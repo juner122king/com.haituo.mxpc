@@ -1,0 +1,331 @@
+
+<import name="icon" src="apex-ui/components/icon/index"></import>
+<!-- 停留3秒显示弹窗 -->
+<template>
+  <div>
+    <div class="reminder-ads" if="{{hasAdList}}">
+      <ad
+        class="ad-native"
+        show="{!!adList.adId}}"
+        adId="{{adList.adId}}"
+        type="native"
+        closeBtnPosition="right-top"
+        onerror="error"
+        onadclick="adClick"
+        onadclose="close"
+      >
+        <div class="container">
+          <!-- 头部图片 -->
+          <div class="vertical-content top-big-img">
+            <ad-clickable-area type="click" class="ad-image">
+              <image
+                src="{{adList.imgUrlList? adList.imgUrlList[0]: defaultAd.img }}"
+              ></image>
+            </ad-clickable-area>
+            <ad-clickable-area
+              class="close-item"
+              type="click"
+              if="{{showTransparency}}"
+            >
+              <icon
+                type="close"
+                size="40"
+                color="#000000"
+                onclick="close"
+              ></icon>
+            </ad-clickable-area>
+            <div class="close-item" else>
+              <icon
+                type="close"
+                size="40"
+                color="#000000"
+                onclick="close"
+              ></icon>
+            </div>
+          </div>
+          <!-- 底下内容 -->
+          <div class="vertical-content horizontal-content">
+            <div class="ad-title">
+              <div>
+                <ad-clickable-area type="click">
+                  <text class="ad-title-txt">{{
+                    adList.title || defaultAd.title
+                  }}</text>
+                </ad-clickable-area>
+              </div>
+              <ad-clickable-area type="logo" class=""> </ad-clickable-area>
+            </div>
+
+            <!-- 标题 -->
+            <div class="ad-s-title">
+              <ad-clickable-area type="click" class="ad-s-title-ad">
+                <text class="ad-s-title-txt">
+                  {{ adList.desc || defaultAd.desc }}</text
+                >
+              </ad-clickable-area>
+            </div>
+
+            <!-- 星星 -->
+            <div class="vertical-content star-list">
+              <icon type="star" size="58" color="#FFCE2D" for="{{5}}"></icon>
+            </div>
+
+            <div class="foot-btn vertical-content">
+              <ad-clickable-area
+                type="button"
+                class="click-item"
+                value="{{
+                  btnTxt || adList.clickBtnTxt || defaultAd.clickBtnTxt
+                }}"
+              >
+              </ad-clickable-area>
+            </div>
+          </div>
+        </div>
+      </ad>
+    </div>
+  </div>
+</template>
+
+<script>
+import prompt from '@system.prompt'
+const { adCodeData } = require('../../../config.js').default
+
+export default {
+  data() {
+    return {
+      adList: {},
+      hasAdList: false,
+      defaultAd: {
+        desc: 'vivo流量联盟，提供最优质的商业化解决方案。流量联盟广告联盟。',
+        title: 'vivo流量联盟',
+        icon: '广告',
+        clickBtnTxt: '点击安装',
+        img: "http://cdn.bank-zone.cn/pro/sy/admin/advertising/3639bdbde8e84397a297ad54f89ac4c3.jpg"
+      },
+      btnTxt: '',
+      adId: "",
+      adObj: "",
+      showClik: false,
+    }
+  },
+  props: {
+    showTransparency: {
+      default: false
+    }
+  },
+  onInit() {
+    const branch = $ad.getProvider()
+    this.adObj = adCodeData[branch]
+    this.adId = adCodeData[branch].fiction2;
+    this.preloadAd()
+  },
+  preloadAd() {
+    try {
+      require('@service.ad').preloadAd({
+        adUnitId: this.adId, // 原生信息流广告广告位id
+        type: 'native', // 原生信息流广告
+        adCount: 1,
+        success: (data) => {
+          console.log(data, '返回广告成功3');
+          this.adList = data.adList[0];
+          this.hasAdList = true;
+          if (this.debug) {
+            prompt.showToast({
+              message: `ad load success`
+            })
+          }
+        },
+        fail: (data, code) => {
+          this.hasAdList = false;
+          this.$emit('emitClose', {
+            data: 'showReminder'
+          })
+          console.log(data, '返回广告失败延时弹窗');
+          if (code === 205) {
+            this.hasAdList = true;
+            this.adList = data.adList[0]
+          } else {
+            if (this.debug) {
+              prompt.showToast({
+                message: `ad load fail!data= ${JSON.stringify(data)},code= ${code}`
+              })
+            }
+          }
+        }
+      })
+    } catch (e) {
+      console.log(e, e.message);
+    }
+  },
+  error(errCode, errMsg) {
+    console.log('没有报错回调吗', errCode, errMsg);
+    // this.$emit('emitClose', {
+    //   data: 'showReminder'
+    // })
+
+    if (this.debug) {
+      prompt.showToast({
+        message: `ad load error: errCode = ${errCode}, errMsg = ${errMsg}`
+      });
+    }
+  },
+  adClick() {
+    console.log('没有点击回调吗');
+    $utils.conversionUpload(this);
+    $utils.buriedPointReport(this, 'click', this.adId)
+    this.$emit('emitHideTransparency')
+  },
+  close() {
+    console.log('没有关闭回调吗');
+    this.hasAdList = false;
+    this.$emit('emitClose', {
+      data: 'showReminder'
+    })
+  }
+}
+</script>
+
+<style lang="less">
+.reminder-ads {
+  align-self: center;
+  flex-direction: column;
+  width: 750px;
+  height: 100%;
+  flex-direction: column;
+  background-color: rgba(0, 0, 0, 0.8);
+  position: fixed;
+  top: 0;
+  left: 0;
+  align-items: center;
+  justify-content: center;
+  .ad-native {
+    width: 100%;
+    height: 800px;
+    margin-top: 80px;
+    background-color: #ffffff;
+    width: 690px;
+    border-radius: 35px;
+
+    .container {
+      width: 100%;
+      height: 750px;
+      flex-direction: column;
+      align-items: center;
+      .top-big-img {
+        flex-direction: column;
+        height: 400px;
+        align-items: center;
+        width: 100%;
+        margin-bottom: 50px;
+        .ad-image {
+          height: 400px;
+          width: 100%;
+          image {
+            width: 100%;
+            height: 100%;
+            border-radius: 15px;
+            object-fit: fill;
+          }
+        }
+
+        .close-item {
+          background-color: rgba(255, 255, 255, 0.5);
+          width: 60px;
+          height: 60px;
+          position: absolute;
+          justify-content: center;
+          align-items: center;
+          top: 20px;
+          right: 20px;
+          border-radius: 50%;
+        }
+      }
+
+      /* 内容区域 */
+      .horizontal-content {
+        flex-direction: column;
+        align-items: center;
+        .ad-title {
+          width: 100%;
+          justify-content: center;
+          align-items: center;
+          margin-bottom: 30px;
+          height: 100px;
+          .ad-title-txt {
+            font-size: 32px;
+            font-weight: 500;
+            color: #000000;
+          }
+        }
+
+        .ad-s-title {
+          width: 80%;
+          height: 100px;
+          justify-content: center;
+          align-content: center;
+          margin-bottom: 30px;
+          .ad-s-title-ad {
+            .ad-s-title-txt {
+              text-align: center;
+              lines: 1;
+              text-overflow: ellipsis;
+            }
+          }
+        }
+
+        .star-list {
+          height: 80px;
+          justify-content: center;
+          margin-bottom: 30px;
+        }
+
+        .foot-btn {
+          width: 100%;
+          align-items: center;
+          justify-content: center;
+          height: 200px;
+          .click-item {
+            width: 400px;
+            height: 120px;
+            border-radius: 60px;
+            font-size: 34px;
+            padding: 10px 20px;
+            color: #fff;
+            text-align: center;
+            background-color: #ff1039;
+            animation-name: scaleDraw;
+            animation-delay: 0;
+            animation-duration: 1200ms;
+            animation-timing-function: ease-out;
+            animation-iteration-count: infinite;
+          }
+          @keyframes scaleDraw {
+            0% {
+              transform: scale(1);
+            }
+            25% {
+              transform: scale(1.1);
+            }
+            50% {
+              transform: scale(1);
+            }
+            75% {
+              transform: scale(1.1);
+            }
+          }
+        }
+      }
+    }
+
+    .vertical-content {
+      width: 100%;
+
+      .ad-close {
+        width: 50px;
+        height: 50px;
+      }
+    }
+  }
+}
+</style>

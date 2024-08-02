@@ -1,0 +1,123 @@
+<import name="my-page" src="apex-ui/components/pagination/index.ux" ></import>
+<import name="my-month-bill" src="../../../components/journalItem/index.ux"></import>
+<import name="my-segmented-control" src="apex-ui/components/segmented-control/index.ux"></import>
+<template>
+  <div class="water-bill-chlid">
+    <div class="content">
+      <div class="title">
+        <div>
+          <text class="title-tisp">{{ params.month }}月账单明细</text>
+        </div>
+        <div class="title-right">
+          <!-- <my-segmented-control theme="dark" current="{{currentClassify}}" values="{{ segments2 }}" onchange="changeCurrentClassify"></my-segmented-control> -->
+
+          <div class="control">
+            <div
+              class=" {{currentClassify ===  0 ?'active-left':'left' }}"
+              @click="changeCurrentClassify(0)"
+            >
+              <text class="txt">支出</text>
+            </div>
+            <div
+              class="  {{currentClassify ===  1 ?'active-right':'right' }}"
+              @click="changeCurrentClassify(1)"
+            >
+              <text class="txt">收入</text>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- 数据列表 -->
+      <list class="month-bill-list" @scrollbottom="touchGround">
+        <block for="{{listData}}" id="listid">
+          <list-item type="product" class="month-bill-item">
+            <my-month-bill bill-item="{{$item}}"></my-month-bill>
+          </list-item>
+        </block>
+      </list>
+    </div>
+
+    <!-- 分页栏
+    <div class="line">
+      <my-page total="{{total}}" current="{{current}}" ontap="clickPage" prev-text="上一页" next-text="下一页"></my-page>
+    </div> -->
+  </div>
+</template>
+
+<style lang="less">
+@import './index.less';
+</style>
+
+<script>
+export default {
+  // 页面的数据模型，private段下的变量仅允许当前页面内代码更改其值。
+  private: {
+    title: 'World',
+    size: 9,
+    arr: [],
+    listData: [],
+    total: 3,
+    current: 1,
+    currentClassify: 0,
+    segments2: ['支出', '收入'],
+    params: {},
+    isLoadMore: "",
+    showArr: true
+  },
+  onInit: function (e) {
+    const params = JSON.parse(e.params);
+    this.params = params;
+    this.getAcList()
+  },
+  onShow: function () {
+    $umeng_stat.resume(this) //在onShow方法的第一行加入此代码
+    //App业务代码
+
+  },
+  onHide: function () {
+    $umeng_stat.pause(this);//在onHide方法的第一行加入此代码
+    //App业务代码
+  },
+
+  changeCurrentClassify: function (e) {
+    this.currentClassify = e;
+    this.listData = []
+    this.isLoadMore = ''
+    this.getAcList()
+
+  },
+  getAcList: function () {
+    console.log('获取了数据');
+    const params = {
+      type: this.currentClassify ? 'REVENUE' : 'EXPENDITURE',
+      month: this.params.isCurrentMonth ? '' : this.params.summaryDt,
+      size: 9,
+      cursorId: this.isLoadMore
+    }
+    const that = this
+    $apis.example.getAcList({
+      ...params
+    }).then(res => {
+      this.isLoadMore = res.data.cursorId || '';
+      let arr = this.listData.concat(res.data.records)
+      this.listData = arr
+      console.log(arr, '查看返回的流水账单');
+    })
+  },
+  touchGround: $utils.throttle(function (params) {
+    if (this.isLoadMore) {
+      this.getAcList()
+    }
+  }),
+  clickPage: function (e) {
+    console.log(e.detail.type);
+    if (e.detail.type === 'prev') {
+      this.current--
+    }
+    if (e.detail.type === 'next') {
+      this.current++
+    }
+
+  },
+}
+</script>

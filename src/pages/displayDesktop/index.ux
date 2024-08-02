@@ -1,0 +1,240 @@
+<import name="Home" src="../Home/index.ux"></import>
+<import name="user" src="../user/index.ux"></import>
+<import name="waterBill" src="../waterBill/index.ux"></import>
+<import name="weather" src="../weather/index.ux"></import>
+<template>
+  <div class="container">
+    <tabs index="{{selectedTab}}" onchange="changeTabactive">
+      <tab-content>
+        <Home
+          index="0"
+          current-index="{{exhibitionIndex}}"
+          ishow-tisp="{{ishowTisp}}"
+          onemit-evt="showTisp"
+        >
+        </Home>
+        <waterBill index="1" current-index="{{exhibitionIndex}}"></waterBill>
+        <weather index="2" current-index="{{exhibitionIndex}}"></weather>
+        <user index="3" current-index="{{exhibitionIndex}}"></user>
+      </tab-content>
+
+      <tab-bar class="tab_bar">
+        <block for="datas.list">
+          <div class="tab_item">
+            <image src="{{$item.show?$item.pic_choice:$item.pic}}" />
+            <text style="color: {{$item.color}}">{{ $item.title }}</text>
+          </div>
+        </block>
+      </tab-bar>
+    </tabs>
+  </div>
+</template>
+
+<style>
+.container {
+  background-color: #f5f5f5;
+  width: 100%;
+  flex-direction: column;
+}
+
+.tab_bar {
+  position: fixed;
+  bottom: 0;
+  background-color: #fff;
+  width: 750px;
+  border-top-left-radius: 20px;
+  border-top-right-radius: 20px;
+  flex: 1;
+}
+
+.tab_item {
+  flex-direction: column;
+  align-items: center;
+  padding-top: 14px;
+  padding-bottom: 11px;
+  width: 171px;
+  height: 104.2px;
+}
+
+.tab_item image {
+  width: 50px;
+  height: 50px;
+  resize-mode: contain;
+  opacity: 0.5;
+}
+
+.tab_item image:active {
+  width: 50px;
+  height: 50px;
+  resize-mode: contain;
+}
+
+.tab_item text {
+  font-size: 21px;
+  margin-top: 10px;
+}
+
+.main-text {
+  font-size: 100px;
+  color: #5f9ea0;
+}
+</style>
+<script>
+const device = require("@system.device")
+export default {
+  // 页面的数据模型，private段下的变量仅允许当前页面内代码更改其值。
+  private: {
+    selectedTab: 0,
+    cruunItem: 1,
+    exhibitionIndex: 1,
+    datas: {
+      color_normal: '#C8C8C8',
+      color_active: '#00B2FF',
+      show: true,
+      list: [{
+        id: 0,
+        color: '#FF7500',
+        pic: 'https://cdn.ipandata.com/app/bookkeeping/tabbar/home.png',
+        pic_choice: 'https://cdn.ipandata.com/app/bookkeeping/tabbar/a-home.png',
+        show: true,
+        title: '测评',
+        pagePath: '/pages/Home',
+        path: 'pages/Home',
+      },
+      {
+        id: 1,
+        color: '#878787',
+        pic: 'https://cdn.ipandata.com/app/bookkeeping/tabbar/will.png',
+        pic_choice: 'https://cdn.ipandata.com/app/bookkeeping/tabbar/a-will.png',
+        show: false,
+        title: '知识',
+        pagePath: '/pages/waterBill',
+        path: 'pages/waterBill',
+      },
+      {
+        id: 2,
+        color: '#878787',
+        pic: 'http://cdn.bank-zone.cn/test/sy/admin/activity/cff392fec3594e9794e6b7c94a0094dc.png',
+        pic_choice: 'http://cdn.bank-zone.cn/test/sy/admin/activity/8d427c22e3df4e6aae115e433ae87f24.png',
+        show: false,
+        title: '天气',
+        pagePath: '/pages/weather',
+        path: 'pages/weather',
+      },
+      {
+        id: 3,
+        color: '#878787',
+        pic: 'https://cdn.ipandata.com/app/bookkeeping/tabbar/user.png',
+        pic_choice: 'https://cdn.ipandata.com/app/bookkeeping/tabbar/a-user.png',
+        show: false,
+        title: '我的',
+        pagePath: '/pages/user',
+        path: 'pages/user',
+      },
+
+      ]
+    },
+    ishowTisp: false
+  },
+  onInit(e) {
+    const { callback = '' } = e;
+    if (callback) {
+      this.$app.$def.globalData.actiParam = {
+        ...e
+      }    }
+    const that = this;
+    $storage.get({
+      key: 'consentPrivacy',
+      success: function (data) {
+        console.log('有1了');
+        if (data !== '1') {
+          that.ishowTisp = true
+          console.log('查看这个ishowTisp');
+        }
+      },
+      error: function () {
+        console.log('获取出错了');
+      }
+    })
+    device.getInfo({
+      success: function (res) {
+        try {
+          $utils.changeGlobalParam(that, 'brand', res.brand)//设备信息
+          $apis.task.getClickControlReyurn({ brand: res.brand }).then((res) => {
+            console.log(res, '获取手势返回配置信息');
+            $utils.changeGlobalParam(that, 'returnResponse', res.data)
+          })
+        } catch (e) {
+          // Do something when catch error
+          console.log('是否报错-----', e);
+        }
+      }
+    })
+
+
+  },
+  onBackPress() {
+    let returnResponse = $utils.changeGlobalParam(this, 'returnResponse') || false;
+    if (this.cruunItem.title !== '福利中心') {
+      return
+    }
+    if (returnResponse.isReturn) {
+      if (returnResponse.returnPage) {
+        $router.push({
+          uri: returnResponse.returnPage
+        })
+        return true
+      }
+      return false
+    } else {
+      return true
+    }
+  },
+  onReady() {
+    // 测试跳转参数
+    // hap://app/com.haituo.bookkeeping/
+    // $router.push({
+    //   uri: "pages/welfareCenter?backurl=vivobrowser%3a%2f%2fbrowser.vivo.com%3fad_token%3d1816021447606374402&btn_name=%E8%BF%94%E5%9B%9E%E6%B5%8F%E8%A7%88%E5%99%A8&channelValue=KYY&type=oppo"
+    // })
+    // 
+    // pages/advertisingCampaigns
+    // pages/readAd
+    // $router.push({
+    //   uri: "pages/welfareCenter"
+    // })
+  },
+  onShow: function () {
+    $umeng_stat.resume(this) //在onShow方法的第一行加入此代码
+    if (!this.$app.$def.globalData.isShwoAd) {
+      this.show = false
+      const that = this;
+      this.exhibitionIndex = 5;
+      setTimeout(() => {
+        that.exhibitionIndex = that.selectedTab
+      })
+    }
+    this.selectedTab = this.cruunItem.id
+
+  }, onHide: function () {
+    console.log();
+    $umeng_stat.pause(this);//在onHide方法的第一行加入此代码
+    //App业务代码
+  },
+  changeTabactive: function (e) {
+    for (let i = 0; i < this.datas.list.length; i++) {
+      let element = this.datas.list[i];
+      element.show = false;
+      element.color = this.datas.color_normal;
+      if (i === e.index) {
+        element.show = true;
+        element.color = this.datas.color_active;
+        this.cruunItem = element;
+      }
+    }
+    this.selectedTab = e.index
+    this.exhibitionIndex = e.index
+  }, showTisp: function (params) {
+    this.ishowTisp = false
+  },
+};
+</script>

@@ -1,0 +1,172 @@
+.water-bill-chlid {
+  width: 100%;
+  height: 100%;
+  background-color: #f5f5f5;
+  flex-direction: column;
+  padding: 0 20px;
+
+  .content {
+    flex-direction: column;
+    background-color: #ffffff;
+    width: 100%;
+    height: 85%;
+    margin-top: 22px;
+    border-radius: 16px;
+
+    .title {
+      height: 144px;
+      justify-content: space-between;
+      padding: 0 32px;
+      align-items: center;
+      width: 100%;
+
+      .title-tisp {
+        font-size: 30px;
+        color: #333333;
+        font-weight: bold;
+      }
+
+      .title-right {
+        width: 300px;
+        border-radius: 8px;
+        align-items: center;
+        height: 100px;
+        justify-content: flex-end;
+
+        .control {
+          justify-content: space-between;
+          align-items: center;
+          height: 100px;
+
+          .left {
+            justify-content: center;
+            border: 1px solid #999999;
+            padding: 10px 22px 10px 22px;
+
+            .txt {
+              font-size: 32px;
+              font-weight: 400;
+              color: #262626;
+            }
+          }
+
+          .active-left {
+            justify-content: center;
+            border: 2px solid #3784f9;
+            color: #3784f9;
+            padding: 10px 22px 10px 22px;
+            border-top-left-radius: 8px;
+            border-bottom-left-radius: 8px;
+
+            .txt {
+              font-size: 32px;
+              font-weight: 400;
+              color: #3784f9;
+            }
+          }
+
+          .active-right {
+            justify-content: center;
+            border: 2px solid #3784f9;
+            color: #3784f9;
+            padding: 10px 22px 10px 22px;
+            border-top-right-radius: 8px;
+            border-bottom-right-radius: 8px;
+
+            .txt {
+              font-size: 32px;
+              font-weight: 400;
+              color: #3784f9;
+            }
+          }
+
+          .right {
+            justify-content: center;
+            border: 1px solid #999999;
+            padding: 10px 22px 10px 22px;
+            border-top-right-radius: 8px;
+            border-bottom-right-radius: 8px;
+
+            .txt {
+              font-size: 32px;
+              font-weight: 400;
+              color: #262626;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  /**列表*/
+  .month-bill-list {
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    margin-top: 20px;
+    min-height: 500px;
+    background-color: #ffffff;
+    .month-bill-item {
+      width: 100%;
+      height: 144px;
+      background-color: #ffffff;
+      justify-content: space-between;
+      align-items: center;
+      // padding: 0 32px;
+
+      .bill-item-left {
+        width: 96px;
+        height: 96px;
+        background-color: #fdefe7;
+        border-radius: 50%;
+        align-items: center;
+        justify-content: center;
+
+        .year {
+          font-size: 24px;
+          font-weight: 400;
+          color: #999999;
+        }
+
+        .time {
+          font-size: 24px;
+          font-weight: 600;
+          color: #333333;
+        }
+      }
+
+      .bill-item-left,
+      .bill-item-cotent {
+        flex-direction: column;
+      }
+
+      .bill-item-cotent {
+        .money {
+          font-size: 32px;
+          font-weight: 600;
+          color: #333333;
+        }
+
+        .introduce {
+          font-size: 24px;
+          color: #999999;
+          font-size: 24px;
+        }
+      }
+
+      .bill-item-right {
+        width: 48px;
+        height: 48px;
+      }
+    }
+  }
+
+  /**分页**/
+  .line {
+    flex-direction: column;
+    justify-content: space-between;
+    width: 500px;
+    padding: 0 20px;
+    margin: 20px auto;
+  }
+}

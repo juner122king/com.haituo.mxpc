@@ -1,0 +1,211 @@
+<template>
+  <div class="retention-pop">
+    <div class="container" if="{{showPop}}">
+      <div
+        class="content"
+        style="{{retentionData.popType === 'award'?' background-size: 642px 730px;':'' }}"
+      >
+        <div class="warningTitle">
+          <text
+            class="Title-txt money-txt {{retentionData.popType ==='detainment'?'default-txt':''}}"
+            style="{{retentionData.popType==='tisp'?'font-size:48px':''}}"
+            >{{ retentionData.title }}</text
+          ><text class="unit" if="{{retentionData.popType ==='award'}}">{{
+            retentionData.unit || '金币'
+          }}</text>
+        </div>
+        <div class="subtitle" if="{{retentionData.popType ==='tisp'}}">
+          <text class="subtitle-txt">{{ retentionData.subtitle }}</text>
+        </div>
+
+        <div class="warning-button" @click="onConfirm">
+          <text class="warning-button-txt">{{
+            retentionData.warningButtonTxt
+          }}</text>
+        </div>
+        <!-- 隐性按钮 -->
+        <div
+          class="hiddenButton"
+          if="{{retentionData.popType ==='tisp'}}"
+          @click="onClone"
+        >
+          <text>明天再来</text>
+        </div>
+
+        <!--  选择按钮-->
+        <div
+          class="optionButtons"
+          if="{{retentionData.popType === 'detainment'}}"
+        >
+          <div class="clone-btn" @click="onClone"><text>残忍离开</text></div>
+          <div class="success-btn" @click="onConfirm">
+            <text>继续观看</text>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+export default {
+  data: {
+
+  },
+  props: {
+    showPop: {
+      type: Boolean,
+      default: false
+    },
+    retentionData: {
+      type: Object,
+      default: {
+        title: "",
+        subtitle: "",
+        warningButtonTxt: "",
+        popType: 'detainment', //award 奖励   detainment 挽回  tisp 提示
+        unit: ""
+      }
+    }
+  },
+  onInit() { },
+  onClone: function () {
+    console.log('关闭');
+    this.$emit('emitClone', { data: 'data' })
+  },
+  onConfirm: function () {
+    console.log('开启');
+    this.$emit('emitConfirm', { data: 'data' })
+  }
+}
+</script>
+
+<style lang="less">
+.retention-pop {
+  /* width: 100%; */
+  /* height: 100%; */
+  /* position: fixed; */
+}
+
+.container {
+  width: 100%;
+  height: 100%;
+  position: fixed;
+  top: 0;
+  left: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  justify-content: center;
+
+  .content {
+    margin-top: 200px;
+    width: 642px;
+    height: 814px;
+    padding: 30px 50px;
+    background-image: url(http://cdn.bank-zone.cn/test/sy/admin/activity/3db5aa1c353140a283c5c190aa1db0e9.png);
+    background-repeat: no-repeat;
+    background-size: 642px 814px;
+    flex-direction: column;
+    padding-top: 420px;
+    align-items: center;
+    padding-bottom: 60px;
+    /* 主标题警示标题 */
+    .warningTitle {
+      width: 454px;
+      justify-content: center;
+      align-items: center;
+      .Title-txt {
+        font-size: 58px;
+        font-weight: 600;
+        color: #ff5431;
+        text-align: center;
+      }
+
+      .money-txt {
+        font-size: 82px;
+        color: #ff5431;
+      }
+
+      .default-txt {
+        color: #1a1a1a;
+        font-size: 40px;
+        margin-bottom: 30px;
+      }
+
+      .unit {
+        color: #ff5431;
+        font-size: 28px;
+        font-family: PingFang SC, PingFang SC-Medium;
+        font-weight: 500;
+        color: #ff5431;
+        position: relative;
+        top: 12px;
+      }
+    }
+    /* 副标题 */
+    .subtitle {
+      margin-top: 12px;
+      .subtitle-txt {
+        font-size: 28px;
+        font-weight: 400;
+        color: #999999;
+      }
+    }
+    /* 警示按钮 */
+    .warning-button {
+      width: 544px;
+      height: 96px;
+      background-color: #ff5431;
+      border-radius: 84px;
+      justify-content: center;
+      align-items: center;
+      margin-top: 32px;
+      .warning-button-txt {
+        font-size: 32px;
+        font-weight: 600;
+        text-align: LEFT;
+        color: #ffffff;
+      }
+    }
+
+    /**
+      隐性按钮
+    */
+    .hiddenButton {
+      margin-top: 12px;
+      text {
+        font-size: 28px;
+        font-weight: 400;
+        color: #999999;
+      }
+    }
+    /* 选择按钮 */
+    .optionButtons {
+      margin-top: 15px;
+      width: 100%;
+      height: 150px;
+      border-top: 2px solid #ececec;
+      justify-content: space-between;
+      position: absolute;
+      bottom: 0;
+      .clone-btn,
+      .success-btn {
+        justify-content: center;
+        align-items: center;
+        flex: 1;
+        text {
+          font-size: 32px;
+          font-weight: 600;
+        }
+      }
+      .success-btn {
+        text {
+          color: #ff5431;
+        }
+      }
+      .clone-btn {
+        border-right: 2px solid #ececec;
+      }
+    }
+  }
+}
+</style>

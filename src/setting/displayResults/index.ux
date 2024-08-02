@@ -1,0 +1,240 @@
+
+<import name="dialog-box" src="../../components/dialogBox"></import>
+<template>
+  <div class="displayResults-page">
+    <!-- 二维码展示框 -->
+    <div class="showAdcCode" if="{{adCodeImgUrl}}">
+      <image src="{{adCodeImgUrl}}"></image>
+    </div>
+
+    <div class="result" if="{{result}}">
+      <div class="title" if="{{btnColor[reqType].iconPath}}">
+        <image src="{{btnColor[reqType].iconPath}}" class="icon"></image>
+        <text class="txt">
+          {{ reqType === 'Numberlocationquery' ? '归属地' : '查看结果' }}</text
+        >
+      </div>
+      <text
+        style="{{reqType==='Numberlocationquery'?' margin-left: 40px;':''}}"
+        >{{ result }}</text
+      >
+    </div>
+    <!-- 确定框 -->
+    <div
+      class="submit-btn"
+      onclick="submit"
+      if="{{btnColor[reqType].showbtn}}"
+      style="background-color:{{btnColor[reqType].color || '#000000'}}"
+    >
+      <text>{{ result ? '复制' : btnColor[reqType].text }}</text>
+    </div>
+    <dialog-box
+      show-dialog="{{showDialog}}"
+      dialog-data="{{dialogData}}"
+      onemit-success="openDialog"
+      onemit-clone="cloneDialog"
+    ></dialog-box>
+  </div>
+</template>
+
+<script>
+const prompt = require("@system.prompt")
+const request = require('@system.request')
+const clipboard = require('@system.clipboard')
+const media = require('@system.media')
+export default {
+  private: {
+    result: '',
+    adCodeImgUrl: "",
+    reqType: "Fortunetelling",
+    btnColor: {
+      orc: {
+        color: '#02bfff',
+        text: '复制文本',
+      },
+      Fortunetelling: {
+        color: "#E14350",
+        text: '复制文本',
+        iconPath: "../../Common/images/select-icon.png",
+        titleBar: '测吉凶',
+        showbtn: false
+      },
+      GenerateQRcode: {
+        color: "#15cab9",
+        text: '保存到手机',
+        titleBar: '生成二维码',
+        showbtn: true
+      },
+      RecognizeQRcode: {
+        color: "#09B775",
+        text: '',
+        showbtn: false
+      },
+      Numberlocationquery: {
+        color: "#3784F9",
+        iconPath: "../../Common/images/site.png",
+        titleBar: '查看结果',
+        showbtn: false
+      },
+      DreamInterpretation: {
+        color: "#3784F9",
+        iconPath: "../../Common/images/Dream.png",
+        titleBar: '周公解梦',
+        showbtn: false
+      },
+    },
+    showDialog: false,
+
+    dialogData: {
+      hading: "图片储存授权申请",
+      subheading: `储存权限:应用需要存储图片权限以便于保存和上传图片，若希望应用访问存储图片权限，‌您可在设备的设置中拒绝或撤销对应用的权限请求‌。`,
+      iconType: "photos",
+      cloneBtn: "不同意",
+      successBtn: "同意",
+      successBtnColor: "#15CAB9"
+    },
+  },
+
+  onInit(e) {
+    const { result = '', reqType = 'Fortunetelling', adCodeImgUrl = '' } = e;
+    console.log('查看跳转过来的参数', e);
+    this.result = result;
+    this.reqType = reqType;
+    this.adCodeImgUrl = adCodeImgUrl
+    this.changeTabName(this.btnColor[reqType].titleBar || '查询结果')
+  },
+  changeTabName: function (name) {
+    this.$page.setTitleBar({ text: name })
+  },
+  submit: function () {
+    if (this.result) {
+      clipboard.set({
+        text: this.result,
+        success: function (data) {
+          $utils.showToast('复制成功')
+        },
+        fail: function (data, code) {
+          console.log(`handling fail, code = ${code}`)
+          if (code === 201) {
+            $utils.showToast('请授权再复制')
+          }
+          $utils.showToast('请稍后重试')
+        }
+      })
+      return
+    }
+
+    const that = this;
+    if (this.adCodeImgUrl) {
+      $storage.get({
+        key: 'isStorageAuthorization',
+        success: function (data) {
+          console.log(data, '是否拍照授权');
+          if (data) {
+            that.saveImage()
+          } else {
+            console.log('进来的是这里');
+            that.showDialog = true
+          }
+        },
+        fail: function (data, code) {
+          console.log(`handling fail, code = ${code}`)
+        }
+      })
+    }
+  },
+  openDialog: function (params) {
+    this.showDialog = false;
+    const that = this;
+    $storage.set({
+      key: 'isStorageAuthorization',
+      value: 1,
+      success: function (data) {
+        console.log('handling success')
+        that.saveImage()
+      },
+      fail: function (data, code) {
+        console.log(`handling fail, code = ${code}`)
+      }
+    })
+  },
+  cloneDialog: function (params) {
+    this.showDialog = false;
+    const that = this;
+    $storage.set({
+      key: 'isStorageAuthorization',
+      value: '',
+      success: function (data) {
+      },
+      fail: function (data, code) {
+        console.log(`handling fail, code = ${code}`)
+      }
+    })
+  },
+  saveImage: function () {
+    let photoPath = this.adCodeImgUrl;
+    let list = photoPath.split('.');
+    /* 用时间来作为图片的名字 */
+    let timeValue = new Date().valueOf();
+    /* 获取图片后缀 */
+    let photoExt = list[list.length - 1];
+    /* 设置要保存的图片名 */
+    let filename = `${timeValue}.${photoExt}`;
+
+    request.download({
+      url: photoPath,
+      filename: filename,
+      success: data => {
+        /* 监听下载任务：1000下载失败，1001下载任务不存在 */
+        request.onDownloadComplete({
+          token: data.token,
+          success: data => {
+            /* 保存图片 */
+            media.saveToPhotosAlbum({
+              uri: data.uri,
+              success: () => {
+                prompt.showToast({
+                  message: '图片保存成功！'
+                })
+              },
+              fail: (data, code) => {
+                if (code == 201) {
+                  prompt.showToast({
+                    message: '授权成功后才能保存图片哦'
+                  })
+                } else if (code == 202) {
+                  prompt.showToast({
+                    message: '请刷新后重试'
+                  })
+                } else if (code == 300) {
+                  prompt.showToast({
+                    message: 'I/O错误，图片保存失败'
+                  })
+                }
+              }
+            })
+          },
+          fail: (data, code) => {
+            if (code == 1000) {
+              prompt.showToast({
+                message: '图片下载失败'
+              })
+            } else if (code == 1001) {
+              prompt.showToast({
+                message: '下载任务不存在'
+              })
+            }
+          }
+        })
+      },
+      fail: () => {
+
+      }
+    })
+  },
+}
+</script>
+
+<style lang="less">
+@import './index.less';
+</style>

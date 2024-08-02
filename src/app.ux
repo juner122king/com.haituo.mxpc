@@ -1,0 +1,39 @@
+<script>
+/**
+ * 应用级别的配置，供所有页面公用
+ */
+import './umenganalysis.es.min';   //必须添加！！！
+const $utils = require('./helper/utils').default
+const $apis = require('./helper/apis').default
+const $router = require('@system.router')
+const $storage = require("@system.storage")
+const $prompt = require("@system.prompt")
+const $ad = require('@service.ad')
+const $device = require('@system.device')
+const $geolocation = require('@system.geolocation')
+/* @desc: 注入方法至全局 global,以便页面调用 */
+const hook2global = global.__proto__ || global
+hook2global.$utils = $utils
+hook2global.$apis = $apis
+hook2global.$router = $router
+hook2global.$storage = $storage
+hook2global.$prompt = $prompt
+hook2global.$ad = $ad
+hook2global.$device = $device
+hook2global.$geolocation = $geolocation
+export default {
+  onCreate() {
+    $umeng_stat.init(this);   //在onCreate函数中加入该行代码，必须添加！！
+
+
+
+  },
+  globalData: {
+    adloadingfailure: false, //广告是否加载失败
+    isShwoAd: false,//是否正在奖励广告,
+    conversionlicks: 0,//点击上传次数为0则不做上传处理
+    clicksOnAdsNow: 0,
+    transparentLayerHits: 0
+  }
+}
+</script>

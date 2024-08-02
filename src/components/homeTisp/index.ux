@@ -1,0 +1,157 @@
+<template>
+  <div
+    class="home-tisp"
+    style="{{!ishowTisp?'width:0;height:0;backgroundColor:none;':''}}"
+  >
+    <div class="content">
+      <div class="title"><text class="txt">用户协议隐私政策提醒</text></div>
+      <div class="details">
+        <text class="txt">
+          感谢您使用记账小管家请您在使用(或继续使用)我们的产品服务前仔细阅读
+
+          <a
+            href="https://test.ipandata.com/statics/quick-app-tool-h5/bookkeeping/用户协议.html"
+            class="active-txt"
+            >《用户协议》</a
+          >
+          和
+          <a
+            href="https://test.ipandata.com/statics/quick-app-tool-h5/bookkeeping/隐私政策.html"
+            class="active-txt"
+            >《隐私政策》</a
+          >
+          我们将全力保障您的合法权益与信息安全，并将持续为您提供优质服务。
+        </text>
+      </div>
+      <div class="subimt" @click="success">
+        <text class="txt">同意</text>
+      </div>
+      <div class="close" @click="close">
+        <text class="txt">拒绝并退出</text>
+      </div>
+    </div>
+  </div>
+</template>
+
+
+<script>
+export default {
+  data: {
+    ishowTisp: false
+  },
+  onInit: function () {
+    this.changeShowTisp()
+  },
+  onShow: function () {
+  },
+  changeShowTisp: function () {
+    const that = this;
+    $storage.get({
+      key: 'consentPrivacy',
+      success: function (data) {
+        if (data !== '1') {
+          that.ishowTisp = true
+        }
+      },
+    })
+  },
+  success: function (params) {
+    const that = this;
+    $storage.set({
+      key: 'consentPrivacy',
+      value: '1',
+      success: function (data) {
+        console.log("handling success");
+        that.hineTisp()
+      },
+      fail: function (data, code) {
+        console.log("handling fail, code=" + code);
+
+      }
+    })
+  },
+  close: function () {
+    this.$app.exit()
+  },
+  hineTisp: function () {
+    this.$emit('emitEvt')
+    this.ishowTisp = false
+    console.log(this.ishowTisp);
+  }
+}
+</script>
+
+<style lang="less">
+.home-tisp {
+  position: fixed;
+  top: 0;
+  left: 0;
+  padding: 32px;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+
+  .content {
+    padding: 0 30px;
+    width: 100%;
+    margin: 200px auto;
+    background-color: #ffffff;
+    border-radius: 12px;
+    flex-direction: column;
+    height: 488px;
+    top: 300px;
+    .title {
+      justify-content: center;
+      align-items: center;
+      margin-top: 25px;
+      margin-bottom: 25px;
+      .txt {
+        font-size: 32px;
+        font-weight: 600;
+        color: #000000;
+      }
+    }
+    .subimt {
+      height: 88px;
+      background-color: #3784f9;
+      border-radius: 16px;
+      justify-content: center;
+      align-items: center;
+      margin-top: 50px;
+      .txt {
+        color: #ffffff;
+        font-weight: 600;
+        font-size: 32px;
+      }
+    }
+
+    .close {
+      height: 88px;
+      justify-content: center;
+      align-items: center;
+      .txt {
+        color: #c5c5c5;
+        font-weight: 600;
+        font-size: 32px;
+      }
+    }
+  }
+
+  .details {
+    flex-wrap: wrap;
+    padding: 0 20px;
+    .txt,
+    .active-txt {
+      font-weight: 400;
+
+      color: #000000;
+      font-size: 26px;
+    }
+
+    .active-txt {
+      font-weight: 400;
+      color: #3784f9;
+      font-size: 26px;
+    }
+  }
+}
+</style>

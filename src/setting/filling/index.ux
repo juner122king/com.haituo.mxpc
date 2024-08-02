@@ -1,0 +1,207 @@
+<template>
+  <!-- Only one root node is allowed in template. -->
+  <div class="filling-page">
+    <div class="title">
+      <text class="txt">设置提现账户</text>
+    </div>
+    <div
+      class="success"
+      if="{{infoData.extInfo.alipayAccount && showType ==='setting'}}"
+    >
+      <div class="number">
+        <text class="txt-left">支付宝账号：</text>
+        <text class="txt-right">{{ infoData.extInfo.alipayAccount }}</text>
+      </div>
+      <div class="name">
+        <text class="txt-left">姓名：</text>
+        <text class="txt-right">{{ infoData.extInfo.alipayUserName }}</text>
+      </div>
+    </div>
+    <div class="lack" else>
+      <div class="phone">
+        <input
+          class="ipt"
+          model:value="{{alipayAccount}}"
+          placeholder="请输入支付宝账号"
+        />
+      </div>
+      <div class="name">
+        <input
+          class="ipt"
+          model:value="{{alipayUserName}}"
+          placeholder="请输入支付宝账号实名认证的姓名"
+        />
+      </div>
+    </div>
+    <div class="subimt" @click="subimt">
+      <text class="txt">{{ showType === 'setting' ? '修改' : '保存' }}</text>
+    </div>
+
+    <dialog-box
+      show-dialog="{{showDialog}}"
+      dialog-data="{{dialogData}}"
+      onemit-success="openDialog"
+      onemit-clone="cloneDialog"
+    ></dialog-box>
+  </div>
+</template>
+
+<style lang="less">
+.filling-page {
+  flex-direction: column;
+  .title {
+    margin-top: 52px;
+    justify-content: center;
+    .txt {
+      font-size: 40px;
+      font-weight: 600;
+      color: #333333;
+      line-height: 56px;
+    }
+  }
+  .success {
+    margin-top: 50px;
+    flex-direction: column;
+    padding: 54px;
+    .number,
+    .name {
+      .txt-left {
+        font-size: 32px;
+        font-weight: 400;
+        color: #333333;
+        line-height: 44px;
+        margin-right: 5px;
+      }
+      .txt-right {
+        font-size: 32px;
+        font-weight: 400;
+        color: #333333;
+        line-height: 44px;
+      }
+    }
+  }
+
+  .subimt {
+    width: 686px;
+    height: 88px;
+    background-color: #3784f9;
+    border-radius: 132px;
+    justify-content: center;
+    align-content: center;
+    margin: 40px auto;
+    .txt {
+      font-size: 32px;
+      font-weight: 500;
+      color: #ffffff;
+      line-height: 44px;
+    }
+  }
+
+  .lack {
+    margin-top: 50px;
+    flex-direction: column;
+    margin: 0 auto;
+
+    .phone,
+    .name {
+      width: 686px;
+      height: 80px;
+      background-color: #f5f5f5;
+      border-radius: 16px;
+      padding: 20px;
+      margin-top: 23px;
+      align-items: center;
+      .ipt {
+        margin-left: 5px;
+        font-size: 28px;
+        font-weight: 400;
+        line-height: 40px;
+        background-color: #f5f5f5;
+        flex: 1;
+      }
+    }
+  }
+}
+</style>
+
+
+
+<import name="dialog-box" src="../../components/dialogBox"></import>
+<script>
+export default {
+  // 页面的数据模型，private段下的变量仅允许当前页面内代码更改其值。
+  private: {
+    infoData: '',
+    alipayAccount: '',
+    alipayUserName: '',
+    showType: "",
+    dialogData: {},
+    showDialog: false,
+  },
+  onInit: function () {
+    this.getUserInfo()
+  }, onShow: function () {
+    $umeng_stat.resume(this) //在onShow方法的第一行加入此代码
+  }, onHide: function () {
+    $umeng_stat.pause(this);//在onHide方法的第一行加入此代码
+    //App业务代码
+  },
+  cloneDialog: function () {
+    this.showDialog = false;
+  },
+  getUserInfo: function () {
+    $apis.user.getUserInfo().then((res) => {
+      console.log('查看用户信息 ', res.data);
+      this.infoData = res.data;
+      this.showType = res.data.extInfo.alipayAccount ? "setting" : "create"
+    })
+  },
+  subimt: function () {
+    if (this.showType === 'create') {
+      if (!this.alipayAccount || !this.alipayUserName) {
+        $prompt.showToast({
+          message: '请填写账户信息',
+          gravity: 'conter'
+        })
+        return
+      }
+      this.dialogData = {
+        hading: "温馨提示",
+        subheading: "支付宝账实名认证姓名和你输入的姓名若不一致，会导致提现失败。",
+        iconType: "hint",
+        cloneBtn: "取消",
+        successBtn: "确定"
+      }
+      this.showDialog = true
+      return
+    }
+
+    this.showType = 'create'
+  },
+  openDialog: function () {
+    this.cloneDialog()
+    const data = {
+      alipayAccount: this.alipayAccount,
+      alipayUserName: this.alipayUserName
+    }
+    console.log(data);
+    $apis.user.putAlipayAccount({
+      ...data
+    }).then((res) => {
+      console.log(res.data, '填写成功');
+      $prompt.showToast({
+        message: '填写成功',
+        gravity: 'conter'
+      })
+      this.getUserInfo()
+
+    }).catch((err) => {
+      console.log(err, '失败了');
+      $prompt.showToast({
+        message: '填写失败',
+        gravity: 'conter'
+      })
+    })
+  }
+}
+</script>

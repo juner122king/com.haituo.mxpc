@@ -1,0 +1,181 @@
+<template>
+  <div class="sign-in-box">
+    <div class="sign-in-title">
+      <text class="sign-in-title-left">每日签到</text>
+      <text class="sign-in-title-right">领金币</text>
+      <image src="/Common/images/Component_2@2x.png" class="gold-img"></image>
+    </div>
+    <div class="sign-in-box-bottom">
+      <div
+        @click="clickSignIn($idx + 1)"
+        class="sign-desk {{ ($idx + 1) < signData.day? 'previous-sign-in':''}} {{ ($idx + 1) === signData.day?(signData.sign ?'previous-sign-in':'now-sign-in') : ''  }}"
+        for="{{6}}"
+      >
+        <div class="txt">
+          <text>第{{ $idx + 1 }}天</text>
+        </div>
+        <image
+          src="/Common/images/check-success.png"
+          class="success-img"
+          if="{{($idx + 1) < signData.day || ((($idx + 1) === signData.day) && signData.sign) }}"
+        ></image>
+        <image
+          src="/Common/images/Component_2@2x.png"
+          class="gold-img"
+          else
+        ></image>
+      </div>
+      <div
+        @click="clickSignIn(7)"
+        class="max-sign-desk  {{  7 === signData.day?(signData.sign ?'previous-sign-in':'now-sign-in') : ''  }}"
+      >
+        <div class="txt">
+          <div class="txt-left">
+            <text class="sky">第7天</text>
+            <text class="bottom-txt">神秘大礼包</text>
+          </div>
+          <div class="treasure-box">
+            <image
+              src="/Common/images/Component_1@2x.png"
+              class="treasure-box-img"
+            ></image>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+
+<script>
+export default {
+  data: {
+    text: 'This is page data.'
+  }, props: [
+    'signData'
+  ],
+  onInit: function () {
+  },
+  clickSignIn: function (e) {
+    if (e === this.signData.day && !this.signData.sign) {
+      this.$emit('emitSing')
+    }
+  }
+}
+</script>
+
+
+<style lang="less">
+.sign-in-box {
+  width: 686px;
+  height: 444px;
+  background-color: #ffffff;
+  border-radius: 24px;
+  margin: 20px auto;
+  flex-direction: column;
+
+  .sign-in-box-bottom {
+    width: 100%;
+    /* justify-content: space-around; */
+    flex-wrap: wrap;
+  }
+
+  .sign-in-title {
+    align-content: center;
+    padding: 0 32px;
+    margin-top: 32px;
+
+    .sign-in-title-left {
+      font-size: 32px;
+      font-weight: 600;
+      color: #181b1a;
+    }
+
+    .sign-in-title-right {
+      font-size: 32px;
+      font-weight: 600;
+      color: #fb7e36;
+    }
+
+    .gold-img {
+      width: 50px;
+      height: 48px;
+    }
+  }
+
+  .sign-desk {
+    width: 142px;
+    height: 150px;
+    background-color: #f3f4f5;
+    border-radius: 16px;
+    justify-content: center;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 20px;
+    margin-left: 28px;
+    .txt {
+      text {
+        font-weight: 400;
+        color: #181b1a;
+        font-size: 22px;
+      }
+    }
+
+    .success-img,
+    .gold-img {
+      width: 48px;
+      height: 48px;
+      margin-top: 15px;
+    }
+  }
+
+  .max-sign-desk {
+    background-color: #f3f4f5;
+    margin-top: 20px;
+    width: 280px;
+    justify-content: center;
+    align-items: center;
+    border-radius: 16px;
+    margin-left: 25px;
+    .txt {
+      .txt-left {
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+
+        .sky {
+          color: #181b1a;
+          font-size: 22px;
+          font-weight: 400;
+        }
+
+        .bottom-txt {
+          width: 74px;
+          height: 60px;
+          font-size: 24px;
+          font-weight: 400;
+          color: #a5a8a8;
+          text-align: center;
+        }
+      }
+    }
+
+    .treasure-box-img {
+      width: 162px;
+      height: 160px;
+    }
+  }
+
+  /**
+       此前订阅
+       **/
+  .previous-sign-in {
+    background-color: rgba(2, 154, 253, 0.1);
+  }
+
+  .now-sign-in {
+    background-color: #3784f9;
+    color: #ffffff;
+  }
+}
+</style>

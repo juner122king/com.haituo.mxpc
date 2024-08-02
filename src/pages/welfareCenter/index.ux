@@ -1,0 +1,816 @@
+<template>
+  <div class="welfareCenter-page">
+    <div class="title">
+      <div class="icon">
+        <image src="/Common/images/right-user.png" @click="goBack"></image>
+      </div>
+      <text class="txt">福利中心</text>
+      <div class=""></div>
+    </div>
+    <!-- 信息框 -->
+    <info-bar info-data="{{infoData}}" txt-clolor="#000000"></info-bar>
+    <!-- 签到框 -->
+    <div class="sigi-in-box">
+      <div class="title"><text class="txt">连续签到领福利</text></div>
+      <div class="container">
+        <!-- 左边签到信息 -->
+        <div class="left-glod-info">
+          <list class="list">
+            <list-item
+              class="sing-item"
+              type="{{!$item.isSignInLeft?'rror-sing':'success-sing'}}"
+              for="{{signInWelfare}}"
+            >
+              <div
+                class="a-horizontalLine {{!$item.isSignInLeft?'heide-horizontalLine':''}}"
+              ></div>
+              <div
+                if="{{$idx !== 6 }}"
+                class="b-horizontalLine {{!$item.isSignInRight?'heide-horizontalLine':''}}"
+              ></div>
+              <div class="info">
+                <text class="amount-txt">{{ $item.amount }}</text>
+                <image class="icon" src="{{$item.icon}}"></image>
+                <text class="txt" if="{{!$item.isSignInLeft}}">{{
+                  signData.day === $idx + 1 ? '今天' : $item.day
+                }}</text>
+                <image
+                  class="nike-icon"
+                  src="../../Common/images/nike.png"
+                  else
+                ></image>
+              </div>
+            </list-item>
+          </list>
+        </div>
+
+        <!-- 右边点击框 -->
+        <div class="right-btn">
+          <div class="top-ico-number">
+            <image class="icon" src="../../Common/images/new-gold.png"></image>
+            <text class="checkglod">{{ signInWelfare[day].amount }}</text>
+          </div>
+          <div
+            class="receive-btn {{signData.sign?'h-receive-btn':''}}"
+            @click="signIn"
+          >
+            <text class="txt">领取</text>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="guidelines" if="{{isStartNoot && tispBoxType===''}}">
+      <!-- 引导弹窗 -->
+      <div class="container">
+        <image
+          class="guidanceTips"
+          src="http://cdn.bank-zone.cn/test/sy/admin/task/8e0194f042db459797f454d6f541e89a.png"
+        ></image>
+      </div>
+    </div>
+    <!-- 每日福利 -->
+
+    <div
+      class="daily-benefits {{isStartNoot?'startNoot':''}}"
+      if="{{dailybenefitsList[0].isShowTask ||  dailybenefitsList[1].isShowTask || dailybenefitsList[2].isShowTask}}"
+      @click="heideStartNoot"
+    >
+      <div class="title"><text class="title-txt">每日福利</text></div>
+      <div
+        class="task-item"
+        for="{{dailybenefitsList}}"
+        if="{{$item.isShowTask}}"
+      >
+        <div class="left" @click="goDailybenefits($item)">
+          <div class="task-item-title">
+            <text>{{ $item.title }}</text>
+          </div>
+          <div class="subheading">
+            <text>{{ $item.subheading }}</text>
+          </div>
+        </div>
+        <div class="right" @click="goDailybenefits($item)">
+          <text>{{ $item.btnTxt }}</text>
+        </div>
+      </div>
+    </div>
+
+    <!-- 广告组件 -->
+    <reward-pop-up
+      if="{{tispBoxType}}"
+      award-data="{{awardData}}"
+      tisp-box-type="{{tispBoxType}}"
+      onemit-openad="openAd"
+      onemit-receiveaward="receiveAward"
+      onemit-bindfali="bindFali"
+      onemit-closepop="closePop"
+    >
+      <!-- oppo原生广告 -->
+      <oppo-ad
+        ad-unit-id="{{adData.nativeAd}}"
+        onemit-clone="adClose"
+        if="{{tispBoxType && showAdItem  && (brand ==='OPPO' || brand ==='xiaomi')}}"
+      >
+      </oppo-ad>
+      <!-- 原生广告组件 2.0广告-->
+      <native-ad
+        onemit-clone="adClose"
+        if="{{tispBoxType && showAdItem  && brand ==='vivo'}}"
+      >
+      </native-ad>
+    </reward-pop-up>
+
+    <!-- 挽留弹窗 -->
+    <retention-pop
+      show-pop="{{showretentionPop}}"
+      retention-data="{{retentionData}}"
+      onemit-clone="cloneRetention"
+      onemit-confirm="confirmRetention"
+    ></retention-pop>
+    <my-banner
+      if="{{!tispBoxType && !showretentionPop}}"
+      display-type="bottom"
+    ></my-banner>
+  </div>
+</template>
+<import name="info-bar" src="../../components/infoBar/index.ux"></import>
+<import name="my-icon" src="apex-ui/components/icon/index"></import>
+<import
+  name="reward-pop-up"
+  src="../../components/reward-pop-up/index.ux"
+></import>
+<import name="my-banner" src="../../components/banner-item/index.ux"></import>
+<import name="ad-item" src="../../components/ad-item/index.ux"></import>
+<import name="native-ad" src="../../components/native-ad/index.ux"></import>
+<import name="retention-pop" src="../../components/retention-pop/index.ux"></import>
+<import name="apex-one-ad" src="../../components/apex-one-ad/index.ux"></import>
+<!-- <import name="apex-ad-2" src="../../components/apex-ad/index.ux"></import> -->
+ <!-- <import name="ad" src="apex-ui/components/ad/index"></import> -->
+ <import name="oppo-ad" src="../../components/oppo-ad/index.ux"></import>
+<script>
+const device = require('@system.device')
+const config = require('../../config.js').default
+export default {
+  private: {
+    title: '用户',
+    signData: {},
+    tispBoxType: '', //failBox //tispBox //awardBox
+    awardData: {
+      txt: '',
+    },
+    showAdItem: false,
+    adTaskCompletions: 0, //红包任务次数
+    totalDegree: 12, // 一共能完成几次
+    showToleftIcon: false,
+    appInfo: {},
+    infoData: {},
+    brand: "",
+    signInWelfare: [
+      {
+        amount: '100',
+        day: '第1天',
+        icon: '../../Common/images/new-gold.png',
+        isSignInLeft: false,
+        isSignInRight: false,
+      },
+      {
+        amount: '100',
+        day: '第2天',
+        icon: '../../Common/images/new-gold.png',
+        isSignInLeft: false,
+        isSignInRight: false,
+      },
+      {
+        amount: '100',
+        day: '第3天',
+        icon: '../../Common/images/new-gold.png',
+        isSignInLeft: false,
+        isSignInRight: false,
+      },
+      {
+        amount: '100',
+        day: '第4天',
+        icon: '../../Common/images/new-gold.png',
+        isSignInLeft: false,
+        isSignInRight: false,
+      },
+      {
+        amount: '100',
+        day: '第5天',
+        icon: '../../Common/images/new-gold.png',
+        isSignInLeft: false,
+        isSignInRight: false,
+      },
+      {
+        amount: '100',
+        day: '第6天',
+        icon: '../../Common/images/new-gold.png',
+        isSignInLeft: false,
+        isSignInRight: false,
+      },
+      {
+        amount: '100',
+        day: '第7天',
+        icon: '../../Common/images/new-gold.png',
+        isSignInLeft: false,
+        isSignInRight: false,
+      },
+    ],
+    signData: '',
+    day: 0,
+    dailybenefitsList: [
+      {
+        title: '每日开红包',
+        subheading: '每日开启拆红包，天天可领',
+        id: 1,
+        btnTxt: '开红包',
+        type: 'openRedEnvelope',
+        isShowTask: false
+      },
+      {
+        title: '看视频赚金币',
+        subheading: '每日可看2次',
+        id: 2,
+        btnTxt: '看视频',
+        type: 'stimulateAd',
+        isShowTask: false
+      },
+      {
+        title: '幸运大转盘，海量金币',
+        subheading: '拼手气抽大奖，最高可得10万金币',
+        id: 3,
+        btnTxt: '去抽奖',
+        type: 'roulette',
+        isShowTask: false
+      },
+    ],
+    isStartNoot: false,
+    rewardedVideoAd: null,
+    showretentionPop: false,
+    retentionData: {
+      title: "",
+      subtitle: "",
+      warningButtonTxt: "",
+      popType: ''  //award 奖励   detainment 挽回  tisp 提示
+    },
+    stimulateAdTimes: 0,//激励完成次数
+    maxStimulateAdTimes: 2,//激励最大完成次数
+    movableSwitchObj: {
+
+    },
+    param: {},
+    adData: {}
+  },
+  onInit(e) {
+    console.log(e)
+    const { callback = '', oaid = '', type = '', channelValue = '', corp_id = '' } = e
+    if (Object.keys(e).length > 0) {
+      console.log('进来了');
+      this.$app.$def.globalData.actiParam = {
+        ...e,
+      }
+      $utils.getConversionlicks(this)
+      $utils.buriedPointReport(this)
+    }
+
+    const that = this
+    this.getSignday()
+    device.getInfo({
+      success: function (res) {
+        let adBrand = $ad.getProvider()
+        const phoninfo = res;
+        that.brand = adBrand;
+
+        that.adData = config.adCodeData[adBrand] || config.adCodeData[res.brand] || {}
+        if (!config.adCodeData[res.brand] && !config.adCodeData[adBrand]) {
+          return
+        }
+        console.log(adBrand, 'adBrand');
+        that.param = {
+          ua: `${phoninfo.manufacturer} ${phoninfo.model} ${phoninfo.product} ${phoninfo.osType}`,
+        }
+        that.getCompleteCount()
+        that.createRewardedVideoAd()
+        that.getStimulateAdTimes()
+        that.getUserwealEntry()
+        that.getAutoPopUps()
+      },
+    })
+    var host = device.host
+    var versionName = host.versionName
+    var versionCode = host.versionCode
+
+    console.log(versionName, 'versionName');
+    console.log(versionCode, 'versionCode');
+  },
+  onReady() {
+    // setTimeout(() => {
+    //   $utils.buriedPointReport(this, 'click', '999999')
+    // }, 5000)
+
+    // setTimeout(() => {
+    //   this.rewardedVideoAd.show()
+    // })
+  },
+  onShow() {
+    this.getUserInfo()
+
+  },
+  goBack: function () {
+    $router.replace({
+      uri: '/pages/displayDesktop',
+    })
+  },
+  getUserInfo: function () {
+    $apis.user.getUserInfo().then((res) => {
+      // console.log(res.data, '查看用户信息');
+      this.infoData = res.data
+    })
+  },
+  goDailybenefits: function (Taskitem) {
+    this.isStartNoot = false
+    let { type } = Taskitem
+    console.log('查看参数', type);
+    if (type === 'roulette') {
+      $router.push({
+        uri: 'setting/rouletteDraw',
+      })
+    } else if (type === 'openRedEnvelope') {
+      console.log('点击了开红包');
+      this.redPacket()
+    } else if (type === 'stimulateAd') {
+      if (this.stimulateAdTimes >= this.maxStimulateAdTimes) {  // 完成次数     
+        this.openRetentionPop('complete')
+        return
+      }
+      if (!this.rewardedVideoAd || typeof this.rewardedVideoAd !== 'object') { //无激励广告
+        $utils.showToast('暂无更多福利')
+        return
+      }
+      this.rewardedVideoAd.show()
+    }
+  },
+  //点击 签到
+  signIn: $utils.throttle(function (params) {
+    if (this.signData.sign) {
+      return
+    }
+    $apis.user.goSianIn().then((res) => {
+      this.getSignday()
+      this.getUserInfo()
+      $prompt.showToast({
+        message: '签到成功',
+        gravity: 'center',
+      })
+    })
+  }),
+  //获取签到日期
+  getSignday: function (params) {
+    $apis.user.getDailySignDay().then((res) => {
+      this.signData = res.data
+      this.day = res.data.day - 1
+      let singData = res.data
+      this.signInWelfare.forEach((singItem, index) => {
+        singItem.isSignInLeft = false
+        singItem.isSignInRight = false
+        if (index + 1 < singData.day) {
+          singItem.isSignInLeft = true
+          singItem.isSignInRight = true
+        }
+        if (index + 1 === singData.day - 1 && !singData.sign) {
+          singItem.isSignInRight = false
+        }
+
+        if (index + 1 <= singData.day && singData.sign) {
+          singItem.isSignInLeft = true
+        }
+      })
+    })
+  },
+  redPacket: $utils.throttle(function () {
+    console.log('开红包按钮', this.adTaskCompletions)
+    if (this.adTaskCompletions <= 0) {
+      this.tispBoxType = 'failBox'
+      return
+    }
+    if (this.adTaskCompletions <= 12) {
+      this.tispBoxType = 'tispBox'
+      this.awardData.txt = '领取奖励'
+      return
+    }
+  }, 4000),
+  // 打开广告
+  openAd: $utils.throttle(function () {
+    this.$app.$def.globalData.isShwoAd = false
+    if (this.showAdItem) {
+      this.completionTask()
+      return
+    }
+    console.log('提示框打开广告')
+    this.tispBoxType = 'tispBox'
+    this.awardData.txt = '打开并领取'
+    this.showAdItem = true
+    this.$set('awardData.txt', '打开并领取')
+  }),
+  receiveAward: function () {
+    this.$app.$def.globalData.isShwoAd = false
+    this.closePop()
+    // console.log('红包框');
+    // if (this.adTaskCompletions) {
+    //   this.redPacket()
+    // } else {
+
+    // }
+  },
+  bindFali: function () {
+    console.log('无次数关闭')
+    this.closePop()
+    this.getAdJumpLink()
+    this.$app.$def.globalData.isShwoAd = false
+  },
+  closePop: function (e) {
+    this.tispBoxType = ''
+    this.showAdItem = false
+    this.$app.$def.globalData.isShwoAd = false
+  },
+  getCompleteCount() {
+    $apis.task
+      .getCompleteCount({
+        adId: config.adCodeData[this.brand].nativeAd,
+      })
+      .then((res) => {
+        this.adTaskCompletions = this.totalDegree - res.data
+        console.log('查看这个获取的任务次数--------------', res.data)
+        this.taksCount = res.data
+        if (this.isAccordWith) {
+          this.getTransparentLayerL()
+        }
+      })
+      .catch((err) => {
+        console.log(err, '获取完成任务次数失败')
+      })
+  },
+  adClose: function (e) {
+    this.showAdItem = false
+    if (e.detail && e.detail.data === 'clone') {
+      this.completionTask()
+      return
+    }
+    this.tispBoxType = ''
+    // $prompt.showToast({
+    //   message: "红包意外关闭稍后重试",
+    //   gravity: "center"
+    // })
+    this.$app.$def.globalData.isShwoAd = false
+    if (e.detail && e.detail.data === 'error') {
+      $utils.showToast('请稍后再试')
+      return
+    }
+  },
+  //完成任务
+  completionTask: function () {
+    this.showAdItem = false
+    let data = {
+      adType: 'NATIVE',
+      adId: config.adCodeData[this.brand].nativeAd,
+      channel: 'AC_0001',
+      countMax: 12,
+    }
+    let headers = {
+      ...this.param,
+    }
+    $apis.task
+      .postFinishCompleteAd({
+        ...data,
+      }, headers)
+      .then((res) => {
+        console.log(res, '完成任务、')
+        this.getUserInfo()
+        this.$app.$def.globalData.isShwoAd = true
+        this.getCompleteCount()
+        if (res.data.awardAmount) {
+          this.awardData = {
+            awardAmount: res.data.awardAmount,
+          }
+          this.adTaskCompletions = 12 - res.data.count
+          this.tispBoxType = 'awardBox'
+        } else {
+          this.tispBoxType = ''
+          this.adTaskCompletions = 12 - res.data.count
+          const that = this
+          $prompt.showDialog({
+            title: '很遗憾',
+            message: '再接再励',
+            buttons: [
+              {
+                text: '继续',
+                color: 'red',
+              },
+            ],
+            success: function (data) {
+              that.$app.$def.globalData.isShwoAd = false
+              console.log('handling callback', data)
+            },
+            cancel: function () {
+              console.log('cancel')
+            },
+          })
+        }
+        if (res.data.jumpLink) {
+          $router.push({
+            uri: res.data.jumpLink,
+          })
+        }
+      })
+      .catch((err) => {
+        console.log(err, '失败')
+        $utils.showToast('暂无活动')
+      })
+  },
+  getAutoPopUps() {
+    $apis.task.getAutoPopUps().then((res) => {
+      this.autoPopUps = res.data
+      if (!res.data) {
+        return
+      }
+      setTimeout(() => {
+        if (!this.tispBoxType && this.adTaskCompletions >= 1 && !this.showretentionPop) {
+          this.openAd()
+        }
+      }, 1000)
+    })
+  },
+  goBack: function () {
+    $router.replace({
+      uri: '/pages/displayDesktop',
+    })
+  },
+  getTransparentLayerL: function () {
+    let result = this.$app.$def.globalData.actiParam.oaid
+    if (!result) {
+      return
+    }
+    try {
+      const res = device.getInfoSync()
+      let payam = {
+        brand: res.brand,
+      }
+      if (!this.isfristReqCoun) {
+        //如果不是初次进来的说明可以添加选项
+        payam.count = this.taksCount
+      }
+      console.log(
+        {
+          ...payam,
+        },
+        '查看上传的参数'
+      )
+      $apis.task
+        .getTransparentLayer({ ...payam })
+        .then((res) => {
+          // 是否初次请求
+          if (this.isfristReqCoun) {
+            this.isfristReqCoun = false
+            this.isAccordWith = res.data
+            if (res.data) {
+              this.getTransparentLayerL()
+            }
+            console.log(res.data, '查看初次的进来')
+            return
+          }
+          this.$set('showTransparentLayer', res.data)
+          $utils.changeGlobalParam('isShowAdDiaphanotheca', res.data)
+          console.log(res, '获取页面透明层配置信息')
+          this.showTransparentLayer = res.data
+        })
+        .catch((err) => {
+          console.log(err, '查看返回报错')
+        })
+    } catch (e) {
+      // Do something when catch error
+      console.log(e.code + e.message)
+    }
+  },
+  getAdJumpLink: function () {
+    let brand = this.brand.toUpperCase()
+    $apis.task.getAdJumpLink({ brand: brand }).then((res) => {
+      let path = res.data
+      if (path) {
+        $router.push({
+          uri: path,
+        })
+      }
+    })
+  },
+  createRewardedVideoAd: function () {
+
+    try {
+
+      const that = this
+      if (this.rewardedVideoAd) {
+        this.rewardedVideoAd = null
+      }
+      if (!config.adCodeData[this.brand].stimulateAd) {
+        return
+      }
+      console.log('进来了激励广告', config.adCodeData[this.brand].stimulateAd);
+      let rewardedVideoAd = $ad.createRewardedVideoAd({
+        adUnitId: config.adCodeData[this.brand].stimulateAd
+      })
+      console.log(rewardedVideoAd, 'rewardedVideoAd');
+      this.rewardedVideoAd = rewardedVideoAd;
+      if (!rewardedVideoAd) {
+        $utils.showToast('暂不支持，稍后再试')
+        // 不支持广告
+        return
+      }
+      rewardedVideoAd.onLoad((e) => {
+        console.log("激励视频广告加载成功", e);
+      })
+      rewardedVideoAd.onClose((e) => {
+        console.log(e, '监听用户点击关闭广告 按钮的事件');
+        that.rewardedVideoAd.load()
+        if (e.isEnded) {
+          that.finishStimulateAd()
+          $utils.conversionUpload(that)
+          $utils.buriedPointReport(that, 'click', config.adCodeData[that.brand].stimulateAd)
+        } else {
+          that.openRetentionPop('detainment')
+        }
+      })
+      rewardedVideoAd.onError((e) => {
+        console.log(e, '激励广告错误');
+        that.rewardedVideoAd = ''
+      })
+
+      if (this.brand !== 'vivo') {
+        that.rewardedVideoAd.load()
+      }
+
+
+    } catch (error) {
+      console.log(error);
+    }
+
+
+  },
+  getStimulateAdTimes: function () {
+    $apis.task
+      .getCompleteCount({
+        adId: 'WATCH_VIDEO'
+        // config.adCodeData[this.brand].stimulateAd
+      })
+      .then((res) => {
+        console.log(res, '查看激励广告次数');
+        this.stimulateAdTimes = res.data;
+      })
+      .catch((err) => {
+        console.log(err, '获取完成任务次数失败')
+      })
+  },
+  finishStimulateAd: function () {
+    // 完成视频广告
+    let data = {
+      adType: 'REWARDED_VIDEO',
+      adId: config.adCodeData[this.brand].stimulateAd,
+      channel: 'AC_0001',
+      countMax: 2,
+      brand: this.brand,
+      completeType: 'WATCH_VIDEO'
+    }
+    let headers = {
+      ...this.param,
+    }
+    $apis.task
+      .postFinishCompleteAd({
+        ...data,
+      }, headers).then((res) => {
+        console.log(res, '查看完成激励广告状态');
+        this.getStimulateAdTimes()
+        this.stimulateAdTimes = res.data.count
+        this.openRetentionPop('award', {
+          awardAmount: res.data.awardAmount,
+        })
+
+      }).catch((err) => {
+        console.log(err, '激励广告未完成');
+      })
+  },
+  /**
+   * 关闭挽留弹窗
+   */
+  cloneRetention: function () {
+    console.log('关闭挽留弹窗');
+    this.showretentionPop = false;//
+    this.retentionData = {
+      title: "",
+      subtitle: "",
+      warningButtonTxt: "",
+      popType: ''
+    }
+  },
+  /**-
+   * 点击挽留弹窗确定按钮
+   */
+  confirmRetention: function (e, data) {
+
+    let type = this.retentionData.popType;
+    console.log(type, '点击挽留弹窗确定键');
+    if (type === 'detainment') {
+      this.rewardedVideoAd.show()
+    }
+    if (type === 'award') {
+      if (this.stimulateAdTimes < this.maxStimulateAdTimes) {
+        this.rewardedVideoAd.show()
+      } else {
+
+        if (this.adTaskCompletions && this.movableSwitchObj.isDailyOpenRedPacketEntry) {
+          this.redPacket()
+        } else {
+          $utils.showToast('暂无更多活动')
+        }
+      }
+    }
+    if (type === 'tisp') {
+      if (this.adTaskCompletions && this.movableSwitchObj.isDailyOpenRedPacketEntry) {
+        this.redPacket();
+      } else {
+        $router.push({
+          uri: 'setting/rouletteDraw',
+        })
+      }
+    }
+
+
+    this.cloneRetention()
+  },
+  // 开启挽留弹窗
+  openRetentionPop: function (type, data) {
+    this.showretentionPop = true;//
+    this.retentionDataType = type;
+    if (type === 'detainment') {
+      this.retentionData = {
+        title: "看完可获得奖励",
+        subtitle: "",
+        warningButtonTxt: "再看可以获得奖励",
+        popType: 'detainment'
+      }
+    }
+
+    if (type === 'award') {
+      this.retentionData = {
+        title: `+${data.awardAmount}`,
+        subtitle: "",
+        warningButtonTxt: this.stimulateAdTimes < this.maxStimulateAdTimes ? '再看一次' : '去开红包',
+        popType: 'award',
+        unit: '金币'
+      }
+    }
+
+    if (type === 'complete' && (this.movableSwitchObj.isDailyOpenRedPacketEntry || this.movableSwitchObj.isWheelOfFortuneEntry)) {
+      let type = (this.adTaskCompletions > 0 && this.movableSwitchObj.isDailyOpenRedPacketEntry) ? '每日开红包' : this.movableSwitchObj.isWheelOfFortuneEntry ? '去幸运大转盘' : '去每日开红包'
+      this.retentionData = {
+        title: "今日抽奖次数已用完明天再来吧",
+        subtitle: `还可以前往${type}有更多好礼哦`,
+        warningButtonTxt: `${type}`,
+        popType: 'tisp',
+        unit: ''
+      }
+    }
+  },
+  getUserwealEntry() {
+    $apis.task.getUserwealEntry().then((res) => {
+      console.log(res, '查看活动开关');
+      let checkObj = res.data; // 注意变量名由 checkOBj 改为 checkObj，以符合常见的命名规范  
+      this.movableSwitchObj = checkObj
+      // 定义一个映射对象，用于根据索引设置对应的属性  
+      const taskMap = {
+        0: 'isDailyOpenRedPacketEntry',
+        1: 'isWatchVideoEarnGoldEntry',
+        2: 'isWheelOfFortuneEntry'
+      };
+      this.dailybenefitsList.forEach((taskItem, index) => {
+        // 检查索引是否在映射对象中  
+        if (taskMap.hasOwnProperty(index)) {
+          // 使用映射对象中的属性名来访问 checkObj 对应的属性值  
+          taskItem.isShowTask = checkObj[taskMap[index]];
+        }
+        // 如果索引不在映射对象中，则可以选择不设置 isShowTask，或者设置为某个默认值  
+        // 例如：taskItem.isShowTask = false; // 如果需要的话  
+      });
+      this.isStartNoot = checkObj.isOpenActivityBootstrapLayer
+    })
+  },
+  heideStartNoot: function () {
+    this.isStartNoot = false
+  }, errorHandler(e) {
+    console.log(e, '失败');
+
+  }
+
+}
+</script>
+
+<style lang="less">
+@import './index.less';
+</style>

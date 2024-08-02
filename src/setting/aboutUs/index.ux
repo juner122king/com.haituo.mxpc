@@ -1,0 +1,104 @@
+<template>
+  <div class="page">
+    <image
+      style="border-radius: 24px; width: 144px; height: 144px; margin-top: 98px"
+      src="/Common/logo.png"
+    ></image>
+    <text
+      style="
+        font-size: 36px;
+        color: #1a1a1a;
+        font-weight: bold;
+        margin-top: 24px;
+      "
+      >{{ appname }}</text
+    >
+
+    <div class="container">
+      <div class="text-item">
+        <text class="span1">当前版本</text>
+        <text class="span2">V{{ versionName }}</text>
+      </div>
+      <div class="text-item">
+        <text class="span1">开发者信息</text>
+        <text class="span2">广州海拓文化传媒有限公司</text>
+      </div>
+      <div class="text-item">
+        <text class="span1">联系电话</text>
+        <text class="span2">16620196086</text>
+      </div>
+      <div class="text-item">
+        <text class="span1">备案号</text>
+        <text class="span2">粤ICP备2024266252号-3K</text>
+      </div>
+    </div>
+  </div>
+</template>
+
+<style>
+.page {
+  flex-direction: column;
+  align-items: center;
+  padding: 27px;
+  background-color: #f5f5f5;
+}
+.container {
+  display: flex;
+  flex-direction: column;
+  width: 686px;
+  height: 280px;
+  margin-top: 100px;
+  background-color: #ffffff;
+  border-radius: 12px;
+}
+
+.text-item {
+  display: flex;
+  justify-content: space-between;
+  flex: 1;
+  text-align: center;
+  width: 100%;
+  padding: 0 20px; /* 添加一些内边距，让内容不直接贴边 */
+}
+
+.span1 {
+  margin-right: 10px;
+  color: #4d4d4d;
+  font-size: 28px;
+  font-weight: 500;
+  line-height: 32px;
+}
+.span2 {
+  margin-right: 10px;
+  font-size: 24px;
+  font-weight: 400;
+  color: #999999;
+  line-height: 28px;
+}
+</style>
+
+<script>
+
+
+import app from '@system.app'
+export default {
+  private: {
+    appname: '',
+    versionName: '',
+    versionCode: '',
+  },
+
+  onInit() {
+    this.$page.setTitleBar({ text: '关于我们' })
+
+    this.appname = app.getInfo().name
+    this.versionName = app.getInfo().versionName
+  }, onShow: function () {
+    $umeng_stat.resume(this) //在onShow方法的第一行加入此代码
+  }, onHide: function () {
+    $umeng_stat.pause(this);//在onHide方法的第一行加入此代码
+    //App业务代码
+  },
+
+}
+</script>

@@ -1,0 +1,59 @@
+<template>
+  <div class="page">
+   <div class="bg"></div> 
+  <div class="top_view">
+    
+    
+
+    <div>
+       <text class="currenttemp">{{now.temperature}}</text>
+       <text class="sky">{{now.weather}}</text>
+    </div>
+  
+    <text class="air">湿度{{now.sd}}|{{now.wind_direction}}{{now.wind_power}}|{{aqiDetail.quality}}{{aqiDetail.pm2_5}}</text>
+
+  </div>
+
+
+
+  </div>
+</template>
+
+<script>
+// const urlEncode = require('url-encode');
+export default {
+
+  data: {
+    now: {},//实时天气信息
+    aqiDetail: {}//实时天气信息-空气信息
+  },
+  onInit() {
+    var that = this
+    $geolocation.getLocation({
+      success: function (data) {
+        console.log(`handling success: longitude = ${data.longitude}, latitude = ${data.latitude}`)
+        that.nowWeather(data.longitude, data.latitude)
+      },
+      fail: function (data, code) {
+        console.log(`handling fail, code = ${code}, errorMsg=${data}`)
+      }
+    })
+  },
+
+  nowWeather: function (lng, lat) {
+    const onCatchCallback = (res) => {
+      let data = JSON.parse(res)
+      console.log(data, '获取当前天气回调信息data')
+      this.now = data.showapi_res_body.now
+      this.aqiDetail = data.showapi_res_body.now.aqiDetail
+    }
+
+    $utils.getWeatherInfo(onCatchCallback, lng, lat)
+  }
+
+}
+</script>
+
+<style lang="less">
+@import './index.less';
+</style>

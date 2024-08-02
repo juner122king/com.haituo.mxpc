@@ -1,0 +1,296 @@
+<template>
+  <div class="item-container {{shwoType?'ad-container':''}}">
+    <div class="container {{shwoType?'ad-container':''}}">
+      <block for="{{adList}}">
+        <ad
+          adId="{{$item.adId}}"
+          class="ad-native"
+          show="{{adList.length > 0}}"
+          @error="errorAd"
+          @adclick="reportNativeClick"
+          @adclose="closeAd"
+        >
+          <div class="ad-content">
+            <block if="{{$item.creativeType===4}}">
+              <ad-clickable-area type="video" class="ad-video">
+              </ad-clickable-area>
+            </block>
+            <block else>
+              <ad-clickable-area type="click">
+                <image class="ad-image" src="{{$item.imgUrlList[0]}}"></image>
+              </ad-clickable-area>
+            </block>
+            <div class="ad-footer" if="{{$item.title}}">
+              <ad-clickable-area type="click">
+                <text class="tag">{{ defaultAd.icon }}</text>
+                <text class="title">{{ $item.title || defaultAd.title }}</text>
+              </ad-clickable-area>
+            </div>
+          </div>
+        </ad>
+      </block>
+    </div>
+  </div>
+</template>
+
+<script>
+const { adCodeData } = require('../../config.js').default
+let nativeAd;
+module.exports = {
+  props: {
+    showTclayer: {
+      type: Boolean,
+      default: false,
+      required: true,
+    },
+    shwoType: {
+      type: Boolean,
+      default: false,
+    }
+  },
+  data: {
+    componentName: "ad",
+    provider: "",
+
+    hasAdList: false,
+    adList: [],
+    defaultAd: {
+      desc: 'vivo流量联盟，提供最优质的商业化解决方案。流量联盟广告联盟。',
+      title: 'vivo流量联盟',
+      icon: '广告',
+      clickBtnTxt: '立即打开'
+    },
+    native: {
+      adUnitId: "",
+      isShow: false,
+      adData: {},
+      isShowImg: true,
+      isShowVideo: true,
+      isShowData: true,
+      errStr: "",
+      btnTxt: "",
+      adImgSrc: "",
+      adVideoSrc: ""
+    }
+
+  },
+  onInit() {
+    this.native.adUnitId = adCodeData.vivo.nativeAd
+  },
+  onReady(options) {
+    console.info("native ad onReady");
+    this.showNativeAd2();
+  },
+  onShow(options) {
+    if (this.native.isShow) {
+      this.reportNativeShow();
+    }
+  },
+  getAdProvider: function () {
+    this.provider = $ad.getProvider();
+
+  },
+  showNativeAd2() {
+    let adParams = {
+      adUnitId: this.native.adUnitId, // 原生自渲染2.0广告广告位id
+      type: 'native',          // 原生自渲染2.0广告类型 
+      adCount: 1
+    }
+    const that = this;
+    console.log(adParams, 'adParams查看编码');
+    $ad.preloadAd({
+      ...adParams,
+      success: (data) => {
+        console.log(data, '查看返回的广告');
+        try {
+          this.adList = data.adList  // 一次成功返回有 1-3 个数据，参照对应的 adCount 数（小概率情况下小于 adCount 数）
+          this.native.isShow = true;
+        } catch (e) {
+          console.log(e);
+        }
+      },
+      fail: (data, code) => {
+        console.log(data, code, '返回广告失败');
+        try {
+          if (code === 205) {
+            this.adList = data.adList // 错误码205时，表示缓存已满导致加载失败，此时从缓存返回最多3个广告数据
+            this.native.isShow = true;
+          }
+
+        } catch (e) {
+          console.log(e);
+        }
+      }
+    })
+  },
+  errorAd: function () {
+    this.$emit('emitClone', {
+      data: 'error'
+    })
+  },
+  reportNativeClick(e) {
+    console.info(" 原生广告被点击了", e);
+    $utils.conversionUpload(this)
+    $utils.buriedPointReport(this, 'click', this.native.adUnitId)
+    //广告或透明层被点击后隐藏透明层
+    this.showTclayer = false;
+    this.$emit('emitClone', {
+      data: 'clone'
+    })
+  },
+  listenNativeAdDownloadStatus(downloadstatus) {
+    if (downloadstatus === "INSTALLED") {
+      this.native.btnTxt = "OPEN";
+    }
+  },
+  removeAdListen: function () {
+    if (nativeAd) {
+      nativeAd.offDownloadProgress();
+      nativeAd.offError(() => {
+        console.log("nativeAd offError");
+      });
+      nativeAd.offLoad(() => {
+        console.log("nativeAd offLoad");
+      });
+      nativeAd.offStatusChanged();
+    }
+  },
+  onDestroy() {
+    if (nativeAd) {
+      nativeAd.destroy();
+    }
+  },
+  closeAd: function (e) {
+    console.log(e, '查看这个关闭的效果');
+    this.native.isShow = false;
+    this.$emit('emitClone', {
+      data: 'clone'
+    })
+  },
+
+}
+</script>
+<style lang="less">
+.tc-layer {
+  width: 100%;
+  height: 850px;
+  position: absolute;
+  bottom: 100px;
+}
+
+.item-container {
+  /* background-color: rgba(0, 0, 0, 0.5); */
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  margin-bottom: 50px;
+  position: absolute;
+  width: 750px;
+  height: 100%;
+}
+.container {
+  flex-direction: column;
+  align-items: flex-end;
+  width: 750px;
+}
+.ad-container {
+  width: 100%;
+}
+.stackstyle {
+  width: 540px;
+  height: 306px;
+  align-items: flex-end;
+}
+.img {
+  width: 100%;
+  height: 100%;
+  border-radius: 20px;
+}
+.closeImg {
+  margin-bottom: 30px;
+  width: 48px;
+  height: 48px;
+}
+.alert {
+  font-size: 40px;
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+
+.ad-video {
+  width: 100%;
+  height: 415px;
+}
+.btn {
+  height: 80px;
+  width: 60%;
+  background-color: #00bfff;
+  color: #ffffff;
+  border-radius: 20px;
+  margin-bottom: 20px;
+}
+.btn:active {
+  background-color: #058fbd;
+}
+.adbtn {
+  width: 200px;
+  height: 50px;
+  color: #ffffff;
+  background-color: #00bfff;
+  border-radius: 8px;
+  position: absolute;
+  align-self: flex-end;
+  bottom: 20px;
+  right: 20px;
+}
+.adbtn:active {
+  background-color: #058fbd;
+}
+.adsource {
+  background-color: rgba(0, 0, 0, 0.5);
+  padding: 5px;
+  color: #ffffff;
+  position: absolute;
+  top: 0;
+  font-size: 18px;
+  border-top-left-radius: 20px;
+  padding-left: 10px;
+  padding-right: 10px;
+}
+.adtitle {
+  background-color: rgba(0, 0, 0, 0.5);
+  padding: 5px;
+  color: #ffffff;
+  font-size: 18px;
+  padding-left: 10px;
+  padding-right: 10px;
+  border-bottom-left-radius: 20px;
+}
+
+.ad-content {
+  padding: 0 30px;
+  height: 500px;
+  flex-direction: column;
+  .ad-image {
+    width: 100%;
+    object-fit: cover;
+    border-radius: 10px;
+  }
+  .ad-video {
+    width: 100%;
+    height: 100%;
+    border-radius: 10px;
+  }
+  .ad-footer {
+    height: 10%;
+    width: 100%;
+    align-items: center;
+    margin-top: 20px;
+    .ad-icon {
+      width: 30px;
+      height: 30px;
+      margin-right: 20px;
+    }
+  }
+}
+</style>

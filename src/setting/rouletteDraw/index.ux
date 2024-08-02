@@ -1,0 +1,706 @@
+<import name="native-ad" src="../../components/native-ad/index.ux"></import>
+<import name="dialog-box" src="../../components/dialogBox"></import>
+<import name="lottery-native" src="../../components/lottery-native/index.ux"></import>
+<!-- 一个内嵌 -->
+<import name="retention-pop" src="../../components/retention-pop/index.ux"></import>
+<!-- 一个包含banner  -->
+<import name="original-gift-box" src="../../components/original-gift-box/index.ux"></import>
+<import name="apex-ad-2" src="../../components/apex-ad/index.ux"></import>
+<import name="my-dialog" src="apex-ui/components/dialog/index"></import>
+ <import name="oppo-ad" src="../../components/oppo-ad/index.ux"></import>
+<template>
+  <div class="lottery-page">
+    <!-- 活动说明 -->
+    <div class="event-description" if="{{showRule}}">
+      <div class="tisp-box">
+        <text class="tispList-title">活动说明</text>
+        <list class="tispList">
+          <list-item type="" class="tispList-item">
+            <text>1、本次活动时间为2024/6/1-2025/5/15；</text>
+            <text>2、点击抽奖可以转动抽奖转盘；</text>
+            <text>3、当抽奖转盘停止后，可以看到中奖结果；</text>
+            <text
+              >4、实物奖励需用户主动联系客服，填写收货信息，由于用户信息填写错误造成的奖品损失我司不承担，因实物奖励为我司奖品之一，因此无发票且不能折现。</text
+            >
+            <text
+              >5、同一设备、手机、身份证信息重复中奖手机，只可领取一次；</text
+            >
+            <text
+              >6、若发现通过系统漏洞作弊、刷奖励、刷机、虚拟账号等违规行为操作非法获得，主办方有权撤销用户参与该活动的资格并退回所有奖励；</text
+            >
+            <text
+              >7、主办方可以根据本活动实际情况对活动规则进行变动或调整，相关变动以页面实际数据为准；</text
+            >
+            <text
+              >8、鉴于互联网的时效性、特殊性等，主办方因出现不可抗情况（包含但不限于重大自然灾难、运营商网络中断、服务商服务器中断等）导致活动无法进行，主办方可依相关法律法规主张免责；</text
+            >
+            <text
+              >9、若在使用页面过程中，遇到bug、奖励等功能问题需要处理的，请拔打服务电话：16620196086，我们会在工作日时间内进行回复处理；</text
+            >
+            <text
+              >10、所有参与活动该活动用户将视为了解本次活动规则细节，且自愿承担所有责任风险，造成任何其他无关损失与主办方无关；</text
+            >
+            <text>11、本次活动最终解释权归广州海拓文化传媒有限公司所有。</text>
+          </list-item>
+        </list>
+        <div class="tisp-btn" @click="changeDescription">
+          <text>我知道了</text>
+        </div>
+      </div>
+    </div>
+
+    <div class="activity-description" @click="changeDescription"></div>
+    <div class="swinners-number">
+      <text>已有{{ pageData.participateNums }}人参与</text>
+    </div>
+    <!-- 转盘 -->
+    <div class="lottery-box">
+      <div class="turntable">
+        <image
+          id="animation"
+          class="turntable-img"
+          src="https://cdn.ipandata.com/app/private-template/sy-lotter/430f57ff6a5bb132f64f5fd3ba381d1.png"
+        ></image>
+      </div>
+      <div class="turntable-content">
+        <div class="turntable-select">
+          <image
+            class="turntable-select"
+            src="https://cdn.ipandata.com/app/private-template/sy-lotter/selected.png"
+          ></image>
+        </div>
+        <div class="turntable-btn">
+          <image
+            @click="launchLottery"
+            src="http://cdn.bank-zone.cn/pro/sy/admin/advertising/be19328f4615468c84895eb54552f607.png"
+          ></image>
+        </div>
+      </div>
+    </div>
+
+    <!-- 底部信息 -->
+    <div class="bottom-info">
+      <div class="frequency">
+        <text>剩余抽奖次数:</text>
+        <text class="frequency-num">{{ pageData.dailyFreeLotteryCount }}</text>
+      </div>
+
+      <div class="awardRecord">
+        <div class="awardRecord-title">
+          <text class="awardRecord-title-txt">领奖记录</text>
+        </div>
+        <div class="awardRecord-top">
+          <div class="awardRecord-top-content">
+            <div><text class="txt">中奖内容</text></div>
+            <div><text class="txt">获奖时间</text></div>
+          </div>
+        </div>
+        <list class="info-list">
+          <list-item
+            type="info-item"
+            class="info-item"
+            for="{{drawPrizeRecordList}}"
+          >
+            <div>
+              <text class="default-color">用户</text
+              ><text class="phone-number">{{ $item.phoneNumber }}</text>
+              <text class="default-color">抽中{{ $item.award }} </text>
+            </div>
+            <div>
+              <text>{{ $item.createdDt }}</text>
+            </div>
+          </list-item>
+        </list>
+      </div>
+    </div>
+
+    <!-- 广告奖励弹窗 -->
+
+    <div class="freeReward-popUp" if="{{tispBoxType}}">
+      <image
+        src="/Common/images/clone.png"
+        class="clone-img"
+        @click="cloneFreeReward"
+      ></image>
+      <div class="container">
+        <div class="title">
+          <text class="title-txt">恭喜获得</text>
+        </div>
+        <div class="money">
+          <text class="money-txt">{{ freeReward.gold }}</text>
+          <text class="unit-txt">金币</text>
+        </div>
+        <div class="subtitle">
+          <text if="{{freeReward.leadCopy}}">{{ freeReward.leadCopy }}</text>
+        </div>
+        <div class="ad">
+          <lottery-native
+            onemit-clone="adClose"
+            if="{{brand ==='vivo'}}"
+          ></lottery-native>
+          <!-- oppo原生广告 -->
+          <oppo-ad
+            ad-unit-id="{{adObj.lotteryPageNativeAd}}"
+            onemit-clone="adClose"
+            if="{{brand ==='OPPO' || brand ==='xiaomi'}}"
+            type="left-text-right-pic"
+          >
+          </oppo-ad>
+        </div>
+      </div>
+    </div>
+    <!-- 挽留弹窗 -->
+    <retention-pop
+      show-pop="{{showretentionPop}}"
+      retention-data="{{retentionData}}"
+      onemit-clone="cloneRetention"
+      onemit-confirm="confirmRetention"
+    ></retention-pop>
+    <!-- 任务选择弹窗 -->
+    <dialog-box
+      show-dialog="{{showDialog}}"
+      dialog-data="{{dialogData}}"
+      onemit-success="openDialog"
+      onemit-clone="cloneDialog"
+    ></dialog-box>
+    <!-- 礼盒原生广告弹窗 -->
+
+    <original-gift-box
+      onemit-subimt="fishOriginal"
+      show-original-gift="{{showOriginalGift}}"
+    >
+      <apex-ad-2
+        ad-unit-id="7c15f38bb3dc4c2eac7810eb6b76bd38"
+        onemit-adclick="loadHandler"
+        onemit-error="errorHandler"
+        onemit-close="closeHandler"
+        if="{{brand ==='vivo'}}"
+      ></apex-ad-2>
+
+      <!-- oppo原生广告 -->
+      <oppo-ad
+        ad-unit-id="{{adObj.lotteryPageNativeAd}}"
+        if="{{brand ==='OPPO'  || brand ==='xiaomi'}}"
+        onemit-clone="poopChangeState"
+        type="left-text-right-pic"
+      >
+      </oppo-ad>
+    </original-gift-box>
+  </div>
+</template>
+
+
+
+<script>
+let $animation = null;
+const device = require('@system.device')
+const { adCodeData } = require('../../config.js').default
+const config = require('../../config.js').default
+let nativeAd;
+export default {
+  private: {
+    mTextState: 'Init',
+    drawPrizeRecordList: [],
+    pageData: {}, //页面渲染数据
+    lotteryData: {},//轮盘展示数据
+    tispBoxType: false,//红包弹窗
+    showretentionPop: false, //是否展示挽留弹窗
+    retentionData: {
+      title: "",
+      subtitle: "",
+      warningButtonTxt: "",
+      popType: ''  //award 奖励   detainment 挽回  tisp 提示
+    },
+    retentionDataType: '',
+    freeReward: {
+
+    },//初次奖励弹窗
+    showDialog: false,
+    dialogData: {
+      hading: "您的抽取次数已用完",
+      subheading: "参与活动或观看视频可以获得抽取次数抽中机会更大哦~",
+      iconType: "hint",
+      cloneBtn: "关闭",
+      successBtn: "去参与"
+    },
+    rewardedVideoAd: null,//激励实例对象
+    showOriginalGift: false,
+    brand: '',
+    adObj: {
+
+    },
+    param: {},
+    showRule: false,
+    firstTimeIn: true,
+    isInitialReward: false
+  },
+  async onInit(e) {
+    console.log(e, '查看这个e');
+    const { callback = '', type = 'jh', channelValue = '', corp_id = '' } = e;
+    if (Object.keys(e).length > 0) {
+      console.log('进来判断');
+      this.$app.$def.globalData.actiParam = {
+        ...e,
+      }
+      $utils.getConversionlicks(this)
+    }
+    const that = this;
+    device.getInfo({
+      success: function (res) {
+        let adBrand = $ad.getProvider()
+        that.brand = adBrand;
+        that.adObj = adCodeData[adBrand]
+        let phoninfo = res
+        that.param = {
+          ua: `${phoninfo.manufacturer} ${phoninfo.model} ${phoninfo.product} ${phoninfo.osType}`,
+        }
+        that.createRewardedVideoAd();
+      }
+    })
+    this.getWheelOfFortuneInfo()
+    this.getDrawPrizeRecord()
+
+  },
+  /**
+   * 启动轮盘
+   */
+  launchLottery: $utils.throttle(function () {
+    let dailyFreeLotteryCount = this.pageData.dailyFreeLotteryCount;
+    if (dailyFreeLotteryCount > 0) { //有次数的启动动画直接  直接转轮盘
+      this.startAnimation()
+      return
+    }
+    this.startLottery()// 没有次数的直接转然后根据状态渲染
+  }, 4000),
+  // 启动动画
+  startAnimation: function () {
+    this.resetAnimation()
+    console.log('启动动画');
+    const num = Math.abs(this.getDegree());
+    const degree = Math.abs(this.getDegree());
+    const rotateDeg = degree * 60 + 1080;
+    const keyframes = [
+      {
+        transform: {
+          rotate: '0deg'
+        },
+        time: 0
+      },
+      {
+        transform: {
+          rotate: `${rotateDeg}deg`
+        },
+        time: 100
+      }
+    ]
+    const options = {
+      duration: 2000,
+      easing: 'ease-in-out',
+      delay: 0,
+      fill: 'forwards', // 确保动画完成后保持最后一帧的状态  
+      iterations: 1
+    }
+    const cAnimationNode = this.$element('animation')
+    $animation = cAnimationNode.animate(keyframes, options)
+    // 将会延迟至 (delay + startTime) ms 后执行动画；
+    $animation.startTime = 800
+
+    $animation.play()
+    this.mTextState = $animation.playState
+
+    $animation.oncancel = () => {
+      this.mTextState = $animation.playState
+    }
+    $animation.onfinish = () => {
+      console.log('动画执行结束');
+      this.mTextState = $animation.playState
+    }
+    setTimeout(() => {
+      this.startLottery()
+    }, 3000)
+  },
+  getDegree: function () {
+    const num = Math.floor(Math.random() * 9) + 1;
+    return num === 6 ? num + 1 : num
+  },
+  // 重置动画
+  resetAnimation: function () {
+    const keyframes = [
+      {
+        transform: {
+          rotate: '0deg'
+        },
+        time: 0
+      },
+      {
+        transform: {
+          rotate: `0deg'`
+        },
+        time: 1
+      }
+    ]
+    const options = {
+      duration: 0,
+      easing: 'ease-out',
+      delay: 0,
+      fill: 'none',
+      fill: 'forwards', // 确保动画完成后保持最后一帧的状态  
+      iterations: 1
+    }
+    const cAnimationNode = this.$element('animation')
+    $animation = cAnimationNode.animate(keyframes, options)
+    // 将会延迟至 (delay + startTime) ms 后执行动画；
+    $animation.startTime = 1000
+    $animation.play()
+    this.mTextState = $animation.playState
+    $animation.oncancel = () => {
+      this.mTextState = $animation.playState
+    }
+    $animation.onfinish = () => {
+      this.mTextState = $animation.playState
+    }
+  },
+  // 获取幸运大转盘信息
+  getWheelOfFortuneInfo() {
+    $apis.activity.getWheelOfFortuneInfo().then((res) => {
+      console.log(res, '获取幸运大转盘信息');
+      let result = res.data;
+      this.pageData = res.data;
+      if (this.firstTimeIn && result.isAutoTurn && result.dailyFreeLotteryCount > 0) {
+        this.firstTimeIn = false;
+        this.launchLottery()
+      }
+    })
+
+  },
+  // 抽奖
+  startLottery() {
+    $apis.activity.getStartLottery().then((res) => {
+      let lotteryresult = res.data;
+      this.lotteryData = lotteryresult
+      this.getWheelOfFortuneInfo();
+      console.log(lotteryresult, 'lotteryresult');
+      if (lotteryresult.isCurrentFreeLottery) { //是否为免费的奖励
+        this.tispBoxType = true;
+        this.freeReward = {
+          gold: lotteryresult.gold,
+          leadCopy: lotteryresult.leadCopy
+        }
+        return
+      } else {
+        if (lotteryresult.gold) {
+          console.log('直接弹窗奖励');
+          this.openRetentionPop('award', lotteryresult)
+          return
+        } if (!lotteryresult.isHaveActivityCount) { //直接判断有无活动次数 
+          this.openRetentionPop('complete')  //直接弹窗提示之后跳转
+          return
+        } else {
+          console.log('是否打开广告');
+          this.showDialog = true
+        }
+
+      }
+    })
+  },
+  // 领奖记录
+  getDrawPrizeRecord() {
+    $apis.activity.getDrawPrizeRecord({
+      size: 16
+    }).then((res) => {
+      let result = res.data.records
+      // this.drawPrizeRecordList = result
+      result.forEach(item => {
+        let fullString = item.content;
+        let startIndex = fullString.indexOf('用户');
+        let awardIndex = fullString.indexOf('抽中');
+
+        if (startIndex !== -1 && awardIndex !== -1 && awardIndex > startIndex) {
+          // 跳过“用户”两个字符的长度  
+          startIndex += 2;
+          // 截取“用户”之后到“抽中”之前的字符串，即手机号（含星号）  
+          let phoneNumber = fullString.substring(startIndex, fullString.indexOf('抽中', startIndex)).replace(/(\d{3})\d*(\d{4})/, '$1****$2');
+
+          // 假设“抽中”后面紧跟着奖励信息，我们可以这样提取  
+          let award = fullString.substring(awardIndex + 2).trim(); // +2 是为了跳过“抽中”两个字  
+
+          // 输出或更新item  
+          // console.log(`phoneNumber: ${phoneNumber}, award: ${award}`);
+
+          // 如果需要更新item对象  
+          item.phoneNumber = phoneNumber;
+          item.award = award;
+        }
+      });
+      this.drawPrizeRecordList = result
+
+
+    })
+  },
+  adClose: function (e) {
+    this.showAdItem = false
+    if (e.detail && e.detail.data === 'clone') {
+      if (this.tispBoxType) {
+        this.tispBoxType = false;
+        this.completionNativeAdTask('NATIVE')
+        return
+      }
+      this.completionNativeAdTask('NATIVE', 'lottery-native')
+      return
+    }
+    if (e.detail && e.detail.data === 'error') {
+      $utils.showToast('请稍后再试')
+      return
+    }
+  },
+  /**
+   * 完成任务  类型
+   */
+  completionNativeAdTask: function (adtype = 'NATIVE', type = 'default') {
+    let data = {
+      adType: adtype,
+      adId: adtype === 'NATIVE' ? this.adObj.lotteryPageNativeAd : this.adObj.stimulateAd,
+      channel: 'AC_0001',
+      completeType: 'WHEEL_OF_FORTUNE',
+      isLeadCopyFetch: type === 'lottery-native' ? true : false
+    }
+    let headers = {
+      ...this.param,
+    }
+    $apis.task
+      .postFinishCompleteAd({
+        ...data
+      }, headers).then((res) => {
+        console.log(res, '完成');
+        let taskResult = res.data;
+        if (type === 'lottery-native') {
+          console.log('怎么还是进来了这里');
+          this.openRetentionPop('LeadCopyFetch', taskResult)
+        }
+        this.getWheelOfFortuneInfo();//完成一个任务直接重新获取任务即可;
+        $utils.showToast('获得次数一次')
+      }).catch((err) => {
+        console.log(err);
+        $utils.showToast('活动失效')
+        return
+      })
+  },
+  /**
+ * 关闭挽留弹窗
+ */
+  cloneRetention: function () {
+    console.log('关闭挽留弹窗');
+    this.showretentionPop = false;//
+    this.retentionData = {
+      title: "",
+      subtitle: "",
+      warningButtonTxt: "",
+      popType: ''
+    }
+
+    if (this.pageData.isAutoTurn && this.pageData.dailyFreeLotteryCount) { //开启自转;
+      this.showretentionPop = false;
+      this.showDialog = false;
+      this.startAnimation()
+    }
+  },
+  /**-
+ * 点击挽留弹窗确定按钮
+ */
+  confirmRetention: function (e, data) {
+    let type = this.retentionDataType;
+    console.log('触发了挽留弹窗？');
+    if (type === 'detainment') {
+      if (!this.rewardedVideoAd || typeof this.rewardedVideoAd !== 'object') { //无激励广告
+        $utils.showToast('暂无更多活动')
+        this.cloneRetention()
+        return
+      }
+      this.rewardedVideoAd.show()
+    }
+
+    if (this.retentionDataType === 'LeadCopyFetch') {
+    }
+
+    if (this.retentionDataType === 'complete') {
+      this.getAdJumpLink()
+    }
+    this.cloneRetention()
+  },
+  // 开启挽留弹窗
+  openRetentionPop: function (type, data) {
+    this.showretentionPop = true;//
+    this.retentionDataType = type;
+    if (type === 'LeadCopyFetch') {
+      this.retentionData = {
+        title: `+${data.awardAmount}`,
+        subtitle: "",
+        warningButtonTxt: '立即领取',
+        popType: 'award',
+        unit: '金币'
+      }
+    }
+
+    if (type === 'award') {
+      this.retentionData = {
+        title: `+${data.gold}`,
+        subtitle: "",
+        warningButtonTxt: '立即领取',
+        popType: 'award',
+        unit: '金币'
+      }
+    }
+
+    if (type === 'complete') {
+      this.retentionData = {
+        title: "今日抽奖次数已用完明天再来吧",
+        subtitle: `还可以前往获得更多好礼哦`,
+        warningButtonTxt: '去获取更多奖励',
+        popType: 'tisp',
+        unit: ''
+      }
+    }
+
+    if (type === 'detainment') {
+      this.retentionData = {
+        title: "看完可获得奖励",
+        subtitle: "",
+        warningButtonTxt: "再看可以获得奖励",
+        popType: 'detainment'
+      }
+    }
+
+  },
+  //关闭初次奖励弹窗
+  cloneFreeReward() {
+    this.tispBoxType = false;
+    if (this.pageData.isAutoTurn && this.pageData.dailyFreeLotteryCount) { //开启自转;
+      this.showretentionPop = false;
+      this.showDialog = false;
+      this.startAnimation()
+    }
+  },
+  getAdJumpLink: function () {
+    let brand = this.brand.toUpperCase()
+    $apis.task.getAdJumpLink({ brand: brand }).then((res) => {
+      let path = res.data
+      if (path) {
+        $router.push({
+          uri: path
+        })
+      }
+
+    })
+  },
+  opneAd: function () {
+    let lotteryData = this.lotteryData;
+    if (lotteryData.adType === 'NATIVE') {
+      this.showOriginalGift = true;
+    } else if (lotteryData.adType === 'REWARDED_VIDEO') {
+      if (!this.rewardedVideoAd || typeof this.rewardedVideoAd !== 'object') { //无激励广告
+        return
+      }
+      this.rewardedVideoAd.show()
+    }
+  },
+  /**
+   * 开关广告逻辑
+   */
+  openDialog: function () {
+    this.opneAd()
+    this.cloneDialog()
+  },
+  cloneDialog: function () {
+    this.showDialog = false;
+  },
+  /**
+   * 创建激励
+   */
+  createRewardedVideoAd: function () {
+    try {
+      console.log('进来了激励广告', this.rewardedVideoAd);
+      const that = this
+      if (this.rewardedVideoAd) {
+        this.rewardedVideoAd = null
+      }
+      if (!this.adObj.stimulateAd) {
+        return
+      }
+      console.log(this.adObj.stimulateAd, 'this.adObj.stimulateAd');
+      let rewardedVideoAd = $ad.createRewardedVideoAd({
+        adUnitId: this.adObj.stimulateAd
+      })
+      console.log(rewardedVideoAd, 'rewardedVideoAd');
+      this.rewardedVideoAd = rewardedVideoAd;
+      if (!rewardedVideoAd) {
+        $utils.showToast('暂不支持，稍后再试')
+        // 不支持广告
+        return
+      }
+      rewardedVideoAd.onLoad((e) => {
+        console.log("激励视频广告加载成功", e);
+      })
+      rewardedVideoAd.onClose((e) => {
+        console.log(e, '监听用户点击关闭广告 按钮的事件');
+        that.rewardedVideoAd.load()
+        if (e.isEnded) {
+          that.completionNativeAdTask('REWARDED_VIDEO')
+          $utils.conversionUpload(that)
+          $utils.buriedPointReport(that, 'click', config.adCodeData[that.brand].stimulateAd)
+        } else {
+          that.openRetentionPop('detainment')
+        }
+      })
+      rewardedVideoAd.onError((e) => {
+        console.log(e, '激励广告错误');
+        that.rewardedVideoAd = ''
+      })
+
+      if (this.brand !== 'vivo') {
+        that.rewardedVideoAd.load()
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  },
+  /**
+   * 完成轮盘原生广告
+   */
+  fishOriginal: $utils.throttle(function () {
+    console.log('参与活动');
+    this.loadHandler()
+  }, 3000),
+  // 轮盘原生广告------------------------
+  loadHandler(e) {
+    console.log("点击轮盘原生广告");
+    this.completionNativeAdTask('NATIVE')
+    this.showOriginalGift = false;
+  },
+  errorHandler(e) {
+    console.log("轮盘原生广告展开失败");
+    this.showOriginalGift = false;
+    $utils.showToast('暂无更多福利')
+  },
+  closeHandler() {
+    console.log("关闭轮盘原生广告");
+  },
+  changeDescription() {
+    console.log('活动说明');
+    this.showRule = !this.showRule;
+  },
+  poopChangeState: function (e) {
+
+    if (e.detail && e.detail.data === 'clone') {
+      this.loadHandler()
+    }
+
+    if (e.detail && e.detail.data === 'error') {
+      this.errorHandler()
+    }
+  }
+}
+</script>
+
+<style lang="less">
+@import './index.less';
+</style>

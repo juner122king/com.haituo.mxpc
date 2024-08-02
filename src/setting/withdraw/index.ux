@@ -1,0 +1,229 @@
+<template>
+  <div class="with-draw">
+    <div class="content">
+      <div class="tab-title">
+        <div class="icon" @click="goBack">
+          <image src="/Common/images/toright.png"></image>
+        </div>
+        <div><text class="txt">收益提现</text></div>
+        <div class="right"></div>
+      </div>
+      <div class="with-draw-title">
+        <text class="heading">当前余额</text>
+        <div class="bottom">
+          <text class="money">{{ infoData.balance || 0 }}</text>
+          <text class="uit">元</text>
+        </div>
+      </div>
+
+      <div class="withd-rawal-frame">
+        <div class="title">
+          <image src="/Common/images/zfb.png"></image>
+          <text class="txt">支付宝提现</text>
+        </div>
+        <div class="selector-list">
+          <div
+            class="selector-item {{pitchOn.id ===  $idx + 1?'active-selector-item':''}}"
+            for="{{quotaList}}"
+            @click="changPitchOn($item)"
+          >
+            <text class="num">{{ $item.title }}</text>
+            <text class="uit">元</text>
+            <div class="hading">
+              <text class="txt">{{ $item.heading }}</text>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tisp">
+        <text @click="openRule">规则说明</text>
+        <text class="right" @click="goWithdrawal">提现记录</text>
+      </div>
+    </div>
+    <rules-pop-up
+      show-rules="{{showRules}}"
+      onemit-open="openRule"
+    ></rules-pop-up>
+    <dialog-box
+      show-dialog="{{showDialog}}"
+      dialog-data="{{dialogData}}"
+      onemit-success="openDialog"
+      onemit-clone="cloneDialog"
+    ></dialog-box>
+  </div>
+</template>
+
+<style lang="less">
+@import './index.less';
+</style>
+
+<import name="rules-pop-up" src="../../components/rules-pop-up"></import>
+<import name="dialog-box" src="../../components/dialogBox"></import>
+<script>
+export default {
+  // 页面的数据模型，private段下的变量仅允许当前页面内代码更改其值。
+  private: {
+    quotaList: [
+      {
+        title: 0.1,
+        id: 1,
+        heading: "每日提现",
+        sign: 'AMOUNT_10'
+      },
+      {
+        title: 1,
+        id: 2,
+        heading: "仅一次",
+        sign: 'AMOUNT_100'
+      },
+      {
+        title: 50,
+        id: 3,
+        heading: "仅一次",
+        sign: 'AMOUNT_5000'
+      },
+      {
+        title: 100,
+        id: 4,
+        heading: "仅一次",
+        sign: 'AMOUNT_10000'
+      },
+    ],
+    pitchOn: {},
+    showRules: false, //规则 
+    infoData: {},
+    showDialog: false, //对话框
+    dialogData: {},
+    successsTtpe: ""
+  },
+  onShow: function () {
+    $umeng_stat.resume(this) //在onShow方法的第一行加入此代码
+    this.getUserInfo()
+  }, onHide: function () {
+    $umeng_stat.pause(this);//在onHide方法的第一行加入此代码
+    //App业务代码
+  },
+  changPitchOn(item) {
+    this.pitchOn = item;
+    console.log(this.infoData, '查看这个参数');
+    if (this.infoData.balance < item.title) { //余额不足 
+      this.successsTtpe = 'behardUp';
+      this.insufficientBalance()
+      return
+    } else {
+      if (!this.infoData.loginPhone) {
+        this.successsTtpe = 'lackPhone'
+        this.gologin()
+        return
+      } else if (Object.values(this.infoData.extInfo).length <= 0) {
+        this.successsTtpe = 'lackExtInfo'
+        this.fillInNUm()
+        return
+      } else {
+        this.successsTtpe = 'behardUp';
+        this.awardGive()
+      }
+    }
+  },
+  openRule() {
+    this.showRules = !this.showRules;
+  },
+  getUserInfo: function () {
+    $apis.user.getUserInfo().then((res) => {
+      this.infoData = res.data;
+      console.log('this.infoData', this.infoData);
+    })
+  },
+  openDialog: function () {
+    this.showDialog = false;
+    if (this.successsTtpe === 'behardUp') {
+      $router.replace({
+        uri: "pages/displayDesktop"
+      })
+    }
+    if (this.successsTtpe === 'lackPhone') {
+      $router.push({
+        uri: 'pages/login'
+      })
+    } else if (this.successsTtpe === 'lackExtInfo') {
+      $router.push({
+        uri: 'setting/filling'
+      })
+    } else {
+      $router.replace({
+        uri: "pages/displayDesktop"
+      })
+    }
+  },
+  cloneDialog: function () {
+    this.showDialog = false;
+  },
+  // 余额不足
+  insufficientBalance: function (params) {
+    this.dialogData = {
+      hading: "提示",
+      subheading: "余额不足，请尝试其他额度或继续赚钱",
+      iconType: "hint",
+      cloneBtn: "换个额度",
+      successBtn: "继续赚钱"
+    }
+    this.showDialog = true
+  },
+  // 注册手机号
+  gologin: function (params) {
+    this.dialogData = {
+      hading: "提示",
+      subheading: "请登录后再使用该功能",
+      iconType: "hint",
+      cloneBtn: "取 消",
+      successBtn: "登录"
+    }
+    this.showDialog = true
+  },
+  //填写账号 
+  fillInNUm: function (params) {
+    this.dialogData = {
+      hading: "提示",
+      subheading: "请填写支付宝提现账号",
+      iconType: "hint",
+      cloneBtn: "取 消",
+      successBtn: "去填写"
+    }
+    this.showDialog = true
+  },
+  awardGive: function () {
+    $apis.user.postWithdraw({
+      amount: this.pitchOn.sign
+    }).then((res) => {
+      this.dialogData = {
+        hading: "提现成功",
+        subheading: `成功提现${res.data.amount}元`,
+        iconType: "success",
+        cloneBtn: "关 闭",
+        successBtn: "继续赚钱"
+      }
+      this.showDialog = true
+      this.getUserInfo()
+    }).catch((err) => {
+      this.dialogData = {
+        hading: "提示",
+        subheading: JSON.parse(err).message,
+        iconType: "hint",
+        cloneBtn: "关 闭",
+        successBtn: "继续赚钱"
+      }
+      this.showDialog = true
+    })
+  },
+  goWithdrawal: function () {
+    $router.push({
+      uri: 'pages/benefit',
+      params: { showlistype: 'EXPENDITURE' }
+    })
+  },
+  goBack: function (params) {
+    $router.back()
+  }
+}
+</script>

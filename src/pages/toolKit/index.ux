@@ -1,0 +1,276 @@
+<template>
+  <div class="toolKit-page">
+    <div class="tools-list">
+      <div
+        class="toolKit-item"
+        for="{{utilsList}}"
+        if="{{!$item.display}}"
+        onclick="handleUtils($item)"
+      >
+        <image src="{{$item.iconPath}}" class="toolKit-img"></image>
+        <text class="title">{{ $item.title }}</text>
+      </div>
+    </div>
+
+    <dialog-box
+      show-dialog="{{showDialog}}"
+      dialog-data="{{dialogData}}"
+      onemit-success="openDialog"
+      onemit-clone="cloneDialog"
+    ></dialog-box>
+  </div>
+</template>
+
+
+<import name="dialog-box" src="../../components/dialogBox"></import>
+<script>
+const media = require('@system.media')
+const image = require('@system.image')
+const barcode = require('@system.barcode')
+export default {
+  data: {
+    title: '欢迎体验快应用开发',
+    utilsList: [
+      {
+        display: false,
+        iconPath: "http://cdn.bank-zone.cn/test/sy/admin/activity/f7d6d2d37ed64e22b828957715c07dc8.png",
+        title: '拍照OCR识别',
+        pagePath: "",
+        task: "orc"
+      },
+      {
+        display: false,
+        iconPath: "http://cdn.bank-zone.cn/test/sy/admin/activity/1abc2e1596564329bfeda76d471f4fc8.png",
+        title: '生成二维码',
+        pagePath: "",
+        task: "GenerateQRcode"
+      },
+      {
+        display: false,
+        iconPath: "http://cdn.bank-zone.cn/test/sy/admin/activity/8f606d16fb834c08b86b771234395084.png",
+        title: '识别二维码',
+        pagePath: "",
+        task: "RecognizeQRcode"
+      },
+      {
+        display: false,
+        iconPath: "http://cdn.bank-zone.cn/test/sy/admin/activity/e1695cecd4154867a566a3e5426020b7.png",
+        title: '号码归属地查询',
+        pagePath: "",
+        task: "Numberlocationquery"
+      },
+      {
+        display: true,
+        iconPath: "http://cdn.bank-zone.cn/test/sy/admin/activity/ef9dba0a4b944cdabf120c48072923c0.png",
+        title: '测吉凶',
+        pagePath: "",
+        task: "Fortunetelling"
+      },
+      {
+        display: true,
+        iconPath: "http://cdn.bank-zone.cn/test/sy/admin/activity/7da6d3498a0d4b1bb96eb32ae4d45295.png",
+        title: '周公解梦',
+        pagePath: "",
+        task: "DreamInterpretation"
+      },
+      {
+        display: true,
+        iconPath: "http://cdn.bank-zone.cn/test/sy/admin/activity/1f2c1fa101d042b589e69654f9d71d82.png",
+        title: '成语词典',
+        pagePath: "",
+        task: "IdiomDictionary"
+      },
+      {
+        display: true,
+        iconPath: "http://cdn.bank-zone.cn/test/sy/admin/activity/8250536a09a140bbb27178826bfad0a2.png",
+        title: '历史上的今天',
+        pagePath: "",
+        task: "todayinHistory"
+      },
+      {
+        display: true,
+        iconPath: "http://cdn.bank-zone.cn/test/sy/admin/activity/794f981d916144d48e4beb5131029012.png",
+        title: '节假日查询',
+        pagePath: "",
+        task: "HolidayQuery"
+      },
+      {
+        display: true,
+        iconPath: "http://cdn.bank-zone.cn/test/sy/admin/activity/400c3423454f455990401fbe0b006e58.png",
+        title: '科学计算器',
+        pagePath: "",
+        task: "scientificcalculator"
+      },
+    ],
+    showDialog: false,
+    dialogData: {
+      hading: "拍照授权申请",
+      subheading: `拍摄权限:用于拍摄照片，扫描识别为文本信息，因各厂商快应用框架不同，可能会在您授权摄像头权限的同时，也会弹出需要授权麦克风的权限，但本快应用实际不会使用麦克风。`,
+      iconType: "photos",
+      cloneBtn: "不同意",
+      successBtn: "同意",
+      successBtnColor: "#15CAB9"
+    },
+    result: '',//查看结果
+  },
+  onInit() {
+  },
+  handleUtils: $utils.throttle(function (data) {
+    const _this = this;
+    let utilsData = data;
+    this.utilsData = data
+    const taskobj = {
+      orc: this.launchOrc,
+      Fortunetelling: this.goOutReult,
+      GenerateQRcode: this.goOutReult,
+      RecognizeQRcode: this.retrieveQRCode,
+      Numberlocationquery: this.goOutReult,
+      DreamInterpretation: this.goOutReult
+    }
+    taskobj[utilsData.task] && taskobj[utilsData.task](utilsData, _this)
+  }),
+  launchOrc: function (utilsData, _this) {
+    console.log(this, '查看这个this');
+    const that = _this;
+    //进行授权判断 没有授权的显示授权（只需一次）
+    $storage.get({
+      key: 'isPhotoAuthorization',
+      success: function (data) {
+        console.log(data, '是否拍照授权');
+        if (data) {
+          _this.uploadOcr(data, that)
+        } else {
+          console.log('进来的是这里');
+          that.showDialog = true
+        }
+      },
+      fail: function (data, code) {
+        console.log(`handling fail, code = ${code}`)
+      }
+    })
+  },
+  // 上传ocr
+  uploadOcr: function (utilsData, _this) {
+    const that = _this;
+    media.takePhoto({
+      success: function (data) {
+        console.log(`handling success: ${data.uri}`)
+        // $utils.showToast(data.uri)
+        image.getImageInfo({
+          uri: data.uri,
+          success: function (data) {
+            console.log(`handling success: size = ${data.size}`)
+            console.log(data.size, '这是压缩前的图片');
+          },
+          fail: function (data, code) {
+            console.log(`handling fail, code = ${code}`)
+          }
+        })
+        image.compressImage({
+          uri: data.uri,
+          quality: 40,
+          ratio: 2, // 变为原图的1/2大小
+          format: 'JPEG',
+          success: function (data) {
+            that.currUri = data.uri;
+            console.log(that.currUri, '这是压缩后的地址');
+            image.getImageInfo({
+              uri: that.currUri,
+              success: function (data) {
+                console.log(`handling success: size = ${data.size}`)
+                if (data.size > 1048576) {
+                  $utils.showToast('文件过大稍后重试')
+                } else {
+                  // that.getBase64(); 
+
+                  $router.push({
+                    uri: "setting/outputReult",
+                    params: {
+                      currUri: that.currUri,
+                      reqType: 'orc'
+                    }
+                  })
+                }
+              },
+              fail: function (data, code) {
+                console.log(`handling fail, code = ${code}`)
+              }
+            })
+
+
+          },
+          fail: function (data, code) {
+            console.log(`handling fail, code = ${code}`)
+          }
+        })
+      },
+      fail: function (data, code) {
+        console.log(`handling fail, code = ${code}, errorMsg=${data}`)
+        $utils.showToast('拒绝授权请同意后重试')
+      }
+    })
+  },
+  openDialog: function (params) {
+    this.showDialog = false;
+    const that = this;
+    $storage.set({
+      key: 'isPhotoAuthorization',
+      value: 1,
+      success: function (data) {
+        console.log('handling success')
+        that.uploadOcr(data, that)
+      },
+      fail: function (data, code) {
+        console.log(`handling fail, code = ${code}`)
+      }
+    })
+  },
+  cloneDialog: function (params) {
+    this.showDialog = false;
+    const that = this;
+    $storage.set({
+      key: 'isPhotoAuthorization',
+      value: '',
+      success: function (data) {
+        console.log('handling success')
+      },
+      fail: function (data, code) {
+        console.log(`handling fail, code = ${code}`)
+      }
+    })
+  },
+  goOutReult: function (e) {
+    console.log(e);
+    $router.push({
+      uri: 'setting/outputReult',
+      params: {
+        reqType: e.task
+      }
+    })
+  },
+  // 调取二维码
+  retrieveQRCode: function () {
+    const that = this;
+    barcode.scan({
+      success: function (data) {
+        console.log(`handling success: ${data.result}`)
+        $router.push({
+          uri: "setting/outputReult",
+          params: {
+            currUri: that.currUri,
+            reqType: 'RecognizeQRcode',
+            result: data.result
+          }
+        })
+      },
+      fail: function (data, code) {
+        console.log(`handling fail, code = ${code}, errorMsg=${data}`)
+      }
+    })
+  }
+}
+</script>
+
+<style lang="less">
+@import './index.less';
+</style>

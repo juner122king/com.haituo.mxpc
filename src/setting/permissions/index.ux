@@ -1,0 +1,66 @@
+<template>
+  <!-- Only one root node is allowed in template. -->
+  <div class="permissions">
+    <div class="function-item" @click="goPremissiions">
+      <div class="left">
+        <image src="../../Common/images/photoAlbum.png"></image>
+        <text class="txt">权限管理</text>
+      </div>
+      <div class="right">
+        <image src="../../Common/images/Frame2175@2x.png"></image>
+      </div>
+    </div>
+  </div>
+</template>
+
+
+<script>
+export default {
+  // 页面的数据模型，private段下的变量仅允许当前页面内代码更改其值。
+  private: {
+    title: 'World'
+  },
+  goPremissiions: function () {
+    $router.push({
+      uri: "hap://settings/permission_manager"
+    })
+  },
+  onShow: function () {
+    $umeng_stat.resume(this) //在onShow方法的第一行加入此代码
+  }, onHide: function () {
+    $umeng_stat.pause(this);//在onHide方法的第一行加入此代码
+    //App业务代码
+  },
+}
+</script>
+
+<style lang="less">
+.permissions {
+  flex-direction: column;
+  padding: 20px 32px;
+  .function-item {
+    justify-content: space-between;
+    align-items: center;
+    .left {
+      image {
+        width: 96px;
+        height: 96px;
+      }
+      .txt {
+        font-size: 28px;
+        font-weight: 500;
+        color: #1a1a1a;
+        line-height: 40px;
+        margin-left: 20px;
+      }
+    }
+
+    .right {
+      image {
+        width: 32px;
+        height: 32px;
+      }
+    }
+  }
+}
+</style>

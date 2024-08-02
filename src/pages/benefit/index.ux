@@ -1,0 +1,228 @@
+<template>
+  <div class="benefit-page">
+    <div class="content">
+      <div class="tab-title">
+        <div class="icon" @click="goBack">
+          <image src="/Common/images/toright.png"></image>
+        </div>
+        <text class="txt">我的收益</text>
+        <div class="right"></div>
+      </div>
+      <div class="benefit-top">
+        <div class="gold-yield">
+          <text class="heading">金币收益</text>
+          <div class="cash-earnings-bottom">
+            <text class="number">{{ infoData.gold }}</text>
+
+            <div class="left-glod">
+              <text class="number-tisp" @click="conversionGold">兑换</text>
+              <image src="/Common/images/Frame_34@2x.png" class="img"></image>
+            </div>
+          </div>
+        </div>
+        <div class="cash-earnings">
+          <text class="heading">现金收益（元）</text>
+          <div class="cash-earnings-bottom" @click="goWithdraw">
+            <text class="number">{{ infoData.balance }}</text>
+            <image src="../../Common/images/Frame2197@2x.png"></image>
+          </div>
+        </div>
+      </div>
+
+      <div class="tisp">
+        <text class="txt"
+          >兑换比例受每日广告收益影响浮动，金币到账可能会有延迟</text
+        >
+      </div>
+
+      <div class="income-data">
+        <div class="income-data-top">
+          <text
+            class="txt   left {{showlistype === 'REVENUE'?'active':''}}"
+            @click="switchingState('REVENUE')"
+            >收益记录</text
+          >
+          <text
+            class="txt {{showlistype === 'EXPENDITURE'?'active':''}}"
+            @click="switchingState('EXPENDITURE')"
+            >提现记录</text
+          >
+        </div>
+        <list class="gold-list">
+          <list-item
+            type="arr"
+            class="gold-item"
+            for="{{monthlyStatementList}}"
+            if="{{monthlyStatementList.length > 0}}"
+          >
+            <div class="left">
+              <text class="title">{{ $item.title }}</text>
+              <text class="timer">{{ $item.createdDt }}</text>
+            </div>
+            <div class="right">
+              <text class="award"
+                >{{ showlistype === 'REVENUE' ? '+' : '' }}{{ $item.amount
+                }}{{ showlistype === 'REVENUE' ? '金币' : '元' }}</text
+              >
+            </div>
+          </list-item>
+
+          <list-item type="name" else style="justify-content: center">
+            <text>暂无相关记录</text>
+          </list-item>
+        </list>
+      </div>
+    </div>
+    <dialog-box
+      show-dialog="{{showDialog}}"
+      dialog-data="{{dialogData}}"
+      onemit-success="openDialog"
+      onemit-clone="cloneDialog"
+    ></dialog-box>
+  </div>
+</template>
+
+<style lang="less">
+@import './index.less';
+</style>
+
+
+<import name="dialog-box" src="../../components/dialogBox"></import>
+<script>
+export default {
+  private: {
+    infoData: {},
+    size: 6,
+    isLoadMore: '',
+    showlistype: 'REVENUE',
+    monthlyStatementList: [],
+    dialogData: {},
+    showDialog: false
+  },
+  clickReachBottom: $utils.throttle(function (params) {
+    if (this.isLoadMore) {
+      this.getUserCashRecord()
+    }
+  }),
+  onInit: function (e) {
+    // $utils.tablePlaque()
+    if (e.showlistype) {
+      this.switchingState(e.showlistype)
+      return
+    }
+    this.getUserGoldRecord()
+  },
+  onBackPress() {
+    // console.info(`触发：onBackPress`)
+    // // true：表示自己处理；否则默认返回上一页
+    // return true
+  },
+  onShow: function () {
+    $umeng_stat.resume(this) //在onShow方法的第一行加入此代码
+    //App业务代码
+    this.getUserInfo()
+
+  },
+  onHide: function () {
+    $umeng_stat.pause(this);//在onHide方法的第一行加入此代码
+    //App业务代码
+  },
+  getUserInfo: function () {
+    $apis.user.getUserInfo().then((res) => {
+      this.infoData = res.data;
+    })
+  },
+  // 获取用户提现记录
+  getUserCashRecord: function () {
+    const params = {
+      size: this.size,
+      cursorId: this.isLoadMore || '',
+      type: 'EXPENDITURE'
+    }
+    $apis.user.getUserCashRecord({
+      ...params
+    }).then((res) => {
+      this.isLoadMore = res.data.cursorId || '';
+      this.monthlyStatementList = [...this.monthlyStatementList, ...res.data.records]
+      console.log(this.monthlyStatementList);
+    })
+  },
+  // 获取金币收益记录
+  getUserGoldRecord: function () {
+    const params = {
+      size: this.size,
+      cursorId: this.isLoadMore || '',
+      type: 'REVENUE'
+    }
+    $apis.user.getUserGoldRecord({
+      ...params
+    }).then((res) => {
+      this.isLoadMore = res.data.cursorId || '';
+      this.monthlyStatementList = [...this.monthlyStatementList, ...res.data.records]
+      console.log(this.monthlyStatementList);
+    })
+  },
+  // 切换展示状态
+  switchingState(type) {
+    if (this.type === type) {
+      return
+    }
+    this.showlistype = type;
+    if (type === 'REVENUE') {
+      this.monthlyStatementList = [];
+      this.getUserGoldRecord()
+    } else if (type === 'EXPENDITURE') {
+      this.monthlyStatementList = [];
+      this.getUserCashRecord()
+    }
+
+  },
+  goWithdraw: function () {
+    $router.push({
+      uri: "setting/withdraw"
+    })
+  },
+  goBack: function () {
+    $router.back()
+  },
+  conversionGold: $utils.throttle(function (params) {
+    if (this.infoData.gold < this.astrictNum) {
+      $prompt.showToast({
+        message: '余额不足请继续赚钱',
+        gravity: "center"
+      });
+      return
+    }
+    $apis.user.putExchangeGoldCash({
+      gold: this.infoData.gold
+    }).then((res) => {
+      this.dialogData = {
+        hading: "兑换成功",
+        subheading: `成功兑换${res.data}元`,
+        iconType: "success",
+        cloneBtn: "关闭",
+        successBtn: "继续赚钱",
+      }
+      this.showDialog = true
+      this.getUserInfo();
+    }).catch((err) => {
+      this.dialogData = {
+        hading: "提示",
+        subheading: JSON.parse(err).message,
+        iconType: "hint",
+        cloneBtn: "关闭",
+        successBtn: "继续赚钱",
+      }
+      this.showDialog = true
+    })
+  }),
+  openDialog: function () {
+    $router.replace({
+      uri: "pages/displayDesktop"
+    })
+  },
+  cloneDialog: function () {
+    this.showDialog = false;
+  }
+}
+</script>

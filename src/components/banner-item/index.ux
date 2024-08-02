@@ -1,0 +1,173 @@
+<template>
+  <div>
+    <div
+      class="container"
+      show="{{ishow}}"
+      style="{{provider==='xiaomi'?height:0:''}}"
+    >
+      <!-- <text class="alert">This is a banner ad demo.</text> -->
+      <!-- <input type="button" class="btn" value="requestBannerAd" onclick="showBannerAd(allowAdNonPersonnal)" /> -->
+      <!-- <input type="button" class="btn" value="hide bannerAd" onclick="hideBanerAd" /> -->
+      <!-- <input type="button" class="btn" value="show banner Ad" onclick="showBanner" /> -->
+    </div>
+  </div>
+</template>
+<style>
+.container {
+  flex-direction: column;
+  /* background-color: #4682b4; */
+  padding: 20px;
+  align-items: center;
+  height: 100px;
+}
+.alert {
+  font-size: 40px;
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+.btn {
+  height: 80px;
+  background-color: #00bfff;
+  color: #ffffff;
+  border-radius: 20px;
+  width: 80%;
+  margin-bottom: 20px;
+}
+.btn:active {
+  background-color: #058fbd;
+}
+</style>
+<script>
+import ad from "@service.ad";
+import prompt from '@system.prompt';
+let bannerAd;
+const { adCodeData } = require('../../config.js').default
+const device = require('@system.device')
+export default {
+    data: {
+        provider: "",
+        bannerAD: {
+            //测试
+            // 278eae7418b04abbb5926847ed42271e
+            adUnitId: "",
+            adIntervals: 60,
+            style: {
+                top: 0,
+                left: 0,
+                height: 57,
+                width: 750
+            }
+        },
+        ishow: true,
+        fixedHead: 0,//头部高度
+    },
+    props: {
+        top: {
+            type: Number,
+            default: 1300
+        },
+        displayType: {
+            type: String,
+            default: ''
+        },
+        isTabar: {
+            type: Boolean,
+            default: false
+        }
+    },
+    onInit() {
+        const that = this;
+        device.getInfo({
+            success: function (ret) {
+                console.log(ret);
+                //获取页面内可见窗口的高度和宽度，此值不包括标题栏和状态栏高度
+                let windowWidth = ret.windowWidth;
+                let windowHeight = ret.windowHeight;
+                //logicWidth对应manifest.json文件设置的designWidth值，默认是750
+                let logicWidth = 750;
+
+                //广告自身大小单位是dp，需要转换成px单位
+                let realAdHeighPX = that.bannerAD.style.height * ret.screenDensity;
+                //标题栏高度一般是42dp左右，此处也需要转换成px单位
+                let titleBarHeight = 20 * ret.screenDensity;
+                let realToppx = ''
+                if (that.isTabar) {
+                    realToppx = windowHeight - realAdHeighPX - titleBarHeight;
+                } else {
+                    realToppx = windowHeight - realAdHeighPX
+                }
+                //此处计算很关键，需要将状态栏高度、标题栏高度加上
+                //转换成页面基准值下的逻辑单位
+                that.bottomHead = (realToppx * logicWidth) / windowWidth;
+                that.fixedHead = titleBarHeight + (20 * ret.screenDensity)
+                console.log(that.fixedHead, '这是多少');
+                if (that.displayType) {
+                    that.bannerAD.style.top = that.displayType === 'top' ? that.fixedHead : that.bottomHead
+                }
+                console.log(that.bannerAD.style, '查看最终高度');
+                that.showBannerAd()
+            }
+        })
+    },
+    getAdProvider: function () {
+        this.provider = ad.getProvider();
+        // prompt.showToast({
+        //     message: "getProvider : " + this.provider,
+        //     duration: 2000,
+        //     gravity: "center"
+        // });
+    },
+    showBannerAd: function () {
+        const that = this;
+        this.getAdProvider();
+        if (!Object.keys(adCodeData).includes(this.provider) || !adCodeData[this.provider].banner) { //没有厂商直接弹出
+            this.ishow = false;
+            return
+        }
+        // if (bannerAd) {
+        //     bannerAd.destroy();
+        // }
+
+        bannerAd = ad.createBannerAd({
+            adUnitId: adCodeData[this.provider].banner,
+            style: this.bannerAD.style,
+            adIntervals: this.bannerAD.adIntervals
+        });
+        // console.info("the device does not support ad.annerAd.style=" + JSON.stringify(bannerAd.style));
+        bannerAd.onLoad(e => {
+            console.info("load bannerAd  onload success");
+            console.info("load bannerAd  onload success e=" + JSON.stringify(e));
+            console.info("show bannerAd  style:" + JSON.stringify(bannerAd.style));
+            if (this.provider === 'xiaomi') {
+                bannerAd.style.width = 750;
+                bannerAd.style.top = this.bottomHead
+            }
+
+            this.ishow = true;
+        });
+        bannerAd.onError(e => {
+            this.ishow = false;
+            console.error("load bannerAd  onError " + JSON.stringify(e));
+        });
+        bannerAd.onClose(e => {
+            this.ishow = false;
+            console.info("load bannerAd  onClose");
+        });
+        console.info("create bannerAd  success:");
+        bannerAd.show();
+    },
+    hideBanerAd: function () {
+        if (bannerAd) {
+            bannerAd.hide();
+        }
+    },
+    onDestroy() {
+        // bannerAd && bannerAd.destroy();
+    },
+    showBanner: function () {
+        if (bannerAd) {
+            bannerAd.show();
+        }
+    }
+};
+</script>

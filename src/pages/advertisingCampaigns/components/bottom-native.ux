@@ -1,0 +1,347 @@
+
+<import name="icon" src="apex-ui/components/icon/index"></import>
+<template>
+  <div>
+    <div class="bottom-native" if="{{hasAdList}}">
+      <ad
+        adId="{{adList.adId}}"
+        class="ad-native"
+        show="{{!!adList.adId}}"
+        onerror="error"
+        onadclick="adClick"
+        onadclose="close"
+        type="native"
+      >
+        <div class="container">
+          <div class="left-img">
+            <!-- 图片 -->
+            <ad-clickable-area type="click" class="ad-img">
+              <image
+                src="{{adList.imgUrlList? adList.imgUrlList[0]: defaultAd.img }}"
+              ></image>
+            </ad-clickable-area>
+
+            <ad-clickable-area
+              class="icon"
+              type="click"
+              if="{{showTransparency}}"
+            >
+              <icon
+                type="close"
+                size="40"
+                color="#FFFFFF"
+                onclick="close"
+              ></icon>
+            </ad-clickable-area>
+            <div class="icon" else>
+              <icon
+                type="close"
+                size="40"
+                color="#FFFFFF"
+                onclick="close"
+              ></icon>
+            </div>
+          </div>
+
+          <!-- 信息 -->
+          <div type="click" class="center-info">
+            <ad-clickable-area type="click" class="info-item">
+              <text class="txt title">{{
+                adList ? adList.title : defaultAd.title
+              }}</text>
+              <ad-clickable-area type="logo"></ad-clickable-area>
+            </ad-clickable-area>
+            <div class="info-item">
+              <text class="txt">{{
+                adList ? adList.desc : defaultAd.desc
+              }}</text>
+            </div>
+          </div>
+
+          <div class="click-item">
+            <ad-clickable-area
+              type="button"
+              class="click-txt"
+              vaule="{{
+                  btnTxt || adList.clickBtnTxt || defaultAd.clickBtnTxt
+                }}"
+            >
+            </ad-clickable-area>
+          </div>
+          <div class="float">
+            <div>
+              <ad-clickable-area type="privacy"> </ad-clickable-area>
+            </div>
+            <text class="float-txt" if="{{adList.hasAppMiitInfo}}">{{
+              adList.appInfo.appName +
+              adList.appInfo.appSize +
+              adList.appInfo.appVersion +
+              adList.appInfo.developer
+            }}</text>
+          </div>
+
+          <ad-clickable-area
+            type="click"
+            class="top-close"
+            if="{{showTransparency}}"
+          >
+            <icon type="close" size="50" color="#000000" onclick="close"></icon>
+          </ad-clickable-area>
+
+          <div class="top-close" else>
+            <icon type="close" size="50" color="#000000" onclick="close"></icon>
+          </div>
+        </div>
+      </ad>
+    </div>
+  </div>
+</template>
+
+<script>
+const { adCodeData } = require('../../../config.js').default
+export default {
+  data: {
+    hasAdList: true,
+    defaultAd: {
+      desc: 'vivo流量联盟，提供最优质的商业化解决方案。流量联盟广告联盟。',
+      title: 'vivo流量联盟',
+      icon: '广告',
+      clickBtnTxt: '点击安装',
+      img: "http://cdn.bank-zone.cn/pro/sy/admin/advertising/3639bdbde8e84397a297ad54f89ac4c3.jpg"
+    },
+    btnTxt: '',
+    adUnitId: "",
+    adList: ""
+  },
+  props: {
+    showTransparency: {
+      default: false
+    }
+  },
+  onInit() {
+    const branch = $ad.getProvider()
+    this.adObj = adCodeData[branch]
+    this.adUnitId = adCodeData[branch].fiction2;
+    if (branch === 'OPPO') {
+      this.adUnitId = adCodeData[branch].fiction5;
+    }
+
+    this.preloadAd()
+  },
+  onReady() {
+
+  },
+  preloadAd() {
+    try {
+      console.log(this.adUnitId, '查看广告id编码');
+      require('@service.ad').preloadAd({
+        adUnitId: this.adUnitId, // 原生信息流广告广告位id
+        type: 'native', // 原生信息流广告
+        adCount: 1,
+        success: (data) => {
+          console.log(data, '返回广告成功');
+          this.adList = data.adList[0]
+          this.hasAdList = true;
+          if (this.adList.appInfo) {
+            this.adList.appInfo.appSize = this.convertAppSize(this.adList.appInfo.appSize)
+          }
+          if (this.debug) {
+            prompt.showToast({
+              message: `ad load success`
+            })
+          }
+        },
+        fail: (data, code) => {
+          console.log(data, code, '返回广告失败2');
+          if (code === 205) {
+            this.hasAdList = true;
+            this.adList = data.adList[0]
+          } else {
+            if (this.debug) {
+              prompt.showToast({
+                message: `ad load fail!data= ${JSON.stringify(data)},code= ${code}`
+              })
+            }
+          }
+        }
+      })
+    } catch (e) {
+      console.log(e, e.message);
+    }
+  },
+  error(errCode, errMsg) {
+    console.log('没有报错回调吗', errCode, errMsg);
+    this.$emit('error', { errCode, errMsg });
+  },
+  adClick() {
+    console.log('没有点击回调吗');
+    console.log('怎么触发的是这里的');
+    $utils.conversionUpload(this)
+    $utils.buriedPointReport(this, 'click', this.adUnitId)
+
+    this.$emit('emitHideTransparency')
+  },
+  close() {
+    this.hasAdList = false;
+  },
+  convertAppSize(appSizeBytes) {
+    // 首先将字节转换为KB  
+    let kb = appSizeBytes / 1024;
+
+    // 检查是否超过1MB（即1024KB）  
+    if (kb >= 1024) {
+      // 转换为MB并保留两位小数  
+      let mb = kb / 1024;
+      return mb.toFixed(2) + 'MB';
+    } else {
+      // 保留两位小数并返回KB  
+      return kb.toFixed(2) + 'KB';
+    }
+  }
+}
+</script>
+
+<style lang="less">
+.bottom-native {
+  align-self: center;
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  background-color: #ffffff;
+  height: 120px;
+  align-items: center;
+  justify-content: center;
+  padding: 15px 10px;
+
+  .ad-native {
+    width: 100%;
+    align-self: center;
+    width: 100%;
+    height: 100%;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    flex-direction: column;
+  }
+
+  .container {
+    width: 100%;
+    width: 100%;
+    height: 100%;
+    align-items: center;
+  }
+  .left-img {
+    width: 200px;
+    height: 90px;
+    margin-right: 10px;
+    .ad-img {
+      width: 100%;
+      height: 100%;
+
+      image {
+        width: 100%;
+        height: 100%;
+        object-fit: fill;
+        border-radius: 15px;
+      }
+    }
+
+    .icon {
+      position: absolute;
+      top: 0;
+      right: 0;
+      background-color: rgba(0, 0, 0, 0.6);
+    }
+  }
+
+  .float {
+    align-items: center;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 80%;
+    .float-txt {
+      font-size: 21px;
+      color: #b3b3b5;
+      lines: 1;
+      text-overflow: ellipsis;
+    }
+  }
+  .center-info {
+    flex: 1;
+    flex-direction: column;
+    top: -10px;
+    .info-item {
+      width: 100%;
+      .txt {
+        lines: 1;
+        font-size: 34px;
+        text-overflow: ellipsis;
+        font-size: 28px;
+      }
+      .title {
+        color: #000000;
+        font-weight: 500;
+      }
+      .tag {
+        background-color: rgba(0, 0, 0, 0.06);
+        color: #999999;
+        padding: 0 10px;
+        height: 56px;
+        width: 120px;
+        text-align: center;
+        border-radius: 4px;
+      }
+    }
+  }
+
+  .click-item {
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: flex-end;
+    align-self: flex-end;
+    margin-right: 8px;
+    .title {
+      color: #999999;
+    }
+    .click-txt {
+      border-radius: 30px;
+      font-size: 34px;
+      padding: 10px 20px;
+      color: #fff;
+      text-align: right;
+      background-color: #ff0f39;
+    }
+    .ad-close {
+      align-self: center;
+      margin-left: 10px;
+      width: 50px;
+      height: 50px;
+    }
+  }
+
+  /* .float-info {
+    position: absolute;
+    top: 100px;
+    height: 30px;
+  } */
+  /* .close-item {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 30px;
+    height: 30px;
+  } */
+
+  .top-close {
+    width: 50px;
+    height: 50px;
+    position: absolute;
+    top: 0;
+    right: 50px;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(205, 205, 207, 0.5);
+  }
+}
+</style>

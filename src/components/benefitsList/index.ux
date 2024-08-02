@@ -1,0 +1,113 @@
+<template>
+  <div class="benefits-list">
+    <div class="benefits-item" for="{{activityList}}" if="{{!$item.disable}}">
+      <div class="left">
+        <image class="icon" src="{{$item.icon}}"></image>
+        <div class="txt">
+          <text class="main-head">{{ $item.title }}</text>
+          <text class="subheading">{{ $item.subTitle }}</text>
+        </div>
+      </div>
+
+      <div class="btn" @click="clickItem($item)">
+        <text>{{ $item.btn }}</text>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+export default {
+  data: {
+    activityList: [
+      {
+        icon: "/Common/images/Frame_2200@2x.png",
+        title: "每日开红包",
+        subTitle: "每日开启拆红包 天天可领",
+        btn: "去完成",
+        disable: true
+      }, {
+        icon: "http://cdn.bank-zone.cn/pro/sy/admin/advertising/8700b026183b4a65b04b937995236f49.png",
+        title: "每日计步",
+        subTitle: "点击右侧按钮体验",
+        btn: "去体验",
+        disable: true,
+        jumpPath: "hap://app/com.haituo.setpplanet/Page_cfd/"
+      }
+    ]
+
+  },
+  clickItem: $utils.throttle(function (params) {
+    let item = params
+    // this.$emit('emitRedpacket')
+    console.log(item.jumpPath, '查看地址');
+    $router.push({
+      uri: item.jumpPath
+    })
+  }, 3000)
+}
+</script>
+
+
+<style lang="less">
+.benefits-list {
+  margin-top: 20px;
+  width: 100%;
+  flex-direction: column;
+  padding: 0 32px;
+
+  image {
+    width: 104px;
+    height: 104px;
+  }
+
+  .benefits-item {
+    justify-content: space-between;
+    padding: 0 32px;
+    align-items: center;
+    background-color: #ffffff;
+    height: 176px;
+    border-radius: 24px;
+    margin-top: 20px;
+
+    .left {
+      align-items: center;
+
+      .icon {
+        width: 104px;
+        height: 104px;
+        margin-right: 24px;
+      }
+    }
+    .txt {
+      flex-direction: column;
+
+      .main-head {
+        font-size: 28px;
+        font-weight: 600;
+        color: #333333;
+      }
+
+      .subheading {
+        font-size: 24px;
+        font-weight: 400;
+        color: #666666;
+      }
+    }
+
+    .btn {
+      width: 144px;
+      height: 64px;
+      background-color: #3784f9;
+      border-radius: 132px;
+      font-size: 28px;
+      justify-content: center;
+      align-items: center;
+
+      text {
+        color: #ffffff;
+      }
+    }
+  }
+}
+</style>

@@ -1,0 +1,245 @@
+<template>
+  <div class="my-service">
+    <div class="service-title"><text>我的服务</text></div>
+    <div class="my-service-content">
+      <div
+        class="function-item"
+        for="{{settingList}}"
+        @click="clickSetting($item)"
+        if="{{$item.iShow}}"
+      >
+        <image src="{{$item.imge}}"></image>
+        <text>{{ $item.title }}</text>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+
+import webview from '@system.webview'
+export default {
+  data: {
+    settingList: [
+      {
+        title: "添加桌面",
+        imge: "/Common/images/Phone_.png",
+        type: 'desktop',
+        iShow: true
+      },
+      {
+        title: "举报反馈",
+        imge: "/Common/images/feedback.png",
+        type: 'feedback',
+        isjump: 'true',
+        path: "setting/feedback",
+        iShow: true
+      },
+      {
+        title: "帮助中心",
+        imge: "/Common/images/Help_.png",
+        type: 'help',
+        isjump: 'true',
+        path: "https://www.ihaituo.cn/xy/jz/bzzx.html",
+        iShow: true
+      },
+      {
+        title: "用户协议",
+        imge: "/Common/images/Agreement_.png",
+        type: 'userAgreement',
+        isjump: 'true',
+        path: "https://www.ihaituo.cn/xy/jz/yhxy.html",
+        iShow: true
+      },
+      {
+        title: "隐私政策",
+        imge: "/Common/images/Protect.png",
+        type: 'privacyPolicy',
+        isjump: 'true',
+        path: "https://www.ihaituo.cn/xy/jz/yszc.html",
+        iShow: true
+      },
+      {
+        title: "设置",
+        imge: "/Common/images/Setting-two_.png",
+        type: 'install',
+        isjump: 'true',
+        path: "setting/permissions",
+        iShow: true
+      },
+      {
+        title: "关于",
+        imge: "/Common/images/Attention_.png",
+        type: 'tisp',
+        isjump: 'true',
+        path: "setting/aboutUs",
+        iShow: true
+      },
+      {
+        title: "注销",
+        imge: "/Common/images/Logout.png",
+        type: 'writeOff',
+        isjump: 'true',
+        path: "setting/logOut",
+        iShow: true
+      }, {
+        title: "退出登录",
+        imge: "/Common/images/quit-out.png",
+        type: 'signOut',
+        isjump: 'true',
+        path: "",
+        iShow: true
+      }
+    ]
+  },
+  clickSetting: function (e) {
+    console.log(e.type);
+    const evenTypeData = {
+      desktop: this.addDesktop,
+      feedback: this.jumpTo,
+      install: this.jumpTo,
+      writeOff: this.jumpTo,
+      tisp: this.jumpTo,
+      userAgreement: this.toH5,
+      privacyPolicy: this.toH5,
+      help: this.toH5,
+      signOut: this.signOut
+
+    }
+
+    evenTypeData[e.type] && evenTypeData[e.type](e)
+  },
+  onInit() {
+    const branch = $ad.getProvider()
+    if (branch === 'vivo') {
+      this.settingList[7].iShow = false;
+      this.settingList[8].iShow = false;
+    }
+  },
+  addDesktop: function () {
+    console.log('添加桌面');
+    const shortcut = require("@system.shortcut")
+    shortcut.hasInstalled({
+      success: function (ret) {
+        console.log('hasInstalled success ret---' + ret);
+        if (ret) {
+          $prompt.showToast({
+            message: '桌面图标已创建',
+            gravity: 'center'
+          })
+        } else {
+          shortcut.install({
+            message: '添加桌面方式更方便',
+            success: function (ret) {
+              console.log('handling createShortCut success');
+            },
+            fail: function (erromsg, errocode) {
+              console.log('handling createShortCut fail');
+            }.bind(this),
+          })
+        }
+      }.bind(this),
+      fail: function (erromsg, errocode) {
+        console.log('hasInstalled fail ret---' + erromsg);
+      }.bind(this),
+      complete: function () {
+      }
+    })
+  },
+  jumpTo: function (e) {
+    console.log(e);
+    if (e.isjump) {
+      $router.push({
+        uri: e.path
+      })
+    }
+  },
+  toH5: function (e) {
+    if (e.isjump) {
+      webview.loadUrl({
+        // 测试url
+        url: e.path,
+      })
+    }
+  },
+  signOut: function () {
+
+    try {
+      $storage.get({
+        key: 'AUTH_TOKEN_DATA',
+        success: function (e) {
+          let data = JSON.parse(e)
+          console.log(data);
+          let { loginPhone } = data;
+          if (!loginPhone) {
+            $utils.showToast('暂未登录')
+          } else {
+            $utils.userPhoneLogout().then((res) => {
+              $utils.showToast('退出成功')
+            }).catch((err) => {
+              $utils.showToast('请稍后重试')
+            })
+          }
+        }
+      })
+
+
+
+    } catch (error) {
+
+    }
+
+  }
+}
+</script>
+
+
+<style lang="less">
+.my-service {
+  width: 686px;
+  height: 450px;
+  background-color: #ffffff;
+  border-radius: 24px;
+  padding: 0 32px;
+  flex-direction: column;
+  margin: 20px auto;
+
+  image {
+    width: 56px;
+    height: 56px;
+  }
+
+  .service-title {
+    height: 44px;
+    margin-top: 32px;
+
+    text {
+      font-size: 32px;
+      font-weight: 600;
+      color: #1a1a1a;
+      line-height: 44px;
+    }
+  }
+
+  .my-service-content {
+    width: 100%;
+    flex-direction: row;
+    /* justify-content: space-between; */
+    flex-wrap: wrap;
+    flex: 1;
+    padding-bottom: 20px;
+    .function-item {
+      justify-content: center;
+      align-items: center;
+      margin-top: 24px;
+      flex-direction: column;
+      width: 25%;
+
+      text {
+        font-size: 24px;
+        color: #4d4d4d;
+      }
+    }
+  }
+}
+</style>

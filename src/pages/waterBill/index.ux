@@ -1,0 +1,188 @@
+<import name="my-page" src="apex-ui/components/pagination/index.ux"></import>
+<import name="my-tabbar" src="../../components/myTabbar/index.ux"></import>
+<template>
+  <div class="month-bill-page">
+    <div style="width: 100%">
+      <my-navbar title="流水账单"></my-navbar>
+    </div>
+    <!-- <div class="" if="{{showBanner && index==currentIndex }}">
+      <my-banner is-tabar="true"></my-banner>
+    </div> -->
+    <!-- 数据列表 -->
+    <list class="month-bill-list" @scrollbottom="clickReachBottom">
+      <list-item
+        type="arr"
+        class="month-bill-item"
+        for="{{monthlyStatementList}}"
+        @click="toChildPage($item)"
+        if="{{monthlyStatementList.length}}"
+      >
+        <div class="bill-item-left">
+          <div>
+            <text class="year">{{ $item.year }}</text>
+          </div>
+          <div>
+            <text class="time">{{ $item.month }}月</text>
+          </div>
+        </div>
+        <div class="bill-item-cotent">
+          <div>
+            <text class="money">{{ $item.expenditure }}</text>
+          </div>
+          <div><text class="introduce">总支出（元）</text></div>
+        </div>
+        <div class="bill-item-cotent">
+          <div>
+            <text class="money">{{ $item.revenue }}</text>
+          </div>
+          <div><text class="introduce">总收入（元）</text></div>
+        </div>
+        <div class="bill-item-right">
+          <image
+            src="../../Common/images/Frame2175@2x.png"
+            class="to-right"
+          ></image>
+        </div>
+      </list-item>
+    </list>
+    <div
+      if="{{!monthlyStatementList.length}}"
+      class="null-tisp"
+      @click="toBookkeeping"
+    >
+      <div class="null-tisp-contnet">
+        <image src="../../Common/images/nullBox.png" class="img"></image>
+        <text class="title">暂无流水账</text>
+      </div>
+      <div class="null-tisp-contnet">
+        <text class="tisp">赶快去记一笔吧</text>
+      </div>
+    </div>
+    <!-- 分页栏 -->
+    <!-- <div class="line">
+      <my-page total="{{total}}" current="{{current}}" ontap="clickPage" prev-text="上一页" next-text="下一页"></my-page>
+    </div> -->
+    <!-- tab栏 -->
+    <!-- <my-tabbar></my-tabbar> -->
+  </div>
+</template>
+
+<style lang="less">
+@import './index.less';
+</style>
+<import name="my-navbar" src="apex-ui/components/navbar/index"></import>
+<import name="my-banner" src="../../components/banner-item/index.ux"></import>
+<script>
+const device = require('@system.device')
+const example = require('../../helper/apis/example.js').default
+export default {
+  // 页面的数据模型，private段下的变量仅允许当前页面内代码更改其值。
+  data: {
+    size: 12,
+    total: 3,
+    current: 0,
+    monthlyStatementList: [],
+    isLoadMore: '',
+    brand: "",
+    showBanner: false
+  }, props: {
+    index: {
+      type: String,
+      default: 0
+    },
+    currentIndex: {
+      type: Number,
+      default: 0
+    }
+  },
+  onInit: function () {
+    const that = this
+    // 监听属性变化
+    this.$watch('currentIndex', 'watchCurrentIndex')
+    $umeng_stat.resume(this) //在onShow方法的第一行加入此代码
+    this.getSummarylist()
+    device.getInfo({
+      success: function (res) {
+        that.brand = res.brand;
+      },
+    })
+  }, onShow: function () {
+    //App业务代码
+  },
+  watchCurrentIndex(newValue, oldValue) {
+    if (parseInt(this.index) === this.currentIndex) {
+      this.monthlyStatementList = []
+      this.getSummarylist()
+      this.showBanner = true
+    }
+  }, toBookkeeping: function () {
+    console.log('是否点击了');
+    $router.push({
+      uri: 'pages/bookKeeping',
+      params: {
+        oaid: '',
+        channelValue: ''
+      }
+    })
+
+  },
+  onHide: function () {
+    $umeng_stat.pause(this);//在onHide方法的第一行加入此代码
+    //App业务代码
+  },
+  clickReachBottom: $utils.throttle(function (params) {
+    if (this.isLoadMore) {
+      this.getSummarylist()
+    }
+  }),
+  clickPage: function (e) {
+    console.log(e.detail.type);
+    if (e.detail.type === 'prev') {
+      this.current--
+    }
+    if (e.detail.type === 'next') {
+      this.current++
+    }
+
+  },
+  getSummarylist: function () {
+    example.getSummaryList({
+      current: this.size,
+      cursorId: this.isLoadMore || ''
+    }).then(res => {
+      this.isLoadMore = res.data.cursorId || '';
+      this.monthlyStatementList = [...this.monthlyStatementList, ...res.data.records]
+
+      this.monthlyStatementList = this.monthlyStatementList.map((item) => {
+        return {
+          ...item,
+          ...this.extractYearMonth(item.summaryDt + '')
+        }
+      })
+    })
+  },
+  extractYearMonth: function (input) {
+    if (input.length !== 6 || isNaN(input)) {
+      throw new Error('Invalid input format');
+    }
+    const year = input.slice(0, 4);
+    let month = input.slice(4, 6);
+
+    if (month[0] === '0') {
+      month = month[1];
+    } else {
+      month = parseInt(month, 10).toString();
+    }
+    return { year, month };
+  },
+  toChildPage: function (e) {
+    console.log(e);
+    $router.push({
+      uri: 'pages/waterBill/child',
+      params: {
+        params: e
+      }
+    })
+  }
+}
+</script>

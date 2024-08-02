@@ -1,0 +1,335 @@
+<template>
+  <div class="user-page">
+    <!-- 内容 -->
+    <div class="content">
+      <div class="title">
+        <div class="icon">
+          <image
+            src="/Common/images/toright.png"
+            @click="goBack"
+            if="{{showToleftIcon}}"
+          ></image>
+        </div>
+        <text class="txt"></text>
+        <div class=""></div>
+      </div>
+
+      <!-- 系统信息 -->
+      <div class="systemMessage">
+        <div class="left-logo">
+          <image src="/Common/logo.png"></image>
+        </div>
+        <div class="right-title">
+          <text class="name">{{ appInfo.name }}</text>
+          <div class="system-info">
+            <text>版本信息：</text><text>v{{ appInfo.versionName }}</text>
+          </div>
+        </div>
+      </div>
+
+      <div class="goToWelfareCenter" if="{{showAdPageEntrance}}">
+        <div class="btn" @click="goToWelfareCenter"></div>
+      </div>
+
+      <!-- 信息框 -->
+      <!-- <info-bar info-data="{{infoData}}"></info-bar> -->
+      <!-- 签到框 -->
+      <!-- <sign-in-box onemit-sing="signIn" sign-data="{{signData}}"></sign-in-box> -->
+      <!-- 福利列表 -->
+      <bene-fits-list onemit-redpacket="redPacket"></bene-fits-list>
+      <!-- 我的服务 -->
+      <my-service></my-service>
+      <!-- 广告红包 -->
+      <my-banner
+        top="{{bannerTop}}"
+        is-tabar="true"
+        if="{{!tispBoxType && currentIndex == index && showBanner }}"
+        display-type="bottom"
+      ></my-banner>
+    </div>
+  </div>
+</template>
+
+<style lang="less">
+@import './index.less';
+</style>
+
+<import name="my-tabbar" src="../../components/myTabbar/index.ux"></import>
+<!-- <import name="info-bar" src="../../components/infoBar/index.ux"></import> -->
+<import name="my-service" src="../../components/myService/index.ux"></import>
+<!-- <import name="sign-in-box" src="../../components/signInBox/index.ux"></import> -->
+<import name="bene-fits-list" src="../../components/benefitsList/index.ux"></import>
+
+<script>
+const user = require('../../helper/apis/user.js').default
+const config = require('../../config.js').default
+const device = require("@system.device")
+import app from '@system.app'
+export default {
+  // 页面的数据模型，private段下的变量仅允许当前页面内代码更改其值。
+  data: {
+    title: '用户',
+    infoData: {},
+    signData: {},
+    tispBoxType: "", //failBox //tispBox //awardBox
+    awardData: {
+      txt: ""
+    },
+    showAdItem: false,
+    adTaskCompletions: 0,
+    totalDegree: 12,
+    bannerTop: 1400,
+    showToleftIcon: false,
+    appInfo: {},
+    showAdPageEntrance: true,
+    brand: "",
+    showBanner: false
+  },
+  props: {
+    index: {
+      type: String,
+      default: 3
+    },
+    currentIndex: {
+      type: Number,
+      default: 0
+    }
+  },
+  onInit: async function () {
+    const that = this
+    this.appInfo = app.getInfo()
+    this.getAdPageEntrance()
+    console.log(this.appInfo, 'this.appInfo');
+    // 监听属性变化
+    this.$watch('currentIndex', 'watchCurrentIndex')
+    $umeng_stat.resume(this) //在onShow方法的第一行加入此代码
+    device.getInfo({
+      success: function (res) {
+        that.brand = res.brand
+        // console.log(res, '---------------99999999999999');
+      }
+    })
+    // this.getUserInfo()
+    // this.getSignday()
+    // this.getCompleteCount()
+    // this.getAutoPopUps()
+    // const that = this
+    // device.getInfo({
+    //   success: function (res) {
+    //     that.brand = res.brand
+    //     that.bannerTop = res.screenLogicHeight - 160 || 1400;
+    //   }
+    // })
+  },
+  watchCurrentIndex(newValue, oldValue) {
+    if (parseInt(this.index) === this.currentIndex) {
+      this.showBanner = true
+    }
+  },
+  onShow() {
+    //App业务代码
+    console.log('是否触发onshow');
+    // $utils.showToast('你好')
+    this.showToleftIcon = true;
+    try {
+      $apis.task.getClickControlReyurn({ brand: this.brand }).then((res) => {
+        console.log(res, '获取手势返回配置信息');
+        $utils.changeGlobalParam(this, 'returnResponse', res.data)
+      })
+    } catch (e) {
+      // Do something when catch error
+      console.log(e.code + e.message);
+    }
+  },
+  onHide: function () {
+    $umeng_stat.pause(this);//在onHide方法的第一行加入此代码
+    //App业务代码
+  },
+  getUserInfo: function () {
+    user.getUserInfo().then((res) => {
+      // console.log(res.data, '查看用户信息');
+      this.infoData = res.data;
+    })
+  },
+  getSignday: function (params) {
+    user.getDailySignDay().then((res) => {
+      this.signData = res.data
+    })
+  },
+  // 签到
+  signIn: $utils.throttle(function (params) {
+    $apis.user.goSianIn().then((res) => {
+      this.getSignday()
+      this.getUserInfo()
+      $prompt.showToast({
+        message: '签到成功',
+        gravity: 'center'
+      })
+    })
+  }),
+  redPacket: function () {
+    console.log(this.adTaskCompletions);
+    if (this.adTaskCompletions <= 0) {
+      this.tispBoxType = 'failBox'
+      return
+    }
+    if (this.adTaskCompletions <= 12) {
+      this.tispBoxType = 'tispBox'
+      this.awardData.txt = '领取奖励'
+      return
+    }
+  },
+  // 打开广告
+  openAd: $utils.throttle(function () {
+    this.$app.$def.globalData.isShwoAd = false
+    if (this.showAdItem) {
+      this.completionTask()
+      return
+    }
+    console.log('提示框打开广告');
+    this.tispBoxType = 'tispBox'
+    this.awardData.txt = '打开并领取'
+    this.showAdItem = true
+
+  }),
+  receiveAward: function () {
+    this.$app.$def.globalData.isShwoAd = false
+    console.log('红包框');
+    if (this.adTaskCompletions) {
+      this.redPacket()
+    } else {
+      this.closePop()
+    }
+  },
+  bindFali: function () {
+    console.log('无次数关闭');
+    this.closePop()
+    this.$app.$def.globalData.isShwoAd = false
+  },
+  closePop: function (e) {
+    this.tispBoxType = ''
+    this.showAdItem = ''
+    this.$app.$def.globalData.isShwoAd = false
+
+  },
+  getCompleteCount() {
+    $apis.task.getCompleteCount({
+      adId: config.adCodeData.nativeAd
+    }).then((res) => {
+      this.adTaskCompletions = this.totalDegree - res.data
+    })
+  },
+  adClose: function (e) {
+    console.log(e, '查看这个e');
+    if (e.detail && e.detail.data === 'clone') {
+      this.completionTask()
+      return
+    }
+    this.tispBoxType = ''
+    // $prompt.showToast({
+    //   message: "红包意外关闭稍后重试",
+    //   gravity: "center"
+    // })
+    this.$app.$def.globalData.isShwoAd = false
+    if (e.detail && e.detail.data === 'error') {
+      $utils.showToast('请稍后再试')
+      return
+    }
+
+  },
+  //完成任务
+  completionTask: function () {
+    this.showAdItem = ''
+    let data = {
+      adType: 'NATIVE',
+      adId: config.adCodeData.nativeAd,
+      channel: "AC_0001"
+    }
+    let headers = {
+      ...this.param,
+    }
+    $apis.task.postFinishCompleteAd({
+      ...data
+    }, headers).then((res) => {
+      console.log(res, '完成任务、');
+      this.getUserInfo();
+      this.$app.$def.globalData.isShwoAd = true
+      if (res.data.awardAmount) {
+        this.awardData = {
+          awardAmount: res.data.awardAmount
+        }
+        this.adTaskCompletions = 12 - res.data.count
+        this.tispBoxType = "awardBox"
+      } else {
+        this.adTaskCompletions = 12 - res.data.count
+        const that = this;
+        $prompt.showDialog({
+          title: '很遗憾',
+          message: '再接再励',
+          buttons: [
+            {
+              text: '继续',
+              color: 'red'
+            }
+          ],
+          success: function (data) {
+            that.$app.$def.globalData.isShwoAd = false
+            console.log("handling callback", data);
+          },
+          cancel: function () {
+            console.log("cancel");
+          }
+        })
+      }
+    }).catch((err) => {
+      console.log(err, '失败');
+    })
+  },
+  getAutoPopUps() {
+    $apis.task.getAutoPopUps().then((res) => {
+      this.autoPopUps = res.data
+      if (!res.data) {
+        return
+      }
+      setTimeout(() => {
+        if (!this.tispBoxType && this.adTaskCompletions > 1) {
+          this.redPacket()
+        }
+      }, 1000)
+    })
+  },
+  goBack: function () {
+    $router.replace({
+      uri: '/pages/displayDesktop',
+    })
+  },
+  getTransparentLayerL: function (count) {
+    const brand = $utils.changeGlobalParam(this, 'brand')//设备信息
+    if (!brand) {
+      return
+    }
+    try {
+      $apis.task.getTransparentLayer({ brand: this.brand, count: count }).then((res) => {
+        console.log(res, '获取页面透明层配置信息');
+        this.showTransparentLayer = res.data;
+        $utils.changeGlobalParam(this, 'isShowAdDiaphanotheca', res.data)
+      })
+    } catch (e) {
+      // Do something when catch error
+      console.log(e.code + e.message);
+    }
+  },
+  goToWelfareCenter: function () {
+    this.showBanner = false
+    $router.push({
+      uri: 'pages/welfareCenter'
+    })
+  },
+  getAdPageEntrance: function () {
+    $apis.task.getAdPageEntrance().then((res) => {
+      console.log(res, '查看是否能展示入口');
+      this.showAdPageEntrance = res.data
+    })
+  }
+}
+</script>

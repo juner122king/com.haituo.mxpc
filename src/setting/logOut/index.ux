@@ -1,0 +1,75 @@
+<template>
+  <div class="logOut-page">
+    <div class="content">
+      <div class="hading">
+        <image src="../../Common/images/warn.png" class="img"></image>
+        <text class="txt">注销提示</text>
+      </div>
+      <div class="details">
+        <text class="txt">1.注销后无法再登录当前账号；</text>
+        <text class="txt">2.注销后无法撤销，无法恢复数据</text>
+        <text class="txt">3.所有信息将在72小时内依法合规删除。</text>
+      </div>
+    </div>
+
+    <div class="conter-bottom" @click="changeChecked">
+      <image
+        src="../../Common/images/check-success.png"
+        if="{{isChecked}}"
+      ></image>
+      <image src="../../Common/images/check-null.png" else></image>
+      <text class="txt">我已了解以上后果，同意注销账号。</text>
+    </div>
+
+    <div class="subimt {{isChecked?'active-subimt':''}}" @click="commit">
+      <text class="txt">申请注销账号</text>
+    </div>
+  </div>
+</template>
+
+<style lang="less">
+@import './index.less';
+</style>
+<script>
+export default {
+  // 页面的数据模型，private段下的变量仅允许当前页面内代码更改其值。
+  private: {
+    title: '我已了解以上后果，同意注销账号。',
+    isChecked: false
+  }, onShow: function () {
+    $umeng_stat.resume(this) //在onShow方法的第一行加入此代码
+  }, onHide: function () {
+    $umeng_stat.pause(this);//在onHide方法的第一行加入此代码
+    //App业务代码
+  },
+  changeChecked: function () {
+    console.log('点击了');
+    this.isChecked = !this.isChecked;
+  },
+  commit: $utils.throttle(function () {
+    if (!this.isChecked) {
+      $prompt.showToast({
+        message: "请先同意协议",
+        gravity: "center"
+      })
+      return
+    }
+    $apis.user.putForeverLogout().then(res => {
+      $storage.delete({
+        key: 'AUTH_TOKEN_DATA',
+        success: function (data) {
+          $prompt.showToast({
+            message: "注销成功",
+            gravity: "center"
+          })
+          setTimeout(() => {
+            $router.back()
+          }, 800);
+        },
+      })
+    }).catch((err) => {
+      console.log(err);
+    })
+  }, 3000)
+}
+</script>

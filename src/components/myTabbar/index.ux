@@ -1,0 +1,164 @@
+<template>
+  <!-- <div class="container">
+    <my-apexTabbar tabbar="{{ defaultList}}"></my-apexTabbar>
+  </div> -->
+  <div class="container">
+    <tabs onchange="tabChange">
+      <tab-bar class="tab_bar">
+        <block for="datas.list">
+          <div class="tab_item" onclick="jumpDetail($item.pagePath)">
+            <image
+              src="{{pageName === $item.path?$item.pic_choice:$item.pic}}"
+            />
+            <text style="color: {{$item.color}}">{{ $item.title }}</text>
+          </div>
+        </block>
+      </tab-bar>
+    </tabs>
+  </div>
+</template>
+
+<import name="my-apexTabbar" src="apex-ui/components/tabbar/index"></import>
+<script>
+export default {
+  data: {
+    defaultList: [
+      {
+        pagePath: '/pages/Home',
+        pagePatams: '',
+        iconPath: 'https://cdn.ipandata.com/app/bookkeeping/tabbar/home.png',
+        selectedIconPath: 'https://cdn.ipandata.com/app/bookkeeping/tabbar/a-home.png',
+        text: '首页',
+        active: true,
+      },
+      {
+        pagePath: '/pages/waterBill',
+        pagePatams: '',
+        iconPath: 'https://cdn.ipandata.com/app/bookkeeping/tabbar/will.png',
+        selectedIconPath: 'https://cdn.ipandata.com/app/bookkeeping/tabbar/a-will.png',
+        text: '流水账',
+        active: false,
+      },
+      {
+        pagePath: '/pages/user',
+        pagePatams: '',
+        iconPath: 'https://cdn.ipandata.com/app/bookkeeping/tabbar/user.png',
+        selectedIconPath: 'https://cdn.ipandata.com/app/bookkeeping/tabbar/a-user.png',
+        text: '用户',
+        active: false,
+      },
+    ],
+    datas: {
+      color_normal: '#C8C8C8',
+      color_active: '#00B2FF',
+      show: true,
+      list: [{
+        i: 0,
+        color: '#FF7500',
+        pic: 'https://cdn.ipandata.com/app/bookkeeping/tabbar/home.png',
+        pic_choice: 'https://cdn.ipandata.com/app/bookkeeping/tabbar/a-home.png',
+        show: true,
+        title: '首页',
+        pagePath: '/pages/Home',
+        path: 'pages/Home',
+      },
+      {
+        i: 1,
+        color: '#878787',
+        pic: 'https://cdn.ipandata.com/app/bookkeeping/tabbar/will.png',
+        pic_choice: 'https://cdn.ipandata.com/app/bookkeeping/tabbar/a-will.png',
+        show: false,
+        title: '流水账',
+        pagePath: '/pages/waterBill',
+        path: 'pages/waterBill',
+      },
+      {
+        i: 2,
+        color: '#878787',
+        pic: 'https://cdn.ipandata.com/app/bookkeeping/tabbar/user.png',
+        pic_choice: 'https://cdn.ipandata.com/app/bookkeeping/tabbar/a-user.png',
+        show: false,
+        title: '我的',
+        pagePath: '/pages/user',
+        path: 'pages/user',
+      }
+      ]
+    },
+    tabIndex: 0,
+    pageName: ''
+  },
+  onInit: function () {
+    console.log('触发了');
+    this.pageName = this.$page.name
+    console.log(this.$page.name);
+    this.datas.list.forEach(element => {
+      element.show = false;
+      element.color = this.datas.color_normal;
+      console.log(element.path, this.$page.name);
+      if (element.path === this.$page.name) {
+        console.log('是否有元素进来');
+        element.show = true;
+        element.color = this.datas.color_active;
+      }
+
+    });
+  },
+  jumpDetail(path) {
+    $router.replace({
+      uri: path
+    })
+  },
+  tabChange(e) {
+
+  }
+}
+</script>
+
+<style>
+.container {
+  background-color: #f5f5f5;
+}
+
+.tab_bar {
+  background-color: #fff;
+  width: 750px;
+  border-top-left-radius: 20px;
+  border-top-right-radius: 20px;
+}
+
+.tab_item {
+  flex-direction: column;
+  align-items: center;
+  padding-top: 14px;
+  padding-bottom: 11px;
+  width: 171px;
+  height: 104.2px;
+}
+
+.tab_item image {
+  width: 50px;
+  height: 50px;
+  resize-mode: contain;
+  opacity: 0.5;
+}
+
+.tab_item image:active {
+  width: 50px;
+  height: 50px;
+  resize-mode: contain;
+}
+
+.tab_item text {
+  font-size: 21px;
+  margin-top: 10px;
+}
+
+.item-container {
+  justify-content: center;
+}
+
+.main-text {
+  font-size: 100px;
+  color: #5f9ea0;
+}
+</style>>

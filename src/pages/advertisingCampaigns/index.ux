@@ -1,0 +1,395 @@
+
+<import name="icon" src="apex-ui/components/icon/index"></import>
+<import name="bottom-native" src="./components/bottom-native.ux"></import>
+<import name="reminder-ads" src="./components/reminder-ads.ux"></import>
+<import name="back-to-ads" src="./components/back-to-ads.ux"></import>
+ <import name="icon" src="apex-ui/components/icon/index"></import>
+ <import name="my-navbar" src="apex-ui/components/navbar/index"></import>
+<template>
+  <div class="advertising-page">
+    <my-navbar></my-navbar>
+    <!-- 头部感谢 -->
+    <div class="advertising-title">
+      <text class="m-heading">正品内容免费读</text>
+      <text class="s-heading">广告收益是为了激励作者提供优质内容</text>
+      <div class="thank-you-speech">
+        <text class="line"></text>
+        <text class="txt">感谢你的支持</text>
+        <text class="line"></text>
+      </div>
+    </div>
+    <!-- 广告组件 -->
+    <div class="ad-compon" if="{{hasAdList}}">
+      <ad
+        adId="{{adList.adId}}"
+        class="ad-native"
+        show="{!!adList.adId}}"
+        onerror="error"
+        onadclick="adClick"
+        onadclose="close"
+        type="native"
+        closeBtnPosition="left-top"
+      >
+        <div class="container">
+          <div class="agreement">
+            <ad-clickable-area
+              class="agreement-item agreement-item-info"
+              type="click"
+            >
+              <text class="txt" if="{{adList.hasAppMiitInfo}}">
+                {{
+                  adList.appInfo.appName +
+                  adList.appInfo.appSize +
+                  adList.appInfo.appVersion
+                }}</text
+              >
+              <text class="txt" if="{{adList.appInfo}}"
+                >{{ adList.appInfo.developer }}
+              </text>
+            </ad-clickable-area>
+            <ad-clickable-area class="agreement-item" type="privacy">
+            </ad-clickable-area>
+            <ad-clickable-area
+              type="click"
+              class="hide-close"
+              if="{{showTransparency}}"
+            >
+              <icon
+                type="close"
+                size="50"
+                color="#FFFFFF"
+                @click="close"
+              ></icon>
+            </ad-clickable-area>
+            <div class="hide-close" else>
+              <icon
+                type="close"
+                size="50"
+                color="#FFFFFF"
+                @click="close"
+              ></icon>
+            </div>
+          </div>
+          <ad-clickable-area type="click" class="ad-title">
+            <text class="ad-title-txt">{{
+              adList.desc || defaultAd.desc
+            }}</text>
+          </ad-clickable-area>
+          <!-- 图片 -->
+          <div class="vertical-content big-img">
+            <ad-clickable-area type="click" class="ad-image">
+              <image
+                src="{{adList.imgUrlList? adList.imgUrlList[0]: defaultAd.img }}"
+              ></image>
+            </ad-clickable-area>
+            <div class="vertical-content logo">
+              <ad-clickable-area
+                type="click"
+                class="close-item"
+                if="{{showTransparency}}"
+              >
+                <icon
+                  type="close"
+                  size="45"
+                  color="#FFFFFF"
+                  @click="close"
+                ></icon>
+              </ad-clickable-area>
+              <div class="close-item" else>
+                <icon
+                  type="close"
+                  size="45"
+                  color="#FFFFFF"
+                  @click="close"
+                ></icon>
+              </div>
+              <ad-clickable-area type="logo"> </ad-clickable-area>
+            </div>
+          </div>
+
+          <div class="icon" if="{{adList.icon}}">
+            <ad-clickable-area type="clikc" class="icon-image">
+              <image src="{{adList.icon}}"></image>
+            </ad-clickable-area>
+            <text class="icon-txt">{{ adList.title }}</text>
+          </div>
+
+          <div class="footer">
+            <ad-clickable-area
+              class="click-item"
+              type="button"
+              value=" {{
+                  btnTxt || adList.clickBtnTxt || defaultAd.clickBtnTxt
+                }}"
+            >
+            </ad-clickable-area>
+          </div>
+
+          <ad-clickable-area
+            class="swipe-left-btn"
+            type="click"
+            if="{{showTransparency}}"
+          >
+            <div style="left: 20px">
+              <icon type="arrow-back" size="45" color="#FFFFFF"></icon>
+            </div>
+            <icon type="arrow-back" size="45" color="#FFFFFF"></icon>
+            <text>左滑继续阅读</text>
+          </ad-clickable-area>
+
+          <div
+            class="swipe-left-btn"
+            @swipe-left="appearSwipe"
+            @click="appearSwipe"
+            if="{{!showTransparency}}"
+          >
+            <div style="left: 20px">
+              <icon type="arrow-back" size="45" color="#FFFFFF"></icon>
+            </div>
+            <icon type="arrow-back" size="45" color="#FFFFFF"></icon>
+            <text>左滑继续阅读</text>
+          </div>
+        </div>
+      </ad>
+    </div>
+    <!-- 底部仿banne框 -->
+    <bottom-native
+      ad-unitId="{{adId}}"
+      ad-list="{{adList}}"
+      if="{{showBanner}}"
+      show-transparency="{{ showTransparency}}"
+      onemit-hide-transparency="hideTransparency"
+    ></bottom-native>
+
+    <!--延迟提示 -->
+    <reminder-ads
+      if="{{showReminder}}"
+      show-transparency="{{ showTransparency}}"
+      onemit-hide-transparency="hideTransparency"
+      onemit-close="heideReminder"
+    ></reminder-ads>
+
+    <!-- 返回时弹出框 -->
+    <back-to-ads
+      if="{{showVackTisp}}"
+      show-transparency="{{ showTransparency}}"
+      onemit-hide-transparency="hideTransparency"
+      onemit-close="heideReminder"
+    ></back-to-ads>
+  </div>
+</template>
+
+<script>
+const { adCodeData } = require('../../config.js').default
+export default {
+  private: {
+    adList: {},
+    hasAdList: false,
+    defaultAd: {
+      desc: 'vivo流量联盟，提供最优质的商业化解决方案。流量联盟广告联盟。',
+      title: 'vivo流量联盟',
+      icon: '广告',
+      clickBtnTxt: '点击安装',
+      img: "http://cdn.bank-zone.cn/pro/sy/admin/advertising/3639bdbde8e84397a297ad54f89ac4c3.jpg"
+    },
+    btnTxt: '',
+    adUnitId: '',
+    adObj: {},
+    adId: '',
+    showBanner: false,
+    showReminder: false,
+    showVackTisp: false,
+    showTransparency: true,
+    adTitle: "",
+    timer: null,
+    isfristReqCoun: true
+  },
+  onInit(e) {
+    const { callback = '', oaid = '', type = '', channelValue = '', corp_id = '' } = e
+    if (Object.keys(e).length > 0) {
+      console.log('进来了');
+      this.$app.$def.globalData.actiParam = {
+        ...e,
+      }
+      $utils.getConversionlicks(this)
+    }
+    const branch = $ad.getProvider()
+    this.adObj = adCodeData[branch]
+    this.adId = adCodeData[branch].fiction1;
+    this.preloadAd()
+    this.getTransparentLayerL()
+  },
+  onReady() {
+    this.delayedDisplay()
+  },
+  onHide() {
+    this.timer = null;
+  },
+  onBackPress() {
+    this.showVackTisp = true;
+    console.log('触发了怎么无效了');
+    return true
+  },
+  /**
+   * 展示
+   */
+  delayedDisplay() {
+    this.timer = null;
+    this.timer = setTimeout(() => {
+      this.showReminder = true;
+      console.log('怎么还没有触发', this);
+    }, 4000)
+  },
+  preloadAd() {
+    try {
+      console.log(this.adId, '查看广告id编码');
+      require('@service.ad').preloadAd({
+        adUnitId: this.adId, // 原生信息流广告广告位id
+        type: 'native', // 原生信息流广告
+        adCount: 1,
+        success: (data) => {
+
+
+          this.adList = data.adList[0]
+          console.log(this.adList, '返回广告成功');
+          // setTimeout(() => {
+
+          // }, 2000)
+          this.showBanner = true
+          this.hasAdList = true;
+          if (this.adList.appInfo) {
+            this.adList.appInfo.appSize = this.convertAppSize(this.adList.appInfo.appSize)
+          }
+          if (this.debug) {
+            prompt.showToast({
+              message: `ad load success`
+            })
+          }
+        },
+        fail: (data, code) => {
+          console.log(data, code, '返回广告失败1');
+          this.hasAdList = true;
+          if (code === 205) {
+            this.hasAdList = true;
+            this.adList = data.adList[0]
+          } else {
+            if (this.debug) {
+              prompt.showToast({
+                message: `ad load fail!data= ${JSON.stringify(data)},code= ${code}`
+              })
+            }
+          }
+        }
+      })
+    } catch (e) {
+      console.log(e, e.message);
+    }
+  },
+  error(errCode, errMsg) {
+    console.log('没有报错回调吗', errCode, errMsg);
+    // this.appearSwipe()
+  },
+  adClick() {
+    console.log('查看点击的this');
+    this.showTransparency = false;
+    console.log('没有点击回调吗');
+    $utils.conversionUpload(this)
+    $utils.buriedPointReport(this, 'click', this.adId)
+    this.addClickNum()
+  },
+  close() {
+    console.log('没有触发这个吗');
+    this.hasAdList = false;
+    this.appearSwipe()
+  },
+  convertAppSize(appSizeBytes) {
+    // 首先将字节转换为KB  
+    let kb = appSizeBytes / 1024;
+
+    // 检查是否超过1MB（即1024KB）  
+    if (kb >= 1024) {
+      // 转换为MB并保留两位小数  
+      let mb = kb / 1024;
+      return mb.toFixed(2) + 'MB';
+    } else {
+      // 保留两位小数并返回KB  
+      return kb.toFixed(2) + 'KB';
+    }
+  },
+  appearSwipe() {
+    $router.replace({
+      uri: "pages/readAd"
+    })
+  },
+  getTransparentLayerL: function () {
+    try {
+      const branch = $ad.getProvider();
+      let payam = {
+        brand: branch.toUpperCase()
+      }
+      if (!this.isfristReqCoun) { //如果不是初次进来的说明可以添加选项
+        payam.count = this.$app.$def.globalData.transparentLayerHits
+      }
+
+      $apis.task
+        .getTransparentLayer({ ...payam })
+        .then((res) => {
+          console.log(res, '查看这个透明层获取');
+          // 是否初次请求
+          if (this.isfristReqCoun) {
+            this.isfristReqCoun = false;
+            if (res.data) {
+              this.getTransparentLayerL()
+            }
+            return
+          }
+          this.showTransparency = res.data;
+          console.log('查看触发透明层');
+        })
+        .catch((err) => {
+          console.log(err, '查看返回报错')
+        })
+    } catch (e) {
+      console.log(e, '获取失效');
+    }
+  },
+  // 关闭透明层
+  hideTransparency() {
+    console.log('点击了关闭广告');
+    this.showTransparency = false;
+    this.addClickNum()
+  },
+  addClickNum() {
+    this.$app.$def.globalData.transparentLayerHits = this.$app.$def.globalData.transparentLayerHits + 1
+    this.getTransparentLayerL()
+  },
+  // 关闭
+  heideReminder(e) {
+    // this.showReminder = false;
+    this.addClickNum()
+    console.log(e);
+    const { detail = '' } = e;
+    if (!detail) {
+    } else {
+      console.log('这是什么', detail.data);
+      if (detail.data === 'showVackTisp') {
+        this.showVackTisp = false
+      } else if (detail.data === 'showReminder') {
+        this.showReminder = false
+      }
+    }
+  },
+  /**
+   *关闭倒计时窗口
+   */
+  hideReminder() {
+    console.log('关闭倒计时窗口');
+    this.showReminder = false;
+  }
+
+}
+</script>
+
+<style lang="less">
+@import './index.less';
+</style>

@@ -1,0 +1,147 @@
+<template>
+  <div class="feedback-page">
+    <div class="feedback-top">
+      <image src="../../Common/images/service.png"></image>
+      <div class="right">
+        <text class="txt">快应用投诉热线</text>
+        <text class="phone">166-2019-6086</text>
+      </div>
+    </div>
+
+    <div class="cause">
+      <div class="title"><text class="">选择投诉原因</text></div>
+      <div class="selector-list">
+        <div
+          class="selector-item {{selectTagData.id === $item.id ?'a-selector-item':''}}"
+          @click="changeCheckedNum($item)"
+          for="{{tagList}}"
+        >
+          <text class="">{{ $item.tag }}</text>
+        </div>
+      </div>
+    </div>
+
+    <div class="issue">
+      <div class="title"><text class="">问题描述</text></div>
+      <div class="content">
+        <textarea
+          model:value="{{txt}}"
+          class="txt"
+          @change="changeTxt"
+          placeholder="请填写10字以上的详细描述，以便我们提供更好的服务和帮助..."
+          maxlength="300"
+        ></textarea>
+      </div>
+      <div class="bottom">
+        <text>已输入{{ txt.length >= 300 ? 300 : txt.length }}/300</text>
+      </div>
+    </div>
+
+    <div class="contactWay">
+      <div class="title">
+        <text>联系方式</text>
+      </div>
+      <div class="content">
+        <input
+          placeholder="请输入您的手机号码/邮箱"
+          model:value="{{phone}}"
+          class="ipt"
+        />
+      </div>
+    </div>
+
+    <div class="submit" @click="submit">
+      <text class="txt">提交投诉</text>
+    </div>
+  </div>
+</template>
+
+<style lang="less">
+@import './index.less';
+</style>
+<script>
+export default {
+  // 页面的数据模型，private段下的变量仅允许当前页面内代码更改其值。
+  private: {
+    txt: "",
+    selectTagData: {
+      id: 1,
+      tag: '广告太多'
+    },
+    phone: "",
+    tagList: [
+      {
+        id: 1,
+        tag: '广告太多'
+      }, {
+        id: 2,
+        tag: '无法正常使用'
+      }, {
+        id: 3,
+        tag: '其他问题'
+      },
+    ]
+  }, onShow: function () {
+    $umeng_stat.resume(this) //在onShow方法的第一行加入此代码
+  }, onHide: function () {
+    $umeng_stat.pause(this);//在onHide方法的第一行加入此代码
+    //App业务代码
+  },
+  changeTxt: function (e) {
+    this.txt = e.value
+  },
+  changeCheckedNum: function (e) {
+    console.log(e, '查看数据');
+    this.selectTagData = e
+  },
+  submit: function () {
+    const tetxBoole = this.containsChineseCharacters(this.phone)
+
+    if (!this.phone) {
+      $prompt.showToast({
+        message: "请填写联系方式",
+        gravity: 'center'
+      })
+      return
+    }
+    if (tetxBoole) {
+      $prompt.showToast({
+        message: "联系方式不能包含中文字符",
+        gravity: 'center'
+      })
+      return
+    }
+    if (this.txt.length < 10) {
+      $prompt.showToast({
+        message: "描述字数不足",
+        gravity: 'center'
+      })
+      return
+    }
+    const param = {
+      tag: this.selectTagData.tag,
+      content: this.txt,
+      contactPhone: this.phone
+    }
+    console.log('查看提交数据', param);
+
+
+    $apis.user.postUserFeedback({
+      ...param
+    }).then((res) => {
+      $prompt.showToast({
+        message: "提交成功",
+        gravity: 'center'
+      })
+      this.selectTagData = this.tagList[0];
+      this.phone = '';
+      this.txt = ''
+
+    })
+  },
+  containsChineseCharacters: function (str) {
+    const chineseCharPattern = /[\u4e00-\u9fff\u3400-\u4dbf\uf900-\ufaff]/;
+    return chineseCharPattern.test(str);
+  }
+}
+</script>

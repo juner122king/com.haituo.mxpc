@@ -1,0 +1,410 @@
+<template>
+  <!-- Only one root node is allowed in template. -->
+  <div class="bill-page">
+    <my-toast id="message"></my-toast>
+    <div style="width: 100%">
+      <my-navbar title="首页"></my-navbar>
+    </div>
+    <!-- <div @click="clearData"><text>清除缓存</text></div> -->
+    <!-- 头部账单 -->
+    <div class="bill-title">
+      <!-- 本月支出 -->
+      <div class="month-expend">
+        <div class="month-expend-left">
+          <div>
+            <text>本月支出</text>
+          </div>
+          <div class="month-expend-left-expend">
+            <text>{{
+              monthData.expenditure || monthData.expenditure === 0
+                ? monthData.expenditure
+                : '---.--'
+            }}</text>
+          </div>
+        </div>
+        <div class="month-expend-right" @click="toBookkeeping">
+          <text>记一笔</text>
+        </div>
+      </div>
+      <!-- 收入以及结余 -->
+      <div class="income-and-alance">
+        <div class="current-income">
+          <div><text>本月收入(元)：</text></div>
+          <div>
+            <text>{{
+              monthData.revenue || monthData.revenue === 0
+                ? monthData.revenue
+                : '---.--'
+            }}</text>
+          </div>
+        </div>
+        <div class="current-balance">
+          <div><text>本月结余(元)：</text></div>
+          <div>
+            <text>{{
+              monthData.balance || monthData.balance === 0
+                ? monthData.balance
+                : '---.--'
+            }}</text>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 流水账 -->
+    <div class="journal">
+      <div
+        class="null-tisp"
+        @click="toBookkeeping"
+        if="{{listData.length <= 0 }}"
+      >
+        <div class="null-tisp-contnet">
+          <image src="../../Common/images/nullBox.png" class="img"></image>
+          <text class="title">暂无流水账</text>
+        </div>
+        <div class="null-tisp-contnet">
+          <text class="tisp">赶快去记一笔吧</text>
+        </div>
+      </div>
+
+      <list
+        class="journal-list"
+        if="{{listData.length > 0}}"
+        @click="clickJournal"
+      >
+        <list-item
+          type="listItem"
+          for="{{listData}}"
+          id="{{'listItem-' + $idx}}"
+          @longpress="changRecord($idx, 'listItem-' + $idx)"
+          class="listItem"
+        >
+          <div
+            class="journal-item {{ ($idx == menuIndex && showMenu )?'active-listItem':''}}"
+            style="{{( $idx == 0 && listData.length == 1 && showMenu && showMenuInde === 0)?'margin-bottom: 170px;':'margin-bottom: 0px;' }}"
+          >
+            <div class="journal-item-left" else>
+              <div class="title" style="margin-bottom: 3px">
+                <text>{{ $item.title }}</text>
+              </div>
+              <div class="time">
+                <text>{{ $item.createdDt }}</text>
+              </div>
+            </div>
+            <div class="journal-item-right">
+              <text class="txt defaultColor" style="color: #b3b3b3"
+                >{{ $item.isRevenue ? '+' : '' }}{{ $item.amount }}</text
+              >
+            </div>
+          </div>
+          <div
+            class="menu-item"
+            if="{{ showMenu   && $idx  === showMenuInde }} "
+            style="{{( $idx == 0 && listData.length == 1)?'top:155px':'' }}"
+          >
+            <text @click="modifyData('delect', $item)">删除</text>
+            <text @click="modifyData('change', $item)">修改</text>
+          </div>
+        </list-item>
+      </list>
+    </div>
+
+    <div class="home-tisp" show="{{ishowTisp}}">
+      <div class="content">
+        <div class="title"><text class="txt">用户协议隐私政策提醒</text></div>
+        <div class="details">
+          <text class="txt">
+            感谢您使用记账小管家请您在使用(或继续使用)我们的产品服务前仔细阅读
+
+            <a
+              href="https://test.ipandata.com/statics/quick-app-tool-h5/bookkeeping/用户协议.html"
+              class="active-txt"
+              >《用户协议》</a
+            >
+            和
+            <a
+              href="https://test.ipandata.com/statics/quick-app-tool-h5/bookkeeping/隐私政策.html"
+              class="active-txt"
+              >《隐私政策》</a
+            >
+            我们将全力保障您的合法权益与信息安全，并将持续为您提供优质服务。
+          </text>
+        </div>
+        <div class="subimt" @click="showTisp">
+          <text class="txt">同意</text>
+        </div>
+        <div class="close" @click="closeTisp">
+          <text class="txt">拒绝并退出</text>
+        </div>
+      </div>
+    </div>
+    <!-- <home-tisp onemit-evt="showTisp" if="{{ ishowTisp }}"></home-tisp> -->
+    <!-- <div if="{{}}"> -->
+    <!-- tab栏 -->
+    <!-- <my-tabbar></my-tabbar> -->
+    <!-- </div> -->
+  </div>
+</template>
+
+<import name="my-navbar" src="apex-ui/components/navbar/index"></import>
+<import name="journal-item" src="../../components/journalItem/index.ux"></import>
+<import name="home-tisp" src="../../components/homeTisp/index.ux"></import>
+<import name="my-toast" src="../../components/my-toast/index.ux"></import>
+<script>
+export default {
+  // 页面的数据模型，private段下的变量仅允许当前页面内代码更改其值。
+  data: {
+    showListType: "default",
+    title: '首页',
+    listData: [],
+    size: 8,
+    monthData: {
+      expenditure: 0
+    },
+    menuTop: 0,
+    menuIndex: '',
+    showMenu: false,
+    showMenuInde: 0
+  },
+  props: {
+    index: {
+      type: String,
+      default: 0
+    },
+    currentIndex: {
+      type: Number,
+      default: 0
+    },
+    ishowTisp: {
+      type: Boolean,
+      default: false
+    }
+  },
+  onInit: function () {
+    // 监听属性变化
+    this.$watch('currentIndex', 'watchCurrentIndex')
+    this.getMoonInfo()
+    this.getAcList()
+  }, watchCurrentIndex(newValue, oldValue) {
+    if (parseInt(this.index) === this.currentIndex) {
+      this.getMoonInfo()
+      this.getAcList()
+    }
+  },
+  onShow: function () {
+    console.log('触发onshow');
+  },
+  onHide: function () {
+    $umeng_stat.pause(this);//在onHide方法的第一行加入此代码
+  }, clearData: function () {
+    $storage.clear()
+  },
+  toBookkeeping: function () {
+
+    // this.$child('message').showToast({
+    //   title: '你干嘛？',
+    //   duration: 4
+    // })
+    // return
+    console.log('是否点击了');
+    this.showMenu = false;
+    $router.push({
+      uri: 'pages/bookKeeping',
+      params: {
+        oaid: '',
+        channelValue: ''
+      }
+    })
+
+  },
+  getMoonInfo: function () {
+    // console.log('是否触发请求');
+    $apis.example.getMoonInfo().then((res) => {
+
+      this.monthData = res.data;
+      // console.log(this.monthData, '查看参数');
+    }).catch((err) => {
+      console.log('请求失败');
+    })
+  },
+  getAcList: function (params) {
+    $apis.example.getAcList().then(res => {
+      this.listData = res.data.records;
+      // console.log('this.listData', this.listData);
+    }).catch((err) => {
+      console.log(err, '请求失败');
+    })
+  },
+  showTisp: function (params) {
+    const that = this;
+    this.$emit('emitEvt')
+    $storage.set({
+      key: 'consentPrivacy',
+      value: '1',
+      success: function (data) {
+        console.log("handling success");
+      },
+      fail: function (data, code) {
+        console.log("handling fail, code=" + code);
+      }
+    })
+  },
+  closeTisp: function (params) {
+    this.$app.exit()
+  },
+  changRecord: $utils.throttle(function (data, id) {
+    this.showMenu = true;
+    // const that = this;
+    this.menuIndex = data
+    this.shouldShowMenu()
+    // this.$element(id).getBoundingClientRect({
+    //   success: function (data) {
+    //     const { top, bottom, left, right, width, height } = data;
+
+    //   },
+    //   fail: (errorData, errorCode) => {
+    //     console.log(errorData, errorCode, '获取错误');
+    //   }
+    // })
+  }, 500),
+  clickJournal: function () {
+    this.showMenu = false;
+    this.menuInde = false
+  },
+  modifyData: function (type, data) {
+    this.clickJournal()
+    let changeData = data
+    const that = this
+    if (type == 'delect') {
+      console.log('删除');
+      console.log(data);
+      $prompt.showDialog({
+        title: '提示',
+        message: '确定删除数据？',
+        buttons: [
+          {
+            text: '删除',
+            color: 'red'
+          },
+          {
+            text: '返回',
+            color: '#000000'
+          }
+        ],
+        success: function (data) {
+          console.log(data);
+          if (data.index == 0) {
+            console.log('进来了判断');
+            $apis.example.delectBillRecord({
+              id: that.listData[that.menuIndex].billRecordId
+            }).then((res) => {
+              $utils.showToast('删除成功')
+              that.getMoonInfo()
+              that.getAcList()
+            }).catch((err) => {
+              $utils.showToast('请稍后重试')
+            })
+          }
+        }
+      })
+
+    } else if (type == 'change') {
+      $router.push({
+        uri: 'pages/bookKeeping',
+        params: {
+          id: that.listData[that.menuIndex].billRecordId
+        }
+      })
+    }
+
+  },
+  shouldShowMenu: function () {
+    if (!this.showMenu) return false;
+    if (this.listData.length === 1) {
+      this.showMenuInde = 0
+      return
+    }
+    if (this.menuIndex >= this.listData.length / 2) {
+      this.showMenuInde = this.menuIndex - 1
+    } else {
+      this.showMenuInde = this.menuIndex + 1
+    }
+  }
+}
+</script>
+
+<style lang="less">
+@import './index.less';
+.home-tisp {
+  position: fixed;
+  top: 0;
+  left: 0;
+  padding: 32px;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+
+  .content {
+    padding: 0 30px;
+    width: 100%;
+    margin: 200px auto;
+    background-color: #ffffff;
+    border-radius: 12px;
+    flex-direction: column;
+    height: 488px;
+    top: 300px;
+    .title {
+      justify-content: center;
+      align-items: center;
+      margin-top: 25px;
+      margin-bottom: 25px;
+      .txt {
+        font-size: 32px;
+        font-weight: 600;
+        color: #000000;
+      }
+    }
+    .subimt {
+      height: 88px;
+      background-color: #3784f9;
+      border-radius: 16px;
+      justify-content: center;
+      align-items: center;
+      margin-top: 50px;
+      .txt {
+        color: #ffffff;
+        font-weight: 600;
+        font-size: 32px;
+      }
+    }
+
+    .close {
+      height: 88px;
+      justify-content: center;
+      align-items: center;
+      .txt {
+        color: #c5c5c5;
+        font-weight: 600;
+        font-size: 32px;
+      }
+    }
+  }
+
+  .details {
+    flex-wrap: wrap;
+    padding: 0 20px;
+    .txt,
+    .active-txt {
+      font-weight: 400;
+
+      color: #000000;
+      font-size: 26px;
+    }
+
+    .active-txt {
+      font-weight: 400;
+      color: #3784f9;
+      font-size: 26px;
+    }
+  }
+}
+</style>

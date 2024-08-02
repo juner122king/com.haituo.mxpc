@@ -1,0 +1,12 @@
+应用名：
+记账小管家
+包名：
+com.haituo.bookkeeping
+
+签名信息
+Certificate Fingerprint
+b8c5aabacaa9bffb2b169054dcc8de9903ed969fc96a93d3f6f2157ebbb50e34
+ 
+Signature Digests
+4365031f68a31f2b7db5cf70b24037e1bf59c2a56377b441d1b02be1c4f6503d
+ 

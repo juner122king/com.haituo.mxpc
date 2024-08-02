@@ -1,0 +1,80 @@
+<template>
+  <div class="original-gift-box">
+    <div class="container" if="{{showOriginalGift}}">
+      <div class="conent"></div>
+      <div class="subimt-btn" @click="clickAd">
+        <text>参与活动</text>
+      </div>
+      <div class="ad-contnt">
+        <slot></slot>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+export default {
+  data: {
+
+  },
+
+  props: {
+    showOriginalGift: {
+      type: Boolean,
+      default: false
+    }
+  },
+
+  onInit() {
+
+
+  },
+  clickAd: function () {
+    // console.log('点击确定按钮');
+    this.$emit('emitSubimt', { data: 'data' })
+  }
+}
+</script>
+
+<style lang="less">
+.original-gift-box {
+  width: 750px;
+  height: 100%;
+  .container {
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    position: fixed;
+    /* justify-content: center; */
+    flex-direction: column;
+    align-items: center;
+    .conent {
+      width: 698px;
+      height: 694px;
+      background-image: url(http://cdn.bank-zone.cn/pro/sy/admin/advertising/570de537e825484e9050832e6bfcbee2.png);
+      background-size: 698px 694px;
+    }
+    .subimt-btn {
+      width: 400px;
+      height: 96px;
+      background-color: #ff5431;
+      border-radius: 84px;
+      justify-content: center;
+      align-items: center;
+      text {
+        font-size: 32px;
+        font-weight: 600;
+        color: #ffffff;
+      }
+    }
+
+    .ad-contnt {
+      width: 670px;
+      height: 248px;
+      border-radius: 16px;
+      margin-top: 30px;
+      background-color: #ffffff;
+    }
+  }
+}
+</style>

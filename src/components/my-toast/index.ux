@@ -1,0 +1,56 @@
+<template>
+  <div class="my-toast-page">
+    <div class="my-toast" if="{{isShowToast}}">
+      <div class="content">
+        <text class="txt">{{ showToatData.title }}</text>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+export default {
+  data: {
+    isShowToast: false,
+    showToatData: {
+      title: '暂无数据',
+      duration: 3
+    }
+  },
+  onInit() {
+
+  },
+  showToast: function (e) {
+    console.log(e, '查看这个e');
+    this.showToatData = e;
+    this.isShowToast = true;
+    setTimeout(() => {
+      this.isShowToast = false;
+    }, e.duration * 1000 || 3 * 1000)
+
+  }
+}
+</script>
+
+<style lang="less">
+.my-toast {
+  width: 100%;
+  height: 100%;
+  position: fixed;
+  top: 0;
+  left: 0;
+  justify-content: center;
+  align-content: center;
+
+  .content {
+    background-color: rgba(0, 0, 0, 0.5);
+    padding: 15px;
+    width: 300px;
+    justify-content: center;
+    .txt {
+      color: #ffffff;
+      font-size: 32px;
+    }
+  }
+}
+</style>

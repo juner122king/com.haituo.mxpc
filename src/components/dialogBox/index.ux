@@ -1,0 +1,64 @@
+<template>
+  <div class="dialog-page" show="{{showDialog}}">
+    <div class="big-content">
+      <div class="content">
+        <div class="hading">
+          <text class="txt">{{ dialogData.hading }}</text>
+        </div>
+        <div class="subheading">
+          <text class="txt">{{ dialogData.subheading }}</text>
+        </div>
+        <div class="btnList">
+          <div class="close-btn" @click="closeBtn">
+            <text class="txt">{{ dialogData.cloneBtn }}</text>
+          </div>
+          <div
+            class="success-btn"
+            @click="clickSuccess"
+            style="{{dialogData.successBtnColor?`background-color:${dialogData.successBtnColor}`:''}}"
+          >
+            <text class="txt">{{ dialogData.successBtn }}</text>
+          </div>
+        </div>
+      </div>
+      <div class="icon-box" show="{{showDialog}}">
+        <image src="{{iconData[dialogData.iconType]}}" class="icon"></image>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+export default {
+  data: {
+    iconData: {
+      success: '../../Common/images/success.png',
+      hint: '../../Common/images/hint.png',
+      warn: "../../Common/images/warn.png",
+      photos: "../../Common/images/photos.png"
+    }
+  },
+  props: {
+    showDialog: {
+      type: Boolean,
+      default: false
+    },
+    dialogData: {
+      type: Object,
+      default: {}
+    },
+  },
+  clickSuccess: function () {
+    console.log('点击成功按钮');
+    this.$emit('emitSuccess')
+  },
+  closeBtn: function () {
+    console.log('点击关闭');
+    this.$emit('emitClone')
+  }
+}
+</script>
+
+<style lang="less">
+@import './index.less';
+</style>

@@ -1,0 +1,24 @@
+<template>
+  <div class="container"></div>
+</template>
+
+<style>
+</style>
+
+<script>
+export default {
+  // 页面的数据模型，private段下的变量仅允许当前页面内代码更改其值。
+  private: {
+    title: 'World'
+  },
+  onInit: function () {
+    this.$app.exit()
+  },
+  onShow: function () {
+    $umeng_stat.resume(this) //在onShow方法的第一行加入此代码
+  }, onHide: function () {
+    $umeng_stat.pause(this);//在onHide方法的第一行加入此代码
+    //App业务代码
+  },
+}
+</script>

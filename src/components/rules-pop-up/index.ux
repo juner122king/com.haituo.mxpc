@@ -1,0 +1,99 @@
+<template>
+  <div class="rules-pop" show="{{showRules}}">
+    <div class="content">
+      <div class="title">
+        <text class="txt">规则说明</text>
+      </div>
+      <div class="details">
+        <text>1.一个账号且一个设备，每日只能提现一次</text>
+        <text>2.提现后1~3个工作日到账</text>
+        <text
+          >3.平台会根据运营能力设置不同的档位额度，具体以提现页面展示为准</text
+        >
+        <text>4.一个账号只能绑1次提现账户，请谨慎使用</text>
+        <text>5.若提现失败，提现金额将返还到您的账户；</text>
+        <text
+          >6.为便于您日常提现，请使用本人支付宝账号，绑定中会进行信息校验。</text
+        >
+      </div>
+
+      <div class="btn" @click="openRule">
+        <text>我已知晓</text>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+export default {
+  data: {
+    text: ""
+  },
+  props: {
+    showRules: {
+      type: Boolean,
+      default: false
+    }
+
+  },
+  openRule: function () {
+    this.$emit('emitOpen')
+  }
+}
+</script>
+<style lang="less">
+.rules-pop {
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  position: fixed;
+  top: 0;
+  left: 0;
+  .content {
+    width: 640px;
+    height: 680px;
+    background-color: #ffffff;
+    border-radius: 16px;
+    flex-direction: column;
+    align-items: center;
+    .title {
+      margin-top: 56px;
+      flex-direction: column;
+      .txt {
+        font-size: 40px;
+        font-weight: 600;
+        color: #1a1a1a;
+        letter-spacing: 0.04px;
+      }
+    }
+
+    .details {
+      width: 544px;
+      flex-direction: column;
+      text {
+        font-size: 32px;
+        font-weight: 400;
+        color: #333333;
+      }
+    }
+
+    .btn {
+      width: 546px;
+      height: 88px;
+      background-color: #3784f9;
+      border-radius: 102px;
+      justify-content: center;
+      align-items: center;
+      margin-top: 20px;
+      text {
+        font-size: 28px;
+        font-weight: 600;
+        color: #ffffff;
+      }
+    }
+  }
+}
+</style>

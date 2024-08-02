@@ -1,0 +1,76 @@
+<template>
+  <div class="reard-pop-component" show="{{tispBoxType}}">
+    <!-- 无次数框 -->
+    <div class="fali-box" if="{{tispBoxType === 'failBox'}}">
+      <image
+        class="cancel-icon"
+        src="/Common/reaw-pop/cancel.png"
+        @click="closePop"
+      ></image>
+      <div class="fali-btn" @click="bindFali"></div>
+    </div>
+    <!-- 提醒奖励框 -->
+    <div class="opne-advertising" if="{{tispBoxType  === 'tispBox'}}">
+      <image
+        class="cancel-icon"
+        src="/Common/reaw-pop/cancel.png"
+        @click="closePop"
+      ></image>
+      <div class="opne-ad-btn" @click="openAd">
+        <text class="txt">{{ awardData.txt }}</text>
+      </div>
+      <div class="slot">
+        <slot></slot>
+      </div>
+    </div>
+    <!-- 红包框 -->
+    <div class="opne-award" if="{{tispBoxType  === 'awardBox'}}">
+      <image
+        class="cancel-icon"
+        src="/Common/reaw-pop/cancel.png"
+        @click="closePop"
+      ></image>
+      <div class="money">
+        <text class="txt">{{ awardData.awardAmount || 0.01 }}</text>
+      </div>
+      <div class="opne-ad-btn" @click="receiveAward"></div>
+    </div>
+  </div>
+</template>
+
+
+<script>
+export default {
+  data: {
+    text: ''
+  },
+  props: {
+    tispBoxType: {
+      type: String,
+      default: ''
+    },
+    awardData: {
+      type: Object,
+      default: {}
+    }
+  },
+  openAd: $utils.throttle(function () {
+    this.$emit('emitOpenad')
+  }),
+  receiveAward: $utils.throttle(function () {
+    this.$emit('emitReceiveaward')
+  })
+  ,
+  bindFali: $utils.throttle(function () {
+    this.$emit('emitBindfali')
+  }),
+  closePop: $utils.throttle(function () {
+    this.$emit('emitClosepop')
+  }),
+}
+
+</script>
+
+<style lang="less">
+@import './index.less';
+</style>

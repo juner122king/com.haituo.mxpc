@@ -1,0 +1,98 @@
+<template>
+  <div class="journal-item">
+    <div class="journal-item-left" if={{type==='default'}}>
+      <div class="time" style="margin-bottom: 3px"><text>{{ billItem.time}}</text></div>
+      <div class="title"><text>{{ billItem.title}}</text></div>
+    </div>
+    <div class="journal-item-left" else>
+        <div class="title" style="margin-bottom: 3px"><text>{{ billItem.title}}</text></div>
+      <div class="time"><text  style="{{type!=='default'?'color: #b3b3b3;':''}}">{{ billItem.createdDt}}</text></div>
+    </div>
+    <div class="journal-item-right">
+      <text class="txt defaultColor" style="{{type!=='default'?'color: #b3b3b3;':''}}">{{billItem.isRevenue?'+':''}}{{billItem.amount}}</text>
+    </div>
+
+  </div>
+</template>
+
+
+
+<script>
+export default {
+  data: {
+    text: '这是我的组件',
+    dataItem: {
+    },
+    type: 'default'
+  },
+  props: {
+    billItem: {
+      type: Object,
+      default: {}
+    },
+    displayType: {
+      type: String,
+      default: 'default1'
+    }
+  },
+  onInit: function () {
+    this.dataItem = this.billItem
+    this.type = this.displayTyp
+  },
+}
+</script>
+
+
+<style lang="less">
+.journal-menu {
+  background-color: #ffffff;
+  width: 300px;
+  box-shadow: 6px 4px 14px #000000;
+  border-radius: 8px;
+  flex-direction: column;
+  padding-left: 20px;
+  position: absolute;
+  left: 40%;
+  top: -50px;
+  text {
+    font-size: 32px;
+    font-weight: bold;
+  }
+}
+
+.journal-item {
+  width: 100%;
+  padding: 32px 56px;
+  justify-content: space-between;
+  border-bottom: 2px solid #f1f1f1;
+  .journal-item-left {
+    flex-direction: column;
+    .title {
+      text {
+        font-size: 28px;
+        font-weight: bold;
+        color: #333333;
+      }
+    }
+    .time {
+      text {
+        font-size: 28px;
+        font-weight: 400;
+        color: #666666;
+      }
+    }
+  }
+
+  .journal-item-right {
+    .txt {
+      font-size: 28px;
+      font-weight: bold;
+      color: #fb7e36;
+      line-height: 40px;
+    }
+  }
+  .defaultColor {
+    color: #b3b3b3;
+  }
+}
+</style>

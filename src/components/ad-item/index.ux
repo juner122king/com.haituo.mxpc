@@ -1,0 +1,299 @@
+<template>
+  <div class="item-container" show="{{showDialog}}">
+    <div if="native.isShow" class="container">
+      <video
+        id="video"
+        if="native.isShowVideo"
+        src="{{native.adVideoSrc}}"
+        autoplay="true"
+        onclick="reportNativeClick()"
+        class="ad-video"
+      ></video>
+      <image
+        class="cancel-icon"
+        src="/Common/reaw-pop/cancel.png"
+        @click="closePop"
+      ></image>
+      <stack class="stackstyle" onclick="reportNativeClick()">
+        <image
+          if="native.isShowImg"
+          class="img"
+          src="{{native.adImgSrc}}"
+        ></image>
+        <ad-button
+          class="adbtn"
+          onclick="startButton()"
+          valuetype="0"
+          adunitid="{{native.adUnitId}}"
+          adid="{{native.adData.adId}}"
+        ></ad-button>
+        <text style="margin-bottom: 8px" class="title">{{
+          native.adData.title
+        }}</text>
+        <text style="margin-bottom: 8px" class="soure"
+          >广告：{{ native.adData.source }}</text
+        >
+      </stack>
+    </div>
+  </div>
+</template>
+<style>
+.item-container {
+  flex-direction: column;
+  margin-top: 20px;
+  width: 100%;
+  margin-bottom: 50px;
+}
+.container {
+  width: 100%;
+  flex-direction: column;
+  align-items: flex-end;
+}
+.stackstyle {
+  width: 100%;
+  height: 300px;
+}
+
+.stackstyle .soure {
+  position: absolute;
+  left: 30px;
+  top: 0;
+  color: #ffffff;
+  font-size: 16px;
+  background-color: rgba(0, 0, 0, 0.5);
+}
+.stackstyle .title {
+  position: absolute;
+  left: 30px;
+  bottom: 0;
+  color: #ffffff;
+  font-size: 16px;
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+.cancel-icon {
+  width: 45px;
+  height: 45px;
+  left: 0px;
+  margin-bottom: 30px;
+}
+.img {
+  width: 100%;
+  height: 100%;
+  border-radius: 20px;
+}
+.closeImg {
+  margin-bottom: 30px;
+  width: 48px;
+  height: 48px;
+}
+.alert {
+  font-size: 40px;
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+
+.ad-video {
+  object-fit: contain;
+  width: 100%;
+  height: 415px;
+}
+.btn {
+  height: 80px;
+  width: 60%;
+  background-color: #00bfff;
+  color: #ffffff;
+  border-radius: 20px;
+  margin-bottom: 20px;
+}
+.btn:active {
+  background-color: #058fbd;
+}
+.adbtn {
+  width: 200px;
+  height: 50px;
+  color: #ffffff;
+  background-color: #00bfff;
+  border-radius: 8px;
+  position: absolute;
+  align-self: flex-end;
+  bottom: 20px;
+  right: 20px;
+}
+.adbtn:active {
+  background-color: #058fbd;
+}
+</style>
+<script>
+let nativeAd;
+const config = require('../../config.js').default
+const device = require('@system.device')
+export default {
+  data: {
+    componentName: "ad",
+    provider: "",
+    native: {
+      adUnitId: "y82ss9y9f7",
+      isShow: false,
+      adData: {},
+      isShowImg: true,
+      isShowVideo: true,
+      isShowData: true,
+      errStr: "",
+      btnTxt: "",
+      adImgSrc: "",
+      adVideoSrc: ""
+    },
+    brand: ""
+  },
+  props: {
+    showDialog: {
+      type: Boolean,
+      default: true
+    },
+  },
+  onInit() {
+    // this.$page.setTitleBar({ text: "Native Ad" });
+    const that = this
+    // device.getInfo({
+    //   success: function (res) {
+    //     that.brand = res.brand;
+    //     if (!config.adCodeData[res.brand]) {
+    //       return
+    //     }
+    //     that.nativeAd = config.adCodeData[res.brand].nativeAd
+    //   },
+    // })
+  },
+  onHide() {
+    $umeng_stat.pause(this);//在onHide方法的第一行加入此代码
+    //App业务代码
+  },
+  onReady(options) {
+    console.info("native ad onReady");
+    this.showNativeAd();
+  },
+  onShow(options) {
+    $umeng_stat.resume(this) //在onShow方法的第一行加入此代码
+    if (this.native.isShow) {
+      this.reportNativeShow();
+    }
+  },
+  getAdProvider: function () {
+    this.provider = $ad.getProvider();
+  },
+  isDownloadAd(creativeType) {
+    let downloadTypes = [103, 106, 107, 108, 101, 102, 110];
+    return downloadTypes.includes(creativeType);
+  },
+  closePop: function () {
+    this.$emit('emitClone', {
+      data: 'clone'
+    })
+  },
+  showNativeAd() {
+    var that = this;
+    this.getAdProvider();
+    if (this.provider !== "huawei") {
+      console.info("the device  does not support ad.");
+      return;
+    }
+    nativeAd = $ad.createNativeAd({ adUnitId: this.native.adUnitId });
+    nativeAd.onLoad(data => {
+      // console.info("ad data loaded: " + JSON.stringify(data));
+      this.native.adData = data.adList[0];
+      $utils.showToast('加载成功')
+      if (this.native.adData) {
+        if (this.native.adData.imgUrlList) {
+          this.native.adImgSrc = this.native.adData.imgUrlList[0];
+          console.info(" this.native.adImgSrc =" + this.native.adImgSrc);
+          this.native.isShowImg = true;
+        } else {
+          this.native.isShowImg = false;
+          this.native.adImgSrc = "";
+        }
+        if (this.native.adData.clickBtnTxt) {
+          this.native.btnTxt = this.native.adData.clickBtnTxt;
+        } else {
+          this.native.btnTxt = "";
+        }
+        if (this.native.adData.videoUrlList && this.native.adData.videoUrlList[0]) {
+          this.native.adVideoSrc = this.native.adData.videoUrlList[0];
+          this.native.isShowVideo = true;
+        } else {
+          this.native.isShowVideo = false;
+          this.native.adVideoSrc = "";
+        }
+        this.native.isShow = true;
+        this.native.errStr = "";
+        this.reportNativeShow();
+      }
+    });
+    nativeAd.onError(e => {
+      $utils.showToast('出错了')
+      console.error("load ad error:" + JSON.stringify(e));
+      this.native.isShowImg = false;
+      this.native.isShowVideo = false;
+      this.native.isShow = false;
+      this.native.errStr = JSON.stringify(e);
+      this.$emit('emitClone', {
+        data: 'error'
+      })
+
+    });
+    nativeAd.load();
+  },
+  reportNativeShow() {
+    if (nativeAd) {
+      nativeAd.reportAdShow({ adId: this.native.adData.adId });
+    }
+  },
+  reportNativeClick() {
+    nativeAd.reportAdClick({
+      adId: this.native.adData.adId
+    });
+    this.$emit('emitClone', {
+      data: 'clone'
+    })
+  },
+  listenNativeAdDownloadStatus(downloadstatus) {
+    if (downloadstatus === "INSTALLED") {
+      this.native.btnTxt = "OPEN";
+    }
+  },
+  startButton(event) {
+    console.error('start download result is = ', event.resultCode)
+  },
+  removeAdListen: function () {
+    if (nativeAd) {
+      nativeAd.offDownloadProgress();
+      nativeAd.offError(() => {
+        console.log("nativeAd offError");
+      });
+      nativeAd.offLoad(() => {
+        console.log("nativeAd offLoad");
+      });
+      nativeAd.offStatusChanged();
+    }
+  },
+  //销毁原生的广告
+  onDestroy() {
+    console.log('触发了广告方法');
+    if (nativeAd) {
+      nativeAd.destroy();
+      this.$emit('emitClone', {
+        data: false
+      })
+    }
+
+  },
+  closeAd: function () {
+    this.native.isShow = false;
+  },
+
+  closeview: function () {
+    console.log('AD点击关闭');
+
+  }
+};
+</script>

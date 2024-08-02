@@ -1,0 +1,259 @@
+<template>
+  <div class="bookkeeping-page">
+    <div class="bookkeeping">
+      <!-- 选择框 -->
+      <div class="bookkeeping-classify">
+        <my-segmented-control
+          theme="{{ currentClassify?'assertive':'royal'}}"
+          current="{{currentClassify}}"
+          values="{{ segments2 }}"
+          onchange="changeCurrentClassify"
+        ></my-segmented-control>
+      </div>
+      <!-- 输入栏 -->
+      <div class="amount-entry">
+        <div class="amount-entry-left">
+          <text class="txt" style="{{ currentClassify?'color:#3784f9':''}}"
+            >￥</text
+          >
+        </div>
+        <input
+          type="number"
+          id="ipt"
+          model:value="{{amount}}"
+          style="{{ currentClassify?'color:#3784f9':''}}"
+          class="amount-entry-ipt"
+          @change="updateValue"
+          @enterkeyclick="saveBill"
+          maxlength="{{15}}"
+        />
+        <div
+          class="amount-entry-save"
+          style="{{ currentClassify?'background-color:#3784f9':''}}"
+          @click="saveBill"
+        >
+          <text class="txt">保存</text>
+        </div>
+      </div>
+      <!-- 记账类型 -->
+      <div class="bookkeeping-type-arr">
+        <block for="selectType">
+          <div
+            @click="changCurrentSubmitType($item)"
+            class="bookkeeping-type-item {{currentSubmitType.id === $item.id ?(currentClassify?'bookkeeping-type-current-blue':'bookkeeping-type-current-item'):''}}"
+          >
+            <text
+              class="{{currentSubmitType.id  === $item.id ?(currentClassify?'theme-color-blue':'theme-color'):''}}"
+              >{{ $item.title }}</text
+            >
+          </div>
+        </block>
+      </div>
+    </div>
+  </div>
+</template>
+<style lang="less">
+@import './index.less';
+</style>
+
+<import name="my-segmented-control" src="../../components/mySegmentedControl/index.ux"></import>
+<script>
+const example = require('../../helper/apis/example.js').default
+export default {
+  // 页面的数据模型，private段下的变量仅允许当前页面内代码更改其值。
+  private: {
+    amount: '',
+    type: {},
+    title: '记账',
+    currentClassify: 0,
+    segments2: ['支出', '收入'],
+    //收入
+    reevenueHeadArr: [
+      {
+        title: '工资收入',
+        id: 1,
+      },
+      {
+        title: '加班收入',
+        id: 2,
+      },
+      {
+        title: '奖金收入',
+        id: 3,
+      },
+      {
+        title: '兼职收入',
+        id: 4,
+      },
+      {
+        title: '礼金收入',
+        id: 5,
+      },
+      {
+        title: '利息收入',
+        id: 6,
+      },
+      {
+        title: '意外来钱',
+        id: 7,
+      },
+      {
+        title: '经营所得',
+        id: 8,
+      },
+      {
+        title: '其他',
+        id: 9,
+      },
+    ],
+    //支出
+    expenditureHeading: [
+      {
+        title: '服装服饰',
+        id: 1,
+      },
+      {
+        title: '早午晚餐',
+        id: 2,
+      },
+      {
+        title: '烟酒茶',
+        id: 3,
+      },
+      {
+        title: '水果零食',
+        id: 4,
+      },
+      {
+        title: '礼金收入',
+        id: 5,
+      },
+      {
+        title: '水电煤气',
+        id: 6,
+      },
+      {
+        title: '房租',
+        id: 7,
+      },
+      {
+        title: '通讯网费',
+        id: 8,
+      },
+      {
+        title: '运动健身',
+        id: 9,
+      },
+      {
+        title: '粮油食杂',
+        id: 10,
+      },
+      {
+        title: '交通费',
+        id: 11,
+      },
+      {
+        title: '运动健身',
+        id: 12,
+      },
+      {
+        title: '其他',
+        id: 13,
+      },
+    ],
+    // 选中的数据
+    currentSubmitType: {},
+    selectType: [],
+  }, onInit(e) {
+    console.log(e);
+    this.billRecordId = e.id || 0;
+  },
+  onShow: function () {
+    $umeng_stat.resume(this) //在onShow方法的第一行加入此代码
+  }, onHide: function () {
+    $umeng_stat.pause(this);//在onHide方法的第一行加入此代码
+    //App业务代码
+  },
+  onReady() {
+    this.focusInput()
+    this.resetSelect()
+  },
+  changeCurrentClassify: function (e) {
+    this.currentClassify = e.detail.index
+    this.resetSelect()
+  },
+  saveBill: $utils.throttle(function () {
+    if (!this.amount) {
+      $prompt.showToast({
+        message: '请输入金额',
+        gravity: 'center'
+      })
+      return
+    }
+    if (!this.isNumeric(this.amount)) {
+      $prompt.showToast({
+        message: '只能输入数字,请删除多余字符',
+        gravity: 'center'
+      })
+      return
+    }
+    const param = {
+      title: this.currentSubmitType.title,
+      isRevenue: this.currentClassify === 1 ? true : false,
+      amount: this.currentClassify === 1 ? (this.amount * 1) : ('-' + this.amount)
+    }
+
+    if (this.billRecordId) {
+      example.changeBillRecord({
+        ...param,
+        id: this.billRecordId
+      }).then((res) => {
+        $prompt.showToast({
+          message: '修改成功',
+          gravity: 'center'
+        })
+        this.amount = ''
+        setTimeout(() => {
+          $router.back()
+        }, 2000)
+      }).catch((err) => {
+        $prompt.showToast({
+          message: '修改失败',
+          gravity: 'center'
+        })
+      })
+    } else {
+      example.postMakeANote({
+        ...param
+      }).then((res) => {
+        $prompt.showToast({
+          message: '记录成功',
+          gravity: 'center'
+        })
+        this.amount = ''
+        console.log('提交成功');
+      }).catch((err) => {
+        console.log(err, '失败');
+      })
+    }
+  }),
+  changCurrentSubmitType: function (e) {
+    this.currentSubmitType = e
+  },
+  focusInput: function () {
+    this.$element('ipt').focus({ focus: true })
+  },
+  resetSelect: function () {
+    this.selectType = this.currentClassify
+      ? this.reevenueHeadArr
+      : this.expenditureHeading
+    this.currentSubmitType = this.selectType[0]
+  }, updateValue: function (e) {
+    this.amount = e.value
+  },
+  isNumeric: function (str) {
+    const numericPattern = /^[0-9]+$/;
+    return numericPattern.test(str);
+  }
+}
+</script>

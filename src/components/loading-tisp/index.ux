@@ -1,0 +1,38 @@
+<template>
+  <div class="sk-chase">
+    <div class="sk-chase-dot sk-chase-dot-1">
+      <div class="sk-chase-dot-before sk-chase-dot-before-1"></div>
+    </div>
+    <div class="sk-chase-dot sk-chase-dot-2">
+      <div class="sk-chase-dot-before sk-chase-dot-before-2"></div>
+    </div>
+    <div class="sk-chase-dot sk-chase-dot-3">
+      <div class="sk-chase-dot-before sk-chase-dot-before-3"></div>
+    </div>
+    <div class="sk-chase-dot sk-chase-dot-4">
+      <div class="sk-chase-dot-before sk-chase-dot-before-4"></div>
+    </div>
+    <div class="sk-chase-dot sk-chase-dot-5">
+      <div class="sk-chase-dot-before sk-chase-dot-before-5"></div>
+    </div>
+    <div class="sk-chase-dot sk-chase-dot-6">
+      <div class="sk-chase-dot-before sk-chase-dot-before-6"></div>
+    </div>
+  </div>
+</template>
+
+<script>
+export default {
+  data: {
+    title: "Hello World. Quickapp Component."
+  },
+
+  props: [],
+
+  onInit() { }
+}
+</script>
+
+<style lang="less">
+@import './spin.less';
+</style>
