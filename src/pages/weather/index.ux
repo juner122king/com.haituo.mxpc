@@ -2,19 +2,80 @@
   <div class="page">
    <div class="bg"></div> 
   <div class="top_view">
-    
-    
-
-    <div>
-       <text class="currenttemp">{{now.temperature}}</text>
-       <text class="sky">{{now.weather}}</text>
-    </div>
   
-    <text class="air">湿度{{now.sd}}|{{now.wind_direction}}{{now.wind_power}}|{{aqiDetail.quality}}{{aqiDetail.pm2_5}}</text>
+    <div class="tempinfo">
+       <text class="currenttemp">{{now.temperature}}</text>
+
+       <div class="info" >
+            <text class="du">℃</text>
+         <text class="sky">{{now.weather}}</text>
+       </div>
+       
+    </div>
+    <text class="air">湿度{{now.sd}} | {{now.wind_direction}}{{now.wind_power}} | {{now.aqiDetail.quality}}{{now.aqiDetail.pm2_5}}</text>
+
+    <div class="todayandtomr">
+        <div class="child">
+          <image src="{{f1.day_weather_pic}}">
+          </image>
+          <text class="c-text">今天  {{f1.day_weather}}{{f1.night_air_temperature}}/{{f1.day_air_temperature}}°</text>
+
+        </div>
+        <div class="vertical-line"></div>
+        <div class="child">
+           <image src="{{f2.day_weather_pic}}"></image>
+        
+             <text class="c-text">明天  {{f2.day_weather}}{{f2.night_air_temperature}}/{{f2.day_air_temperature}}°</text>
+             </div>
+    </div>
 
   </div>
 
+<div class="title">
+    <div class="line">
+    
+    </div>
+   <text class="text">24小时预报</text>
+</div>
+<div>
+ 
+<list id="weather24hor" class="weather24hor" >
+      <list-item  type="vertical-list" class="item" for="{{hour3Forcast}}">
+              <text class="text">{{$item.hour}}</text>
+                 <image class="pic" src="{{$item.weather_pic}}"></image>
+      <text class="text">{{$item.weather}}</text>
+      <text class="text">{{$item.temperature}}C°</text>
+      </list-item>
 
+</list>
+</div>
+
+ <div class="title">
+    <div class="line"></div>
+   <text class="text">未来7天天气</text>
+</div>
+
+<list  class="weather7day">
+
+           <!-- 列表元素，属性type值相同时，需要确保渲染中dom结构相同 -->
+      <list-item  type="h-list" class="item" for="{{weather7day}}">
+              <text>{{$item.day}}</text>
+              <div class="item-air">
+                 <image class="pic" src="{{$item.day_weather_pic}}"></image>
+      <text>{{$item.day_weather}}</text>
+              </div>
+     
+      <text>{{$item.night_air_temperature}}°~{{$item.day_air_temperature}}°</text>
+      
+      <div class="line">
+        
+      </div>
+      </list-item>
+
+</list >
+
+
+</div>
 
   </div>
 </template>
@@ -24,8 +85,34 @@
 export default {
 
   data: {
-    now: {},//实时天气信息
-    aqiDetail: {}//实时天气信息-空气信息
+    now: {
+      weather_pic: '',
+      temperature: '--',
+      weather: '--',
+      sd: '--',
+      wind_direction: '-',
+      wind_power: '-',
+      aqiDetail: {
+        quality: '-',
+        pm2_5: '-'
+      }
+    },//实时天气信息
+
+    weather7day: [],//7天天气信息
+    f1: {
+      day_weather: '--',
+      night_air_temperature: '--',
+      day_air_temperature: '--',
+
+    },//当天天气
+    f2: {
+      day_weather: '--',
+      night_air_temperature: '--',
+      day_air_temperature: '--'
+    },//明天天气
+    hour3Forcast: [],//3小时间隔
+    nowhour: 0//当前小时
+
   },
   onInit() {
     var that = this
@@ -44,12 +131,65 @@ export default {
     const onCatchCallback = (res) => {
       let data = JSON.parse(res)
       console.log(data, '获取当前天气回调信息data')
-      this.now = data.showapi_res_body.now
-      this.aqiDetail = data.showapi_res_body.now.aqiDetail
+      if (data.showapi_res_body) {
+        this.now = data.showapi_res_body.now
+
+
+        this.f1 = data.showapi_res_body.f1
+        this.f2 = data.showapi_res_body.f2
+        const f3 = data.showapi_res_body.f3
+        const f4 = data.showapi_res_body.f4
+        const f5 = data.showapi_res_body.f5
+        const f6 = data.showapi_res_body.f6
+        const f7 = data.showapi_res_body.f7
+
+        this.hour3Forcast = this.f1["3hourForcast"]
+
+        this.weather7day.push(this.f1)
+        this.weather7day.push(this.f2)
+        this.weather7day.push(f3)
+        this.weather7day.push(f4)
+        this.weather7day.push(f5)
+        this.weather7day.push(f6)
+        this.weather7day.push(f7)
+
+
+        this.weather7day = this.formatData(this.weather7day)
+
+
+        this.goIndex()
+
+      }
     }
 
     $utils.getWeatherInfo(onCatchCallback, lng, lat)
-  }
+  },
+
+  //自动滑动到当前时刻
+  goIndex: function () {
+    this.$element('weather24hor').scrollTo({ index: 3, behavior: 'smooth' })
+
+  },
+
+  //格式化日期
+  formatData(data) {
+    return data.map((item, index) => {
+      let date = (item.day).toString();
+      // 提取月份和日期部分
+      let formattedDate = date.substring(4, 6) + '/' + date.substring(6, 8);
+      // 判断是否为第一项，如果是则设为'今天'
+      if (index === 0) {
+        formattedDate = ' 今天  ';
+      }
+      return {
+        day: formattedDate,
+        day_weather: item.day_weather,
+        day_weather_pic: item.day_weather_pic,
+        night_air_temperature: item.night_air_temperature,
+        day_air_temperature: item.day_air_temperature
+      };
+    });
+  },
 
 }
 </script>

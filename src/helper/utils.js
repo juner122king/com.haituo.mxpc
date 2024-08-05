@@ -427,19 +427,20 @@ async function buriedPointReport(these, event = 'AppLaunch', adId = '') {
 const getWeatherInfo = async (onCatchCallback, lng, lat) => {
 
   const params = {
-    appKey: '276D814076B64BA8881d0EcDfA884f95',
+    appKey: '2D30bc634AA046B4A9f3f185F9eCB310',
     needAlarm: 0,
-    needMoreDay: 0,
-    need3HourForcast: 0,
+    needMoreDay: 1,
+    need3HourForcast: 1,
     needIndex: 0,
     from: 1,
     needHourData: 0,
     lng: lng,
     lat: lat
   }
-  $apis.weather.getNowWeather({ ...params })
+  $apis.weather.get7dayWeather({ ...params })
     .catch(onCatchCallback)
 
+    
 };
 
 
