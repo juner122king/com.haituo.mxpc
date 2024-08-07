@@ -145,6 +145,12 @@
       },
       "pages/weather": {
         "component": "index"
+      },
+      "pages/testing": {
+        "component": "index"
+      },
+      "pages/testing/detail": {
+        "component": "index"
       }
     },
     "widgets": {
@@ -233,6 +239,18 @@
         "titleBar": false
       },
       "pages/weather": {
+        "titleBar": false,
+        "menu": false,
+        "statusBarImmersive": true,
+        "statusBarBackgroundOpacity": 0
+      },
+      "pages/testing": {
+        "titleBar": false,
+        "menu": false,
+        "statusBarImmersive": true,
+        "statusBarBackgroundOpacity": 0
+      },
+      "pages/testing/detail": {
         "titleBar": false,
         "menu": false,
         "statusBarImmersive": true,

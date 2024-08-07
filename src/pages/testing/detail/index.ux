@@ -1,0 +1,66 @@
+<template>
+  <div class="page">
+    <text class="page_title">{{key}}</text>
+       
+
+    <div class="div">
+      <div class="problem" if="{{!isResults}}">
+
+        <text class="title">{{detail.title}}</text>
+        <div class="list" for="{{detail.options}}" >
+           <text onclick="itemClick($item,$idx)" class="{{selectedIdx===$idx?'content_active':'content'}}">{{$item.optionContent}}</text>
+        </div> 
+        <text onclick="getResults" class="button">获取结果</text>
+      </div>
+      <div class="result" if="{{isResults}}">
+            <text style="font-size: 34px;font-weight: bold;color: #000000;">测评结果:</text>
+            <text style="font-size: 28px;margin-top: 30px;">如果你选择尝试逃避或推迟解决问题，这可能表明你的情商稍低。面对困难时，避免去面对或解决问题可能会导致问题进一步恶化。学会面对挑战并寻找解决方案是发展情商的关键。</text>
+      </div>
+
+    </div>
+  </div>
+</template>
+
+<script>
+export default {
+  data: {
+    key: "",//问题id
+    detail: {},
+    selectedIdx: -1, // 选中的索引
+    isResults: false
+  },
+  onInit() {
+
+    // this.$page.setTitleBar({ text: this.key })
+
+    $apis.testing.detail(this.key).then((res) => {
+
+      console.log(res, '测评详情data')
+      this.detail = res.data
+    })
+  },
+  itemClick(e, idx) {
+    console.log(e, '点击')
+    console.log(idx, '索引')
+    this.selectedIdx = idx
+  },
+  getResults() {
+
+    if (this.selectedIdx === -1) {
+
+      $prompt.showToast({
+        message: '请选择一个选项!',
+        gravity: 'center'
+      })
+
+    } else {
+      this.isResults = true
+    }
+
+  }
+}
+</script>
+
+<style lang="less">
+@import './index.less';
+</style>

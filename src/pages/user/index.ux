@@ -59,7 +59,7 @@
 <import name="my-service" src="../../components/myService/index.ux"></import>
 <!-- <import name="sign-in-box" src="../../components/signInBox/index.ux"></import> -->
 <import name="bene-fits-list" src="../../components/benefitsList/index.ux"></import>
-
+<import name="my-banner" src="../../components/banner-item/index.ux"></import>
 <script>
 const user = require('../../helper/apis/user.js').default
 const config = require('../../config.js').default

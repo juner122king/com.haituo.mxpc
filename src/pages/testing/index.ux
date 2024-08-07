@@ -1,0 +1,64 @@
+<template>
+  <div class="page">
+    <div class="top_view"> 
+      <image class="icon" src="./img/icon.png"></image>
+      <image onclick="routePageDetail('情商测试，你的EQ值多少？')" class="button" src="./img/button.png"></image>
+      <text class="text">17876人已测</text>
+    </div>
+    
+      <list  class="list" >
+        <list-item  type="vertical-list" class="item" for="{{lists}}">
+        
+          <image class="pic" src="{{$item.icon}}"></image>
+
+   <text class="title">{{$item.title}}</text>
+          <text class="subTitle">{{$item.subTitle}}</text>
+          <text class="userCount">{{$item.userCount}}+人已测</text>
+
+          <div onclick="routePageDetail($item.pcId)" class="button">
+            <text class="text">立即测试</text>
+          </div>
+  
+        </list-item>  
+      </list>
+  </div>
+</template>
+
+<script>
+export default {
+
+  data: {
+    lists: [
+
+
+    ],//测试列表
+
+  },
+  onInit() {
+
+
+    $apis.testing.list().then((res) => {
+
+      console.log(res, '测评列表data')
+      this.lists = res.data.records
+      console.log(this.lists, 'lists测评列表')
+    })
+
+  },
+  // 跳转到问答页面
+  routePageDetail(id) {
+    console.log(id, '选中id')
+    $router.push({
+      uri: 'pages/testing/detail',
+      params: { key: id ,
+      
+      }
+    })
+  }
+
+}
+</script>
+
+<style lang="less">
+@import './index.less';
+</style>

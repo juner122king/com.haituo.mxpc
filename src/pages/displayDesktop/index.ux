@@ -1,21 +1,19 @@
-<import name="Home" src="../Home/index.ux"></import>
+<import name="testing" src="../testing/index.ux"></import>
 <import name="user" src="../user/index.ux"></import>
-<import name="waterBill" src="../waterBill/index.ux"></import>
 <import name="weather" src="../weather/index.ux"></import>
 <template>
   <div class="container">
     <tabs index="{{selectedTab}}" onchange="changeTabactive">
       <tab-content>
-        <Home
+        <testing
           index="0"
           current-index="{{exhibitionIndex}}"
           ishow-tisp="{{ishowTisp}}"
           onemit-evt="showTisp"
         >
-        </Home>
-        <waterBill index="1" current-index="{{exhibitionIndex}}"></waterBill>
-        <weather index="2" current-index="{{exhibitionIndex}}"></weather>
-        <user index="3" current-index="{{exhibitionIndex}}"></user>
+        </testing>
+        <weather index="1" current-index="{{exhibitionIndex}}"></weather>
+        <user index="2" current-index="{{exhibitionIndex}}"></user>
       </tab-content>
 
       <tab-bar class="tab_bar">
@@ -94,8 +92,8 @@ export default {
       list: [{
         id: 0,
         color: '#FF7500',
-        pic: 'https://cdn.ipandata.com/app/bookkeeping/tabbar/home.png',
-        pic_choice: 'https://cdn.ipandata.com/app/bookkeeping/tabbar/a-home.png',
+        pic: 'https://cdn.ihaituo.cn/qa/app/mxpc/tabbar/testing-a.png',
+        pic_choice: 'https://cdn.ihaituo.cn/qa/app/mxpc/tabbar/testing.png',
         show: true,
         title: '测评',
         pagePath: '/pages/Home',
@@ -104,28 +102,18 @@ export default {
       {
         id: 1,
         color: '#878787',
-        pic: 'https://cdn.ipandata.com/app/bookkeeping/tabbar/will.png',
-        pic_choice: 'https://cdn.ipandata.com/app/bookkeeping/tabbar/a-will.png',
-        show: false,
-        title: '知识',
-        pagePath: '/pages/waterBill',
-        path: 'pages/waterBill',
-      },
-      {
-        id: 2,
-        color: '#878787',
-        pic: 'http://cdn.bank-zone.cn/test/sy/admin/activity/cff392fec3594e9794e6b7c94a0094dc.png',
-        pic_choice: 'http://cdn.bank-zone.cn/test/sy/admin/activity/8d427c22e3df4e6aae115e433ae87f24.png',
+        pic: 'https://cdn.ihaituo.cn/qa/app/mxpc/tabbar/weather-a.png',
+        pic_choice: 'https://cdn.ihaituo.cn/qa/app/mxpc/tabbar/weather.png',
         show: false,
         title: '天气',
         pagePath: '/pages/weather',
         path: 'pages/weather',
       },
       {
-        id: 3,
+        id: 2,
         color: '#878787',
-        pic: 'https://cdn.ipandata.com/app/bookkeeping/tabbar/user.png',
-        pic_choice: 'https://cdn.ipandata.com/app/bookkeeping/tabbar/a-user.png',
+        pic: 'https://cdn.ihaituo.cn/qa/app/mxpc/tabbar/user-a.png',
+        pic_choice: 'https://cdn.ihaituo.cn/qa/app/mxpc/tabbar/user.png',
         show: false,
         title: '我的',
         pagePath: '/pages/user',

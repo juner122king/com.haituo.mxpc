@@ -125,6 +125,7 @@ export default {
         console.log(`handling fail, code = ${code}, errorMsg=${data}`)
       }
     })
+    
   },
 
   nowWeather: function (lng, lat) {
@@ -167,7 +168,7 @@ export default {
 
   //自动滑动到当前时刻
   goIndex: function () {
-    this.$element('weather24hor').scrollTo({ index: 3, behavior: 'smooth' })
+    this.$element('weather24hor').scrollTo({ index: 1, behavior: 'smooth' })
 
   },
 
