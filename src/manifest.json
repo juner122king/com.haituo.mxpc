@@ -7,18 +7,11 @@
   "icon": "/Common/logo.png",
   "designWidth": 750,
   "features": [
-    {
-      "name": "system.barcode"
-    },
+
     {
       "name": "system.request"
     },
-    {
-      "name": "system.clipboard"
-    },
-    {
-      "name": "system.media"
-    },
+ s
     {
       "name": "system.prompt"
     },
@@ -152,19 +145,6 @@
       "pages/testing/detail": {
         "component": "index"
       }
-    },
-    "widgets": {
-      "CardDemo": {
-        "name": "CardDemo",
-        "description": "快应用卡片展示",
-        "component": "index",
-        "path": "/CardDemo",
-        "minPlatformVersion": 1032,
-        "targetManufactorys": [
-          "vivo"
-        ],
-        "features": []
-      }
     }
   },
   "display": {
@@ -172,7 +152,7 @@
     "titleBarTextColor": "#414141",
     "pages": {
       "pages/Home": {
-        "titleBarText": "记账小管家",
+        "titleBarText": "喵星测评",
         "titleBarBackgroundOpacity": 0.1,
         "statusBarBackgroundOpacity": 0.1
       },

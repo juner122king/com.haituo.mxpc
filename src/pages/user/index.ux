@@ -243,7 +243,7 @@ export default {
     let data = {
       adType: 'NATIVE',
       adId: config.adCodeData.nativeAd,
-      channel: "AC_0001"
+      channel: "mxpc"
     }
     let headers = {
       ...this.param,

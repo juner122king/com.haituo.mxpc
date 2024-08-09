@@ -36,7 +36,7 @@ const getTokenData = () => {
     example
       .toLogin({
         loginType: 'DEVICE',
-        appId: 'AC_0001',
+        appId: 'mxpc',
         deviceNum,
         loginAccount: deviceNum,
       })
@@ -85,6 +85,7 @@ const request = (options) => {
       headers = {},
       isforeignAddress = false,
     } = options
+
     const authData =
       (await $storage.get({
         key: 'AUTH_TOKEN_DATA',
@@ -136,6 +137,7 @@ const request = (options) => {
         return retry
       }
     }
+
     headers.Authorization = accessToken || ''
     $fetch.fetch({
       url: isforeignAddress ? url : config.BASEHOST + url,
@@ -172,12 +174,12 @@ const request = (options) => {
               reject(res.data)
             }
           }
-        } catch (error) {}
+        } catch (error) { }
       },
       fail: function (err) {
         reject(err)
       },
-      complete: function (res) {},
+      complete: function (res) { },
     })
   })
 }

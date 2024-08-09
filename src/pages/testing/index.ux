@@ -2,25 +2,59 @@
   <div class="page">
     <div class="top_view"> 
       <image class="icon" src="./img/icon.png"></image>
-      <image onclick="routePageDetail('情商测试，你的EQ值多少？')" class="button" src="./img/button.png"></image>
+      <image onclick="routePageDetail('1821799037569380354')" class="button" src="./img/button.png"></image>
       <text class="text">17876人已测</text>
     </div>
-    
-      <list  class="list" >
-        <list-item  type="vertical-list" class="item" for="{{lists}}">
-        
-          <image class="pic" src="{{$item.icon}}"></image>
 
-   <text class="title">{{$item.title}}</text>
+
+    <list  class="list" >
+        <list-item  type="vertical-list" class="item" for="{{lists}}">
+          <image class="pic" src="{{$item.icon}}"></image>
+          <text class="title">{{$item.title}}</text>
           <text class="subTitle">{{$item.subTitle}}</text>
           <text class="userCount">{{$item.userCount}}+人已测</text>
-
           <div onclick="routePageDetail($item.pcId)" class="button">
-            <text class="text">立即测试</text>
+          <text class="text">立即测试</text>
           </div>
-  
         </list-item>  
-      </list>
+    </list>
+
+
+    <div show="{{!isaddDesktop}}" class="buttom_view">
+         <image class="logo" src="/Common/logo.png"></image>
+         <text style="color:#f0f8ff;margin-left: -80px;">添加桌面立享极速轻体验</text>
+          <text onclick="addDesktop" class="text">立即添加</text>
+         
+    </div>
+  <div class="home-tisp" show="{{ishowTisp}}">
+      <div class="content">
+        <div class="title"><text class="txt">用户协议隐私政策提醒</text></div>
+        <div class="details">
+          <text class="txt">
+            感谢您使用喵星测评请您在使用(或继续使用)我们的产品服务前仔细阅读
+
+            <a
+              href="https://www.ihaituo.cn/xy/mxpc/yhxy.html"
+              class="active-txt"
+              >《用户协议》</a
+            >
+            和
+            <a
+              href="https://www.ihaituo.cn/xy/mxpc/yszc.html"
+              class="active-txt"
+              >《隐私政策》</a
+            >
+            我们将全力保障您的合法权益与信息安全，并将持续为您提供优质服务。
+          </text>
+        </div>
+        <div class="subimt" @click="showTisp">
+          <text class="txt">同意</text>
+        </div>
+        <div class="close" @click="closeTisp">
+          <text class="txt">拒绝并退出</text>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -29,20 +63,40 @@ export default {
 
   data: {
     lists: [
-
-
     ],//测试列表
+    isaddDesktop: false
+  },
+  props: {
 
+    ishowTisp: {
+      type: Boolean,
+      default: false
+    }
   },
   onInit() {
 
+    $shortcut.hasInstalled({
+      success: function (ret) {
+        console.log('hasInstalled success ret---' + ret);
+        this.isaddDesktop = ret
+      }.bind(this),
+      fail: function (erromsg, errocode) {
+        console.log('hasInstalled fail ret---' + erromsg);
+      }.bind(this),
+      complete: function () {
+      }
+    })
 
+
+
+  },
+  onReady() {
     $apis.testing.list().then((res) => {
-
       console.log(res, '测评列表data')
       this.lists = res.data.records
       console.log(this.lists, 'lists测评列表')
     })
+
 
   },
   // 跳转到问答页面
@@ -50,15 +104,115 @@ export default {
     console.log(id, '选中id')
     $router.push({
       uri: 'pages/testing/detail',
-      params: { key: id ,
-      
+      params: { key: id }
+    })
+  },
+  //添加桌面
+  addDesktop() {
+
+    if (!this.isaddDesktop) {
+      this.isaddDesktop = true
+      $shortcut.install({
+        message: '添加桌面方式更方便',
+        success: function (ret) {
+        },
+        fail: function (erromsg, errocode) {
+        }.bind(this),
+      })
+    }
+  }, showTisp: function (params) {
+    const that = this;
+    this.$emit('emitEvt')
+    $storage.set({
+      key: 'consentPrivacy',
+      value: '1',
+      success: function (data) {
+        console.log("handling success");
+      },
+      fail: function (data, code) {
+        console.log("handling fail, code=" + code);
       }
     })
-  }
+  },
+  closeTisp: function (params) {
+    this.$app.exit()
+  },
 
 }
 </script>
 
 <style lang="less">
 @import './index.less';
+.home-tisp {
+  position: fixed;
+  top: 0;
+  left: 0;
+  padding: 32px;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+
+  .content {
+    padding: 0 30px;
+    width: 100%;
+    margin: 200px auto;
+    background-color: #ffffff;
+    border-radius: 12px;
+    flex-direction: column;
+    height: 488px;
+    top: 300px;
+    .title {
+      justify-content: center;
+      align-items: center;
+      margin-top: 25px;
+      margin-bottom: 25px;
+      .txt {
+        font-size: 32px;
+        font-weight: 600;
+        color: #000000;
+      }
+    }
+    .subimt {
+      height: 88px;
+      background-color: #3784f9;
+      border-radius: 16px;
+      justify-content: center;
+      align-items: center;
+      margin-top: 50px;
+      .txt {
+        color: #ffffff;
+        font-weight: 600;
+        font-size: 32px;
+      }
+    }
+
+    .close {
+      height: 88px;
+      justify-content: center;
+      align-items: center;
+      .txt {
+        color: #c5c5c5;
+        font-weight: 600;
+        font-size: 32px;
+      }
+    }
+  }
+
+  .details {
+    flex-wrap: wrap;
+    padding: 0 20px;
+    .txt,
+    .active-txt {
+      font-weight: 400;
+
+      color: #000000;
+      font-size: 26px;
+    }
+
+    .active-txt {
+      font-weight: 400;
+      color: #3784f9;
+      font-size: 26px;
+    }
+  }
+}
 </style>

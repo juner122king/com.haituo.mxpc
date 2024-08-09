@@ -11,6 +11,7 @@ const $prompt = require("@system.prompt")
 const $ad = require('@service.ad')
 const $device = require('@system.device')
 const $geolocation = require('@system.geolocation')
+const $shortcut = require('@system.shortcut')
 /* @desc: 注入方法至全局 global,以便页面调用 */
 const hook2global = global.__proto__ || global
 hook2global.$utils = $utils
@@ -21,12 +22,10 @@ hook2global.$prompt = $prompt
 hook2global.$ad = $ad
 hook2global.$device = $device
 hook2global.$geolocation = $geolocation
+hook2global.$shortcut = $shortcut
 export default {
   onCreate() {
     $umeng_stat.init(this);   //在onCreate函数中加入该行代码，必须添加！！
-
-
-
   },
   globalData: {
     adloadingfailure: false, //广告是否加载失败

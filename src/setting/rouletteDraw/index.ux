@@ -460,7 +460,7 @@ export default {
     let data = {
       adType: adtype,
       adId: adtype === 'NATIVE' ? this.adObj.lotteryPageNativeAd : this.adObj.stimulateAd,
-      channel: 'AC_0001',
+      channel: 'mxpc',
       completeType: 'WHEEL_OF_FORTUNE',
       isLeadCopyFetch: type === 'lottery-native' ? true : false
     }

@@ -1,7 +1,11 @@
 <template>
   <div class="page">
-    <text class="page_title">{{key}}</text>
-       
+  
+      <div class="page_title" onclick="back">
+      <image style="  width: 40px;height: 40px;" src="../img/back.png"></image>
+        <text class="text">{{detail.subTitle}}</text>
+    </div>
+
 
     <div class="div">
       <div class="problem" if="{{!isResults}}">
@@ -14,7 +18,7 @@
       </div>
       <div class="result" if="{{isResults}}">
             <text style="font-size: 34px;font-weight: bold;color: #000000;">测评结果:</text>
-            <text style="font-size: 28px;margin-top: 30px;">如果你选择尝试逃避或推迟解决问题，这可能表明你的情商稍低。面对困难时，避免去面对或解决问题可能会导致问题进一步恶化。学会面对挑战并寻找解决方案是发展情商的关键。</text>
+            <text style="font-size: 28px;margin-top: 30px;">{{detail.options[selectedIdx].optionAnswer}}</text>
       </div>
 
     </div>
@@ -27,7 +31,8 @@ export default {
     key: "",//问题id
     detail: {},
     selectedIdx: -1, // 选中的索引
-    isResults: false
+    isResults: false,
+    optionAnswer:''
   },
   onInit() {
 
@@ -43,6 +48,7 @@ export default {
     console.log(e, '点击')
     console.log(idx, '索引')
     this.selectedIdx = idx
+
   },
   getResults() {
 
@@ -56,8 +62,10 @@ export default {
     } else {
       this.isResults = true
     }
-
-  }
+  },
+  back() {
+    $router.back()
+  },
 }
 </script>
 

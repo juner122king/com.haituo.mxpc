@@ -11,15 +11,20 @@
         margin-top: 90px;
         font-size: 34px;
         width: 90%;
-
-        font-weight: bold;
-        text-align: left;
-        color: #000000;
+        align-items: center;
+        .text{
+            font-weight: bold;
+            text-align: left;
+            font-size: 36px;
+            width: 60%;
+            color: #000000;
+            lines: 1;
+            text-overflow: ellipsis;
+        }
     }
 
     .div {
         width: 90%;
-        height: 830px;
         background-color: #fff;
         border-radius: 30px;
         flex-direction: column;
@@ -36,7 +41,7 @@
                 margin-bottom: 20px;
                 font-size: 32px;
                 font-weight: bold;
-                text-align: center;
+                text-align: left;
                 color: #000000;
             }
 
@@ -48,29 +53,29 @@
 
                 .content {
 
-                    width: 100%;
+                    width:630px;
                     height: 130px;
                     border: 1px solid #b0b0b0;
                     border-radius: 96px;
                     padding: 20px 40px 20px 40px;
                     font-size: 28px;
                     font-weight: bold;
-                    text-align: LEFT;
-                    line-height: 36px;
                     background: linear-gradient(90deg, #ffffff, #ffffff 100%);
+                    lines: 2;
+                    text-overflow: ellipsis;
                 }
 
                 .content_active {
-                    width: 100%;
+                    width: 640px;
                     height: 130px;
                     border: 1px solid #b0b0b0;
                     border-radius: 96px;
                     padding: 20px 40px 20px 40px;
                     font-size: 28px;
                     font-weight: bold;
-                    text-align: LEFT;
-                    line-height: 36px;
                     background: linear-gradient(90deg, #cd8eff, #9584ff 100%);
+                    lines: 2;
+                    text-overflow: ellipsis;
                 }
 
             }
@@ -78,7 +83,7 @@
             .button {
                 margin-top: 40px;
                 width: 100%;
-                padding: 20px 46px 20px 46px;
+                padding: 20px 56px 20px 56px;
                 background: linear-gradient(90deg, #cd8eff, #9584ff 100%);
                 border-radius: 96px;
                 color: #fff;
@@ -88,7 +93,7 @@
         .result{
             padding: 30px;
                 flex-direction: column;
-            
+                line-height: 32px;
         }
     }
 

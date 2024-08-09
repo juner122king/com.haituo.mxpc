@@ -434,6 +434,9 @@ export default {
     this.$app.$def.globalData.isShwoAd = false
   },
   getCompleteCount() {
+
+    let nad = config.adCodeData[this.brand].nativeAd;
+    console.log('nid',nad)
     $apis.task
       .getCompleteCount({
         adId: config.adCodeData[this.brand].nativeAd,
@@ -473,7 +476,7 @@ export default {
     let data = {
       adType: 'NATIVE',
       adId: config.adCodeData[this.brand].nativeAd,
-      channel: 'AC_0001',
+      channel: 'mxpc',
       countMax: 12,
     }
     let headers = {
@@ -673,7 +676,7 @@ export default {
     let data = {
       adType: 'REWARDED_VIDEO',
       adId: config.adCodeData[this.brand].stimulateAd,
-      channel: 'AC_0001',
+      channel: 'mxpc',
       countMax: 2,
       brand: this.brand,
       completeType: 'WATCH_VIDEO'

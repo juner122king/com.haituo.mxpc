@@ -1,7 +1,7 @@
 应用名：
-记账小管家
+喵星测评
 包名：
-com.haituo.bookkeeping
+com.haituo.mxpc
 
 签名信息
 Certificate Fingerprint

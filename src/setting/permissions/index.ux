@@ -21,8 +21,9 @@ export default {
     title: 'World'
   },
   goPremissiions: function () {
+    
     $router.push({
-      uri: "hap://settings/permission_manager"
+      uri: "hap://settings/permissions"
     })
   },
   onShow: function () {

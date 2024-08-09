@@ -86,8 +86,8 @@ export default {
     cruunItem: 1,
     exhibitionIndex: 1,
     datas: {
-      color_normal: '#C8C8C8',
-      color_active: '#00B2FF',
+      color_normal: '#000000',
+      color_active: '#8E89FC',
       show: true,
       list: [{
         id: 0,

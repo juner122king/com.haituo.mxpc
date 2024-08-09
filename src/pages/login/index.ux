@@ -1,7 +1,7 @@
 <template>
   <div class="login-page">
     <div class="login-title">
-      <text class="heading">欢迎来到记账小管家</text>
+      <text class="heading">欢迎来到喵星测评</text>
       <text class="subhead">使用手机号快捷登录，享受更多专属权益</text>
     </div>
     <div class="phone-num">
@@ -57,11 +57,11 @@
       />
       <div class="" style="left: -36px">
         <text class="default">勾选同意</text>
-        <a href="https://www.ihaituo.cn/xy/jz/yhxy.html" class="agreement"
+        <a href="https://www.ihaituo.cn/xy/mxpc/yhxy.html" class="agreement"
           >《用户协议》</a
         >
         <text class="default">和</text>
-        <a href="https://www.ihaituo.cn/xy/jz/yszc.html" class="agreement"
+        <a href="https://www.ihaituo.cn/xy/mxpc/yszc.html" class="agreement"
           >《隐私政策》</a
         >
       </div>
@@ -192,7 +192,7 @@ export default {
     const param = {
       loginType: 'PHONE',
       code: this.authCode,
-      appId: "AC_0001",
+      appId: "mxpc",
       loginAccount: this.phone,
       deviceNum: this.deviceNum,
       phone: this.phone

@@ -40,7 +40,7 @@ export default {
         imge: "/Common/images/Help_.png",
         type: 'help',
         isjump: 'true',
-        path: "https://www.ihaituo.cn/xy/jz/bzzx.html",
+        path: "https://www.ihaituo.cn/xy/mxpc/bzzx.html",
         iShow: true
       },
       {
@@ -48,7 +48,7 @@ export default {
         imge: "/Common/images/Agreement_.png",
         type: 'userAgreement',
         isjump: 'true',
-        path: "https://www.ihaituo.cn/xy/jz/yhxy.html",
+        path: "https://www.ihaituo.cn/xy/mxpc/yhxy.html",
         iShow: true
       },
       {
@@ -56,7 +56,7 @@ export default {
         imge: "/Common/images/Protect.png",
         type: 'privacyPolicy',
         isjump: 'true',
-        path: "https://www.ihaituo.cn/xy/jz/yszc.html",
+        path: "https://www.ihaituo.cn/xy/mxpc/yszc.html",
         iShow: true
       },
       {
