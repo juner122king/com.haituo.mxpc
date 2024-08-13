@@ -277,15 +277,16 @@ export default {
     this.getSignday()
     device.getInfo({
       success: function (res) {
-        let adBrand = $ad.getProvider()
+        let adBrand = $ad.getProvider() ||'huawei'//华为手机有可能为返回空
         const phoninfo = res;
         that.brand = adBrand;
+
+        console.log(adBrand, 'adBrand', res.brand, 'res.brand')
 
         that.adData = config.adCodeData[adBrand] || config.adCodeData[res.brand] || {}
         if (!config.adCodeData[res.brand] && !config.adCodeData[adBrand]) {
           return
         }
-        console.log(adBrand, 'adBrand');
         that.param = {
           ua: `${phoninfo.manufacturer} ${phoninfo.model} ${phoninfo.product} ${phoninfo.osType}`,
         }
@@ -436,7 +437,7 @@ export default {
   getCompleteCount() {
 
     let nad = config.adCodeData[this.brand].nativeAd;
-    console.log('nid',nad)
+    console.log('nid', nad)
     $apis.task
       .getCompleteCount({
         adId: config.adCodeData[this.brand].nativeAd,

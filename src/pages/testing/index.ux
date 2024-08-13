@@ -96,8 +96,6 @@ export default {
       this.lists = res.data.records
       console.log(this.lists, 'lists测评列表')
     })
-
-
   },
   // 跳转到问答页面
   routePageDetail(id) {

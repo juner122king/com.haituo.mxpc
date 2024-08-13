@@ -37,6 +37,13 @@ const adCodeData = {
     stimulateAd: 'o0rbevcepx',
     lotteryPageNativeAd: 'b9flx2el39',
   },
+  huawei: {
+    banner: 'w4brvyloy0',
+    nativeAd: 'y82ss9y9f7', //原生
+    tableScreen: 'l4ai02av3y',
+    stimulateAd: 'o0rbevcepx',
+    lotteryPageNativeAd: 'b9flx2el39',
+  },
 }
 const publicKey = `MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAqaj0Y3k54jCyTq47t73S
 cBX9uBsSScDo7/uZ+PhHYh9eQqHNW1bBjKGV4t3Y8Wokhv783krxhIqzkPf9nHeZ

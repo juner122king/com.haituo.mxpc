@@ -96,8 +96,8 @@ export default {
         pic_choice: 'https://cdn.ihaituo.cn/qa/app/mxpc/tabbar/testing.png',
         show: true,
         title: '测评',
-        pagePath: '/pages/Home',
-        path: 'pages/Home',
+        pagePath: '/pages/testing',
+        path: 'pages/testing',
       },
       {
         id: 1,
@@ -224,5 +224,5 @@ export default {
   }, showTisp: function (params) {
     this.ishowTisp = false
   },
-};
+}
 </script>
