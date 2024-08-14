@@ -115,6 +115,14 @@ export default {
 
   },
   onInit() {
+
+    //暂时写死位置，不请求
+    // this.getLocation()
+
+    //位置默认广州
+    this.nowWeather()
+  },
+  getLocation() {
     var that = this
     $geolocation.getLocation({
       success: function (data) {
@@ -123,9 +131,9 @@ export default {
       },
       fail: function (data, code) {
         console.log(`handling fail, code = ${code}, errorMsg=${data}`)
+
       }
     })
-    
   },
 
   nowWeather: function (lng, lat) {
@@ -134,8 +142,6 @@ export default {
       console.log(data, '获取当前天气回调信息data')
       if (data.showapi_res_body) {
         this.now = data.showapi_res_body.now
-
-
         this.f1 = data.showapi_res_body.f1
         this.f2 = data.showapi_res_body.f2
         const f3 = data.showapi_res_body.f3
@@ -143,9 +149,7 @@ export default {
         const f5 = data.showapi_res_body.f5
         const f6 = data.showapi_res_body.f6
         const f7 = data.showapi_res_body.f7
-
         this.hour3Forcast = this.f1["3hourForcast"]
-
         this.weather7day.push(this.f1)
         this.weather7day.push(this.f2)
         this.weather7day.push(f3)
@@ -153,17 +157,15 @@ export default {
         this.weather7day.push(f5)
         this.weather7day.push(f6)
         this.weather7day.push(f7)
-
-
         this.weather7day = this.formatData(this.weather7day)
-
-
         this.goIndex()
 
       }
     }
 
-    $utils.getWeatherInfo(onCatchCallback, lng, lat)
+    // $utils.getWeatherInfo(onCatchCallback, lng, lat)
+
+    $utils.getWeatherInfo2(onCatchCallback, '广州')
   },
 
   //自动滑动到当前时刻

@@ -424,7 +424,7 @@ async function buriedPointReport(these, event = 'AppLaunch', adId = '') {
 
 //获取天气信息
 
-const getWeatherInfo = async (onCatchCallback, lng, lat) => {
+const getWeatherInfo = async (onCatchCallback, lng, lat,area) => {
 
   const params = {
     appKey: '2D30bc634AA046B4A9f3f185F9eCB310',
@@ -435,13 +435,26 @@ const getWeatherInfo = async (onCatchCallback, lng, lat) => {
     from: 1,
     needHourData: 0,
     lng: lng,
-    lat: lat
+    lat: lat,
+    area:area
   }
   $apis.weather.get7dayWeather({ ...params })
     .catch(onCatchCallback)
-
     
-};
+}
+//使用城市信息获取天气
+const getWeatherInfo2 = async (onCatchCallback,area) => {
+
+  const params = {
+    appKey: '2D30bc634AA046B4A9f3f185F9eCB310',
+    needMoreDay: 1,
+    need3HourForcast: 1,
+    area:area
+  }
+  $apis.weather.get7dayWeatherforArea({ ...params })
+    .catch(onCatchCallback)
+    
+}
 
 
 export default {
@@ -457,5 +470,6 @@ export default {
   changeGlobalParam, //修改全局变量
   getConversionlicks,
   buriedPointReport, //上传参数
-  getWeatherInfo
+  getWeatherInfo,
+  getWeatherInfo2
 }

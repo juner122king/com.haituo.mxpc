@@ -21,11 +21,10 @@ export default {
     title: 'World'
   },
   goPremissiions: function () {
-    
-    $router.push({
-      uri: "hap://settings/permissions"
-    })
+
+    $router.push({ uri: 'hap://settings/permissions' })
   },
+
   onShow: function () {
     $umeng_stat.resume(this) //在onShow方法的第一行加入此代码
   }, onHide: function () {
