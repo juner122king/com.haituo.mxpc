@@ -107,6 +107,15 @@ const getConversionlicks = (data) => {
   })
 }
 
+// 埋点捕获
+const postTrackCapture = (data) => {
+  return request({
+    method: 'POST',
+    url: `/qa/track/capture`,
+    data,
+  })
+}
+
 let task = {
   getCompleteCount,
   postCompleteAd,
@@ -119,6 +128,7 @@ let task = {
   getAdJumpLink,
   getAdPageEntrance,
   getConversionlicks,
+  postTrackCapture
 }
 
 export default task

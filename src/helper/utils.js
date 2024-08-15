@@ -115,45 +115,29 @@ const showToast = (message, duration = 3000, gravity = 'center') => {
   })
 }
 
+
 /**
- * 插屏广告
- */
+* 保存广告回传参数   router.push(OBJECT)  例：@param {Object} e='hap://app/com.company.app/index?param1=value1'
+*/
+const saveHapUri = (that, e) => {
+  console.log('saveHapUri() 转化参数e= ', e)
 
-const tablePlaque = (that) => {
-  let Provider = $ad.getProvider()
-  if (!Provider) {
-    console.log('没有广告返回')
-    return
+  const { channelValue = '', backurl = '', type } = e
+  if (channelValue) {
+    that.$app.$def.dataApp.actiParam = {
+      ...e
+    }
   }
-  let interstitialAd = $ad.createInterstitialAd({
-    adUnitId: 'b1k2is3cbt',
-  })
-
-  interstitialAd
-    .load()
-    .then((res) => {
-      console.log(res, '查屏加载成功')
-      interstitialAd.show().then(
-        () => {
-          console.log('插屏广告show成功')
-        },
-        () => {
-          console.log('插屏广告show失败')
-        }
-      )
-    })
-    .catch((err) => {
-      console.log(err, '插屏加载失败')
-    })
 }
 
 /**
  * 转化上传
- * @param {*} that 所在this
+ * @param {*} that 所在this  小说广告页面的转化方法
  */
-function conversionUpload(that) {
+async function conversionUpload(that, ecpmParam) {
+
   let param = {
-    ...that.$app.$def.globalData.actiParam,
+    ...that.$app.$def.dataApp.actiParam,
   }
   param.type = judgingAd(that) //转换类型
   if (Object.keys(param).length <= 0 || !param.type) {
@@ -161,17 +145,6 @@ function conversionUpload(that) {
     return
   }
   console.log('进入了回传上报')
-  let conversionlicks = that.$app.$def.globalData.conversionlicks //第几次回传上报
-  let clicksOnAdsNow = that.$app.$def.globalData.clicksOnAdsNow + 1 //现在是第几次任务
-  console.log(conversionlicks, 'conversionlicks第几次回传上报')
-  console.log(clicksOnAdsNow, 'clicksOnAdsNow现在是第几次任务')
-
-  that.$app.$def.globalData.clicksOnAdsNow = clicksOnAdsNow
-  if (conversionlicks <= 0 || clicksOnAdsNow !== conversionlicks) {
-    console.log('取消转换上传')
-    return
-  }
-
   if (param.type === 'jh') {
     for (const key in param) {
       param[key] = param[key].replace(/\/$/, '')
@@ -179,11 +152,25 @@ function conversionUpload(that) {
     param = convertKeysToCamelCase(param)
   }
   console.log(param, '查看上传的参数')
+
+
+  let res = await $device.getOAID()
+  let oaid = res.data.oaid
+  console.info("OAID:  " + oaid)
+  console.log('竞价相关参数传到了？', ecpmParam);
+
+  let adBrand = $ad.getProvider()
   $apis.task
     .postConvertUpload({
       ...param,
+      ecpm: ecpmParam.ecpm,
+      adType: ecpmParam.adType,
+      adPositionId: ecpmParam.adPositionId,
+      clickCount: ecpmParam.clickCount,
+      pid: adBrand.toLowerCase(),
       deviceId: param.oaid || '',
       type: param.type,
+      oaid: oaid
     })
     .then((res) => {
       console.log(res, '转换成功')
@@ -193,6 +180,122 @@ function conversionUpload(that) {
     })
 }
 
+/**
+ * 插屏广告
+ */
+
+const tablePlaque = async (onCloseCallback, onCatchCallback, that) => {
+
+  let branch = $ad.getProvider();
+  if (!branch) {
+    console.log('没有广告商');
+    return
+  }
+  let adid = adCodeData[branch].interstitialAdUnitId
+  console.info('插屏广告id ', adid)
+
+  let interstitialAd = $ad.createInterstitialAd({
+    adUnitId: adid
+  })
+  var e
+  interstitialAd.load().then((res) => {
+    console.log(res, '查屏加载成功')
+
+    e = interstitialAd.getECPM()
+    console.log(`getECPM: 插屏广告获取实时竞价结果成功!ecpm=${e.ecpm}`)
+
+    interstitialAd.show().then(
+      () => {
+        console.log('插屏广告show成功')
+
+        let ecpmParam = {  //竞价相关参数
+          ecpm: e.ecpm,
+          adType: 'INSERT_SCREEN',
+          adPositionId: adid,
+          clickCount: '0'
+        }
+        console.log('竞价相关参数', ecpmParam)
+
+        conversionUpload(that, ecpmParam)
+      },
+      () => { console.log('插屏广告show失败') }
+    )
+  })
+    .catch(onCatchCallback)
+
+
+  interstitialAd.onClick(() => {
+    console.log('插屏广告点击了')
+
+    let ecpmParam = {  //竞价相关参数
+      ecpm: e.ecpm,
+      adType: 'INSERT_SCREEN',
+      adPositionId: adid,
+      clickCount: '1'
+    }
+    console.log('竞价相关参数', ecpmParam)
+
+    conversionUpload(that, ecpmParam)
+
+  })
+
+  interstitialAd.onClose(onCloseCallback)
+
+};
+
+
+/**
+* banner广告  margin_bot底部缩进    @param isbuttom 是否显示在最底部
+*/
+
+let bannerAd; const showBannerAd = async () => {
+  let branch = $ad.getProvider();
+  console.info('广告商:', branch);
+
+  let adid = adCodeData[branch].banner;
+  console.info("banner广告位=" + adid);
+  bannerAd = $ad.createBannerAd({
+    adUnitId: adid,//banner广告位
+    style: {
+      width: 750,
+      top: 1540
+    }
+  });
+
+  console.info("annerAd.style=" + JSON.stringify(bannerAd.style));
+  bannerAd.onLoad(e => {
+    // console.info("load bannerAd  onload success e=" + JSON.stringify(e));
+  });
+  bannerAd.onError(e => {
+    // console.error("load bannerAd  onError " + JSON.stringify(e));
+  });
+  bannerAd.onClose(e => {
+    // console.info("load bannerAd  onClose");
+  });
+  bannerAd.show();
+
+  bannerAd.onResize((data) => {
+    console.log(data.width + "|" + data.height, 'onResize')
+  })
+
+
+}
+
+const hideBanerAd = () => {
+  if (bannerAd) {
+    bannerAd.hide();
+  }
+}
+const viewBanner = () => {
+  if (bannerAd) {
+    bannerAd.show();
+  }
+}
+const destroyBanner = () => {
+  if (bannerAd) {
+    bannerAd.destroy()
+  }
+}
 function toCamelCase(str) {
   return str.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase())
 }
@@ -316,29 +419,69 @@ function analyzeAdvertiserId(context) {
   }
 }
 
-/**
- * 获取哪一次上报回传  context  指向
- */
-function getConversionlicks(context) {
-  const {
-    type = '',
-    corp_id = '',
-    channelValue = '',
-  } = context.$app.$def.globalData.actiParam
-  let adType = type ? type : judgingAd(context) //有类型直接获取类型 没有则进行判断；
-  let corpId = corp_id ? corp_id : analyzeAdvertiserId(context)
-  $apis.task
-    .getConversionlicks({ type: adType, corpId, channelValue })
-    .then((res) => {
-      console.log(res, '查看点击回传')
-      if (res.data === 0) {
-        $utils.conversionUpload(context)
-      }
-      context.$app.$def.globalData.conversionlicks = res.data
+
+// 埋点上报
+async function buriedPointReport(these, event = 'AppLaunch', adId = '') {
+  try {
+    let checkPaem = {
+      ...these.$app.$def.dataApp.actiParam,
+    }
+    console.log(these.$app.$def.dataApp, 'these.$app.$def.dataApp-')
+    console.log(checkPaem, '查看是否有参数')
+    if (Object.keys(checkPaem).length <= 0) {
+      //无值的情况直接删除
+      return
+    }
+
+    let token = await $storage.get({
+      key: 'AUTH_TOKEN_DATA',
     })
-    .catch((err) => {
-      console.log(err, '查看点击回传失败')
+    token = JSON.parse(token.data)
+    console.log('查看这个token', token)
+    const that = this
+    let adBrand = $ad.getProvider()
+    let param = {
+      ...checkPaem,
+      cid: checkPaem.channelValue,
+      event: event === 'click' ? '$AdClick' : '$AppLaunch',
+      pid: adBrand.toLowerCase(),
+      appId: token.appId,
+      userId: token.userId,
+    }
+    let urlQuery = convertToQueryString(checkPaem)
+    $device.getInfo({
+      success: function (res) {
+        const phoninfo = res
+        let param2 = {
+          ...param,
+          properties: {
+            ...res,
+            manufacturer: phoninfo.manufacturer,
+            model: phoninfo.model,
+            os: phoninfo.osType,
+            product: phoninfo.product,
+            analysis: {
+              adId: adId,
+              title: adId,
+            },
+            urlQuery: urlQuery,
+          },
+        }
+
+        console.log('查看上报参数', param2)
+        $apis.task
+          .postTrackCapture({ ...param2 })
+          .then((res) => {
+            console.log('埋点上报成功', res)
+          })
+          .catch((err) => {
+            console.log(err, '埋点上传失败')
+          })
+      },
     })
+  } catch (error) {
+    console.log(error, '埋点上传错误')
+  }
 }
 
 function convertToQueryString(objects) {
@@ -358,73 +501,9 @@ function convertToQueryString(objects) {
   return queryString
 }
 
-// 埋点上报
-async function buriedPointReport(these, event = 'AppLaunch', adId = '') {
-  try {
-    let checkPaem = {
-      ...these.$app.$def.globalData.actiParam,
-    }
-    console.log(these.$app.$def.globalData, 'these.$app.$def.globalData-')
-    console.log(checkPaem, '查看是否有参数')
-    if (Object.keys(checkPaem).length <= 0) {
-      //无值的情况直接删除
-      return
-    }
-
-    let token = await $storage.get({
-      key: 'AUTH_TOKEN_DATA',
-    })
-    token = JSON.parse(token.data)
-    console.log('查看这个token', token)
-    const that = this
-    let adBrand = $ad.getProvider()
-    let param = {
-      ...checkPaem,
-      event: event === 'click' ? '$AdClick' : '$AppLaunch',
-      pid: adBrand.toLowerCase(),
-      appId: token.appId,
-      userId: token.userId,
-    }
-    let urlQuery = convertToQueryString(checkPaem)
-    $device.getInfo({
-      success: function (res) {
-        const phoninfo = res
-        let param2 = {
-          ...param,
-          cid: param.channelValue,
-          properties: {
-            ...res,
-            manufacturer: phoninfo.manufacturer,
-            model: phoninfo.model,
-            os: phoninfo.osType,
-            product: phoninfo.product,
-            analysis: {
-              adId: adId,
-              title: adId,
-            },
-            urlQuery: urlQuery,
-          },
-        }
-
-        console.log('查看上报参数', param2)
-        $apis.activity
-          .postTrackCapture({ ...param2 })
-          .then((res) => {
-            console.log('上报成功', res)
-          })
-          .catch((err) => {
-            console.log(err, '上传失败')
-          })
-      },
-    })
-  } catch (error) {
-    console.log(error, '上传错误')
-  }
-}
 
 //获取天气信息
-
-const getWeatherInfo = async (onCatchCallback, lng, lat,area) => {
+const getWeatherInfo = async (onCatchCallback, lng, lat, area) => {
 
   const params = {
     appKey: '2D30bc634AA046B4A9f3f185F9eCB310',
@@ -436,24 +515,24 @@ const getWeatherInfo = async (onCatchCallback, lng, lat,area) => {
     needHourData: 0,
     lng: lng,
     lat: lat,
-    area:area
+    area: area
   }
   $apis.weather.get7dayWeather({ ...params })
     .catch(onCatchCallback)
-    
+
 }
 //使用城市信息获取天气
-const getWeatherInfo2 = async (onCatchCallback,area) => {
+const getWeatherInfo2 = async (onCatchCallback, area) => {
 
   const params = {
     appKey: '2D30bc634AA046B4A9f3f185F9eCB310',
     needMoreDay: 1,
     need3HourForcast: 1,
-    area:area
+    area: area
   }
   $apis.weather.get7dayWeatherforArea({ ...params })
     .catch(onCatchCallback)
-    
+
 }
 
 
@@ -461,15 +540,19 @@ export default {
   throttle,
   getUserId,
   extractYearMonth,
+  saveHapUri,
   startCountDown,
   dataEncryption,
   showToast,
   tablePlaque,
+  showBannerAd,
+  hideBanerAd,
+  viewBanner,
+  destroyBanner,
   conversionUpload, //转化
   checkCurrentDay, //一天触发一次
   changeGlobalParam, //修改全局变量
-  getConversionlicks,
-  buriedPointReport, //上传参数
+  buriedPointReport, //上传参数 
   getWeatherInfo,
   getWeatherInfo2
 }

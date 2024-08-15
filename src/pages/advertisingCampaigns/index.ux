@@ -1,10 +1,8 @@
-
-<import name="icon" src="apex-ui/components/icon/index"></import>
 <import name="bottom-native" src="./components/bottom-native.ux"></import>
 <import name="reminder-ads" src="./components/reminder-ads.ux"></import>
 <import name="back-to-ads" src="./components/back-to-ads.ux"></import>
- <import name="icon" src="apex-ui/components/icon/index"></import>
- <import name="my-navbar" src="apex-ui/components/navbar/index"></import>
+<import name="icon" src="apex-ui/components/icon/index"></import>
+<import name="my-navbar" src="apex-ui/components/navbar/index"></import>
 <template>
   <div class="advertising-page">
     <my-navbar></my-navbar>
@@ -12,7 +10,7 @@
     <div class="advertising-title">
       <text class="m-heading">正品内容免费读</text>
       <text class="s-heading">广告收益是为了激励作者提供优质内容</text>
-      <div class="thank-you-speech">
+      <div class="thank-you-s-peech">
         <text class="line"></text>
         <text class="txt">感谢你的支持</text>
         <text class="line"></text>
@@ -28,6 +26,7 @@
         onadclick="adClick"
         onadclose="close"
         type="native"
+        onadshow="adShow"
         closeBtnPosition="left-top"
       >
         <div class="container">
@@ -39,8 +38,8 @@
               <text class="txt" if="{{adList.hasAppMiitInfo}}">
                 {{
                   adList.appInfo.appName +
-                  adList.appInfo.appSize +
-                  adList.appInfo.appVersion
+                    adList.appInfo.appSize +
+                    adList.appInfo.appVersion
                 }}</text
               >
               <text class="txt" if="{{adList.appInfo}}"
@@ -139,7 +138,7 @@
 
           <div
             class="swipe-left-btn"
-            @swipe-left="appearSwipe"
+            @swipe="appearSwipe"
             @click="appearSwipe"
             if="{{!showTransparency}}"
           >
@@ -176,6 +175,9 @@
       onemit-hide-transparency="hideTransparency"
       onemit-close="heideReminder"
     ></back-to-ads>
+
+    <!-- 看视频得红包悬浮件-->
+    <div if="isShowMoviered" class="moviered" onclick="onMovieredClick"></div>
   </div>
 </template>
 
@@ -202,27 +204,51 @@ export default {
     showTransparency: true,
     adTitle: "",
     timer: null,
-    isfristReqCoun: true
+    isfristReqCoun: true,
+    isShowMoviered: false,//是否显示页面跳转悬浮组件
   },
+  onMovieredClick() {
+    $router.push({
+      uri: 'Page_cfd'
+    })
+  },
+  //获取小说页面是否开启跳转红包页面悬浮组件
+  getIsShowMovieredClick() {
+    $apis.task
+      .getUserwealEntry()
+      .then((res) => {
+        console.log(res, '获取福利入口信息')
+        this.isShowMoviered = res.data.isOpenNovelRedPacket
+      })
+      .catch((err) => {
+        console.log(err, '获取福利入口信息')
+      })
+  },
+
   onInit(e) {
     const { callback = '', oaid = '', type = '', channelValue = '', corp_id = '' } = e
     if (Object.keys(e).length > 0) {
       console.log('进来了');
-      this.$app.$def.globalData.actiParam = {
+      this.$app.$def.dataApp.actiParam = {
         ...e,
       }
-      $utils.getConversionlicks(this)
+      $utils.buriedPointReport(this)
     }
     const branch = $ad.getProvider()
     this.adObj = adCodeData[branch]
     this.adId = adCodeData[branch].fiction1;
     this.preloadAd()
     this.getTransparentLayerL()
+    this.getIsShowMovieredClick()
   },
   onReady() {
     this.delayedDisplay()
   },
+  onShow(options) {
+    $umeng_stat.resume(this)
+  },
   onHide() {
+    $umeng_stat.pause(this);//在onHide方法的第一行加入此代码
     this.timer = null;
   },
   onBackPress() {
@@ -247,14 +273,11 @@ export default {
         adUnitId: this.adId, // 原生信息流广告广告位id
         type: 'native', // 原生信息流广告
         adCount: 1,
+        ecpm: true,
         success: (data) => {
-
+          console.log(data, '返回广告成功');
 
           this.adList = data.adList[0]
-          console.log(this.adList, '返回广告成功');
-          // setTimeout(() => {
-
-          // }, 2000)
           this.showBanner = true
           this.hasAdList = true;
           if (this.adList.appInfo) {
@@ -286,16 +309,34 @@ export default {
     }
   },
   error(errCode, errMsg) {
-    console.log('没有报错回调吗', errCode, errMsg);
-    // this.appearSwipe()
+    console.log('没有报错回调吗');
+    this.appearSwipe()
   },
+  adShow(evt) {
+    console.log('小说广告show: ', evt)
+
+    this.conversionUp('0')
+  },
+
   adClick() {
     console.log('查看点击的this');
     this.showTransparency = false;
-    console.log('没有点击回调吗');
-    $utils.conversionUpload(this)
-    $utils.buriedPointReport(this, 'click', this.adId)
+    this.conversionUp('1')
+
     this.addClickNum()
+    //后台单个埋点 - 事件：广告点击
+    $utils.buriedPointReport(this, 'click', this.adId)
+  },
+
+  conversionUp(clickCount) {
+    let ecpmParam = {  //竞价相关参数
+      ecpm: this.adList.ecpm,
+      adType: 'NATIVE',
+      adPositionId: this.adId,
+      clickCount: clickCount
+    }
+    console.log('竞价相关参数', ecpmParam);
+    $utils.conversionUpload(this, ecpmParam)
   },
   close() {
     console.log('没有触发这个吗');
@@ -328,7 +369,7 @@ export default {
         brand: branch.toUpperCase()
       }
       if (!this.isfristReqCoun) { //如果不是初次进来的说明可以添加选项
-        payam.count = this.$app.$def.globalData.transparentLayerHits
+        payam.count = this.$app.$def.dataApp.transparentLayerHits
       }
 
       $apis.task
@@ -360,7 +401,7 @@ export default {
     this.addClickNum()
   },
   addClickNum() {
-    this.$app.$def.globalData.transparentLayerHits = this.$app.$def.globalData.transparentLayerHits + 1
+    this.$app.$def.dataApp.transparentLayerHits = this.$app.$def.dataApp.transparentLayerHits + 1
     this.getTransparentLayerL()
   },
   // 关闭
@@ -391,5 +432,5 @@ export default {
 </script>
 
 <style lang="less">
-@import './index.less';
+@import "./index.less";
 </style>

@@ -135,7 +135,7 @@ export default {
         });
         // console.info("the device does not support ad.annerAd.style=" + JSON.stringify(bannerAd.style));
         bannerAd.onLoad(e => {
-            console.info("load bannerAd  onload success");
+            console.info("load bannerAd  onload success 广告位id:",adCodeData[this.provider].banner);
             console.info("load bannerAd  onload success e=" + JSON.stringify(e));
             console.info("show bannerAd  style:" + JSON.stringify(bannerAd.style));
             if (this.provider === 'xiaomi') {

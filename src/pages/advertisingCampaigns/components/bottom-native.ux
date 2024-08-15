@@ -11,11 +11,16 @@
         onadclick="adClick"
         onadclose="close"
         type="native"
+        onadshow="adShow"
       >
         <div class="container">
           <div class="left-img">
             <!-- 图片 -->
-            <ad-clickable-area type="click" class="ad-img">
+            <ad-clickable-area
+              type="click"
+              class="ad-img"
+              if="{{adList.imgUrlList}}"
+            >
               <image
                 src="{{adList.imgUrlList? adList.imgUrlList[0]: defaultAd.img }}"
               ></image>
@@ -74,9 +79,9 @@
             </div>
             <text class="float-txt" if="{{adList.hasAppMiitInfo}}">{{
               adList.appInfo.appName +
-              adList.appInfo.appSize +
-              adList.appInfo.appVersion +
-              adList.appInfo.developer
+                adList.appInfo.appSize +
+                adList.appInfo.appVersion +
+                adList.appInfo.developer
             }}</text>
           </div>
 
@@ -121,11 +126,7 @@ export default {
   onInit() {
     const branch = $ad.getProvider()
     this.adObj = adCodeData[branch]
-    this.adUnitId = adCodeData[branch].fiction2;
-    if (branch === 'OPPO') {
-      this.adUnitId = adCodeData[branch].fiction5;
-    }
-
+    this.adUnitId = adCodeData[branch].fiction1;
     this.preloadAd()
   },
   onReady() {
@@ -138,6 +139,7 @@ export default {
         adUnitId: this.adUnitId, // 原生信息流广告广告位id
         type: 'native', // 原生信息流广告
         adCount: 1,
+        ecpm: true,
         success: (data) => {
           console.log(data, '返回广告成功');
           this.adList = data.adList[0]
@@ -170,16 +172,33 @@ export default {
     }
   },
   error(errCode, errMsg) {
-    console.log('没有报错回调吗', errCode, errMsg);
+    console.log('没有报错回调吗');
     this.$emit('error', { errCode, errMsg });
+  },
+  adShow(evt) {
+    console.log('小说广告show: ', evt)
+
+ this.conversionUp('0')
   },
   adClick() {
     console.log('没有点击回调吗');
     console.log('怎么触发的是这里的');
-    $utils.conversionUpload(this)
-    $utils.buriedPointReport(this, 'click', this.adUnitId)
+
+    this.conversionUp('1')
 
     this.$emit('emitHideTransparency')
+    //后台单个埋点 - 事件：广告点击
+    $utils.buriedPointReport(this, 'click', this.adUnitId)
+  },
+  conversionUp(clickCount) {
+    let ecpmParam = {  //竞价相关参数
+      ecpm: this.adList.ecpm,
+      adType: 'NATIVE',
+      adPositionId: this.adUnitId,
+      clickCount: clickCount
+    }
+    console.log('竞价相关参数', ecpmParam);
+    $utils.conversionUpload(this, ecpmParam)
   },
   close() {
     this.hasAdList = false;

@@ -1,16 +1,19 @@
 page {
   background-color: #f7f7f9;
 }
+
 .advertising-page {
   flex-direction: column;
   align-self: center;
 
   background-color: #f7f7f9;
+
   //   头部组件
   .advertising-title {
     flex-direction: column;
     justify-content: center;
     padding: 0 32px;
+
     .m-heading {
       text-align: center;
       font-weight: 500;
@@ -30,9 +33,11 @@ page {
       margin-top: 12px;
       align-items: center;
       justify-content: center;
+
       .txt {
         margin: 0 20px;
       }
+
       .line {
         height: 3px;
         width: 50px;
@@ -46,6 +51,7 @@ page {
     height: 100%;
     padding: 0 32px;
   }
+
   //   广告组件
   .ad-native {
     width: 100%;
@@ -57,14 +63,17 @@ page {
       flex-direction: column;
       padding: 20px 0;
       height: 100%;
+
       .agreement {
         width: 100%;
         align-items: center;
         justify-content: space-between;
+
         .agreement-item {
           width: 55%;
           align-items: center;
           height: 80px;
+
           .txt {
             lines: 1;
             font-size: 28px;
@@ -84,6 +93,7 @@ page {
 
       .ad-title {
         margin-top: 10px;
+
         .ad-title-txt {
           font-weight: 500;
           font-size: 32px;
@@ -93,19 +103,23 @@ page {
 
       .vertical-content {
         width: 100%;
+
         .ad-close {
           width: 50px;
           height: 50px;
         }
       }
+
       .big-img {
         flex-direction: column;
         align-items: center;
         margin-top: 30px;
+
         .ad-image {
           height: 500px;
           width: 100%;
           flex-shrink: 0;
+
           image {
             width: 100%;
             height: 100%;
@@ -113,6 +127,7 @@ page {
             object-fit: contain;
           }
         }
+
         .logo {
           width: 100%;
           padding: 0 20px;
@@ -120,6 +135,7 @@ page {
           position: absolute;
           top: 70px;
           left: 0;
+
           .close-item {
             background-color: rgba(205, 205, 207, 0.5);
           }
@@ -130,9 +146,11 @@ page {
         width: 100%;
         align-items: center;
         height: 80px;
+
         .icon-image {
           width: 80px;
           height: 80px;
+
           image {
             width: 80px;
             height: 80px;
@@ -152,6 +170,7 @@ page {
         width: 100%;
         margin-top: 50px;
         align-items: center;
+
         .click-item {
           flex: 1;
           flex-shrink: 0;
@@ -164,15 +183,18 @@ page {
           text-align: center;
           color: aliceblue;
           height: 120px;
+
           .title {
             color: #999999;
           }
+
           .click-txt {
             font-size: 34px;
             padding: 10px 20px;
             text-align: center;
             color: aliceblue;
           }
+
           .ad-close {
             align-self: center;
             margin-left: 10px;
@@ -181,6 +203,7 @@ page {
           }
         }
       }
+
       .swipe-left-btn {
         width: 100%;
         height: 75px;
@@ -189,10 +212,25 @@ page {
         border-radius: 45px;
         margin: 0 auto;
         margin-top: 52px;
+
         text {
           color: #ffffff;
         }
       }
     }
+  }
+
+  //看视频得红包悬浮件
+  .moviered {
+    // background-image: url('http://cdn.ihaituo.cn/qa/pro/mxpc/0ccd93449877a65385dc7727e2e4c22f.png');
+    background-image: url('/Common/img/moviered.png');
+    background-repeat: no-repeat;
+    background-size: 120px 120px;
+    width: 120px;
+    height: 120px;
+    /* background-color: #fcf; */
+    position: fixed;
+    bottom: 180px;
+    right: 30px;
   }
 }

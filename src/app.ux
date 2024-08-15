@@ -33,6 +33,15 @@ export default {
     conversionlicks: 0,//点击上传次数为0则不做上传处理
     clicksOnAdsNow: 0,
     transparentLayerHits: 0
+  },
+  dataApp: {
+
+
+    actiParam: '',
+    transparentLayerHits: 0,
+    conversionlicks: 0,//点击上传次数为0则不做上传处理
+    clicksOnAdsNow: 0,
+
   }
 }
 </script>

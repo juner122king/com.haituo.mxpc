@@ -13,17 +13,18 @@
         >
           <div  class="ad-container" style="background-color: {{backgroundcolor}}" >
             <ad
-             class="ad-native new-native"
-            show="{!!adList.adId}}"
-            adId="{{adList.adId}}"
-            type="native"
-            closeBtnPosition="right-top"
-            onerror="error"
-          onadclick="adClick"
-            onadclose="close"
+             class="ad-native {{displayAdType < 5?'new-native':''}}"
+        show="{!!adList.adId}}"
+        adId="{{adList.adId}}"
+        type="native"
+        closeBtnPosition="right-top"
+        onerror="error"
+        onadclick="adClick"
+        onadclose="close"
+        onadshow="adShow"
             >
 
-        <div class="container" if="{{ false}}">
+        <div class="container" if="{{ displayAdType >=5}}">
           <!-- 头部图片 -->
           <div class="vertical-content top-big-img">
             <ad-clickable-area type="click" class="ad-image">
@@ -560,8 +561,8 @@
         position: absolute;
         justify-content: center;
         align-items: center;
-        top: 30px;
-        right: 30px;
+        top: 50px;
+        right: 50px;
         border-radius: 50%;
       }
     }
@@ -1314,15 +1315,14 @@ export default {
       desc: 'vivo流量联盟，提供最优质的商业化解决方案。流量联盟广告联盟。',
       title: 'vivo流量联盟',
       icon: '广告',
-      clickBtnTxt: '点击安装',
-      img: "http://cdn.bank-zone.cn/pro/sy/admin/advertising/3639bdbde8e84397a297ad54f89ac4c3.jpg"
+      clickBtnTxt: '点击安装'
     },
     btnTxt: '',
     newBtnTxt: '',
     lastAdId: '',
     //reader
-    chapterContent1: '经过一段时间的努力，李浩终于迎来了他的逆袭契机。\",\"有一天，李浩在参加一个行业聚会时，\",\"意外地遇到了一位成功的企业家。\",\"这位企业家对李浩的才华和努力表示赞赏，\",\"并邀请他加入自己的公司。\",\"李浩抓住了这个机会，辞去了原本的工作，\",\"加入了新的公司。\",\"\",\"在新的公司里，李浩充分发挥自己的才华和努力，\",\"很快就得到了上级的认可。\",\"他的职位不断提升，收入也越来越高。\",\"他逐渐从一个普通的员工成长为了公司的核心骨干。\",\"\",\"与此同时，李浩也没有忘记自己最初的梦想。\",\"他开始尝试接近林婉儿，\",\"和她建立了深厚的友谊。\",\"他用自己的真诚和才华打动了林婉儿的心，\",\"两人逐渐走到了一起。\",\"\",\"在一次浪漫的约会中，\",\"李浩鼓起勇气向林婉儿求婚。\",\"他向林婉儿承诺，\",\"会用自己的努力和才华让她过上幸福的生活。\",\"林婉儿被李浩的真诚和才华所感动，\",\"答应了他的求婚。\",\"\",\"就这样，一个平凡的屌丝男李浩，\",\"通过自己的努力和坚持，\",\"实现了自己的逆袭梦想。\",\"他成功地迎娶了自己心目中的白富美林婉儿，\",\"两人共同开启了一段幸福美好的新生活。\",\"他变得更加有魅力，充满了对未来的信心和期待。',
-    chapterContent: '在繁华的都市中，有一个名叫李浩的年轻人。\",\"他身材普通，长相平凡，是一个典型的“屌丝男”。\",\"每天，他都在一家小公司里做着枯燥无味的工作，\",\"拿着微薄的薪水，过着平淡无奇的生活。\",\"\",\"然而，李浩的心中却有一个不为人知的梦想——\",\"那就是有朝一日能够逆袭，\",\"成为一个成功的人，迎娶他心目中的白富美。\",\"他知道这个梦想遥不可及，但他从未放弃过。\",\"\",\"有一天，李浩在公司附近的一家咖啡店里\",\"偶遇了一个美丽的女孩。\",\"她名叫林婉儿，家境优渥，气质高雅，\",\"是李浩心目中的白富美。\",\"两人虽然只是短暂的交谈了几句，\",\"但李浩却被林婉儿深深地吸引了。\",\"\",\"从那以后，李浩开始努力地改变自己。\",\"他努力学习各种知识和技能，提升自己的能力。\",\"他利用业余时间参加各种社交活动，\",\"扩大自己的人脉。\",\"他不断地锻炼自己的身体，\",\"让自己变得更加健康和有魅力。',
+    chapterContent1: '有些人经历长时间的跑步后，极易产生厌食心理，实际上，,\"在你跑完马拉松的45分钟之内不补充能量，接下来日子你的身体就会受到惩罚。\",\"美国健身委员会建议，大量运动过后，饮食中碳水化合物跟蛋白质保持3：1最为理想。\",\"4、切勿空腹跑步\",\"人体经过一夜的新陈代谢很多器官都处于不利的状态。\",\"空腹晨跑会影响肠胃，对胃的伤害非常大，\",\"急需补充能量和营养物质。如果空\",\"\",\"腹晨跑，胃容易受到刺激。晨跑可以补充碳水化合物，摄入300-500卡路里的能量。\"',
+    chapterContent: '1、跑前热身\",\"有些跑者换上装备就直接开跑，没有做充分的热身运动\",\"，这样抽筋，跟腱酸痛等毛病会很容易找上门。\",\"开始运动时，可以做循序渐进的方式，原地踏步，随后进行跨步，\",\"最后在活动一下各关节，这样就能降低跑步受伤的概率。\",\"2、遵循适时恢复原则\",\"有些跑者经常参加月月跑马、周周跑马，\",\"至于频繁的参赛是否值得提倡，这还是要依据跑者的自身条件而定。\",\"\",\"值得注意的是，无论怎么跑，\",\"都要爱护自己身体，在参赛跟休息之间找到最佳的平衡。\",\"3、重视跑后恢复食物\"',
     charpterdatas: [],
     realchaptercontent: '',
     adinstance: '',
@@ -1350,7 +1350,10 @@ export default {
     showTransparency: false,
     timer: null,
     isfristReqCoun: true,
-    adUnitId: 'a6d7b1e5c1244277acc78dd86793a880',
+    ecpm: ''
+  },
+  protected: {
+    adUnitId: '',
     customBtn: ''
   },
   routeDetail() {
@@ -1403,7 +1406,7 @@ export default {
     }
   },
   addClickNum() {
-    this.$app.$def.globalData.transparentLayerHits = this.$app.$def.globalData.transparentLayerHits + 1
+    this.$app.$def.dataApp.transparentLayerHits = this.$app.$def.dataApp.transparentLayerHits + 1
     this.getTransparentLayerL()
   },
   getTransparentLayerL: function () {
@@ -1414,7 +1417,7 @@ export default {
         brand: branch.toUpperCase()
       }
       if (!this.isfristReqCoun) { //如果不是初次进来的说明可以添加选项
-        payam.count = this.$app.$def.globalData.transparentLayerHits
+        payam.count = this.$app.$def.dataApp.transparentLayerHits
       }
       $apis.task
         .getTransparentLayer({ ...payam })
@@ -1507,23 +1510,22 @@ export default {
       this.mTextState = $animation.playState
     }
   },
-  // onInit() {
 
-  // },
   onInit(e) {
-    const { callback = '', oaid = '', type = '', channelValue = '', corp_id = '' } = e
-    if (Object.keys(e).length > 0) {
-      console.log('进来了');
-      this.$app.$def.globalData.actiParam = {
-        ...e,
-      }
-      $utils.getConversionlicks(this)
-    }
-    this.clicktag = 'yellow'
+
     const branch = $ad.getProvider()
     this.adObj = adCodeData[branch]
     this.adUnitId = adCodeData[branch].fiction4;
+    console.log('reaAd广告位fiction4', this.adUnitId);
 
+    const { callback = '', oaid = '', type = '', channelValue = '', corp_id = '' } = e
+    if (Object.keys(e).length > 0) {
+      console.log('进来了');
+      this.$app.$def.dataApp.actiParam = {
+        ...e,
+      }
+    }
+    this.clicktag = 'yellow'
     // this.$page.setTitleBar({ text: 'Swiper' })
     setTimeout(() => {
       console.log('helloworld 10 time ')
@@ -1531,16 +1533,13 @@ export default {
       // this.readerpaddingtop = 10
       this.delayShow = true
     }, 1000 * 3)
-    // prompt.showToast({
-    //   message: `adUnitId:${this.adUnitId}`
-    // })
+
 
     this.getTransparentLayerL()
-    // this.adinstance = require("@service.ad").createFeedAd({
-    //   adUnitId: this.adUnitId
-    // })
+    this.adinstance = require("@service.ad").createFeedAd({
+      adUnitId: this.adUnitId
+    })
     this.latencyShowReminder()
-    // this.preloadAd()
     // this.initcontent()
     this.backgroundcolor = '#F8F8FA'
   },
@@ -1587,7 +1586,7 @@ export default {
       this.realchaptercontent = this.chapterContent
     }
     this.$element('readerdiv').setContent({
-      title: '上一章节标题',
+      title: '',
       content: this.realchaptercontent,
       success(data) {
         console.log('_setContent  success data ： ' + JSON.stringify(data))
@@ -1609,7 +1608,7 @@ export default {
       this.realchaptercontent = this.chapterContent
     }
     this.$element('readerdiv').setContent({
-      title: '下一章节标题',
+      title: '',
       content: this.realchaptercontent,
       success(data) {
         console.log('_setContent  success data ： ' + JSON.stringify(data))
@@ -1761,7 +1760,7 @@ export default {
       + " realchaptercontent : " + this.realchaptercontent)
 
     this.$element('readerdiv').setContent({
-      title: '第一章：穷屌丝偶遇白富美',
+      title: '跑步的注意事项',
       content: this.realchaptercontent,
       success(data) {
         console.log('_setContent  success data ： ' + JSON.stringify(data))
@@ -1776,7 +1775,7 @@ export default {
 
     this.$element('readerdiv').preLoadContent({
       forward: true,
-      title: '预加载下章标题',
+      title: '',
       content: this.chapterContent1,
       success(data) {
         console.log('_preLoadContent  success data ： ' + JSON.stringify(data))
@@ -1826,7 +1825,7 @@ export default {
       this.realchaptercontent = this.chapterContent
     }
     this.$element('readerdiv').setContent({
-      title: '下一章节标题',
+      title: '适时恢复',
       content: this.realchaptercontent,
       success(data) {
         console.log(' chapterend setContent  success data ： ' + JSON.stringify(data))
@@ -1847,7 +1846,7 @@ export default {
       this.realchaptercontent = this.chapterContent
     }
     this.$element('readerdiv').setContent({
-      title: '上一章节标题',
+      title: '',
       forward: false,
       content: this.realchaptercontent,
       success(data) {
@@ -1882,13 +1881,13 @@ export default {
     //左点击预加载左广告页，自定义
     if (datas.forward == 1) {
       if (datas.curIndex % 3 == 0) {
-        // var adId1 = this.lastAdId
-        // console.log(' pagechange change   adId1 : ' + JSON.stringify(adId1))
+        var adId1 = this.lastAdId
+        console.log(' pagechange change   adId1 : ' + JSON.stringify(adId1))
         //顺序是先销毁    再创建  
-        // //手动销毁上个广告
-        // if (adId1) {
-        //   this.adinstance.destroy({ adId: adId1 })
-        // }
+        //手动销毁上个广告
+        if (adId1) {
+          this.adinstance.destroy({ adId: adId1 })
+        }
 
         console.log(' helloworld pagechange lastAdId : ' + this.lastAdId)
         console.log(' helloworld pagechange 1 lastAdId : ' + JSON.stringify(this.lastAdId))
@@ -1909,13 +1908,13 @@ export default {
       }
     } else {
       if (datas.isPreAd) {
-        // var adId1 = this.lastAdId
+        var adId1 = this.lastAdId
         //  顺序是  先销毁    再创建    
-        // console.log(' pagechange change   adId1 : ' + JSON.stringify(adId1))
+        console.log(' pagechange change   adId1 : ' + JSON.stringify(adId1))
         //手动销毁上个广告 
-        // if (adId1) {
-        //   this.adinstance.destroy({ adId: adId1 })
-        // }
+        if (adId1) {
+          this.adinstance.destroy({ adId: adId1 })
+        }
         //no ad test 
         this.preloadAd()
         this.$element('readerdiv').preLoadPage({
@@ -1961,33 +1960,23 @@ export default {
     }
   },
   preloadAd() {
-    const branch = $ad.getProvider()
-    this.adObj = adCodeData[branch]
-    this.adUnitId = adCodeData[branch].fiction4;
-    console.log(this.adUnitId, '查看广告编码------------');
     ad.preloadAd({
       adUnitId: this.adUnitId, // 原生信息流广告广告位id 
-      type: 'native', // 原生信息流广告 
-      adCount: 1,
+      type: 'native', // 原生信息流广告 ,
+      ecpm: true,
       success: (data) => {
-        console.log('999999999999999999999999999999999999999999', data);
         this.adList = data.adList[0]
         this.lastAdId = this.adList.adId
-        console.log(this.adList, '成功加载广告小说页');
         //for adid remove
         if (this.adList.appInfo) {
           this.adList.appInfo.appSize = this.convertAppSize(this.adList.appInfo.appSize)
         }
 
-        // console.log(' adList : ' + JSON.stringify(this.adList))
-        // console.log(' cmc_tag preloadAd lastAdId : ' + this.lastAdId)
+        console.log(' adList : ' + JSON.stringify(this.adList))
+        console.log(' cmc_tag preloadAd lastAdId : ' + this.lastAdId)
         this.hasAdList = true
-        // prompt.showToast({
-        //   message: `success`
-        // })
+
       }, fail: (data, code) => {
-        console.log('8888888888888888888888888');
-        console.log('失败加载广告');
         console.log(data, code)
         if (code === 205) {
           this.adList = data.adList[0]
@@ -2000,21 +1989,35 @@ export default {
     })
   },
   error(errCode, errMsg) {
-    console.log('失败加载广告', errCode, errMsg);
     // prompt.showToast({
     //   message: `error : errCode = ${errCode}, errMsg = ${errMsg}`
     // })
     console.log(`error : errCode = ${errCode}, errMsg = ${errMsg}`)
   },
+  adShow(evt) {
+    console.log('小说广告show: ', evt)
+    this.conversionUp('0')
+  },
   adClick() {
     console.log('被点击了')
     this.showTransparency = false;
-    $utils.conversionUpload(this)
+    this.conversionUp('1')
+    //后台单个埋点 - 事件：广告点击
     $utils.buriedPointReport(this, 'click', this.adUnitId)
-
   },
+
+  conversionUp(clickCount) {
+    let ecpmParam = {  //竞价相关参数
+      ecpm: this.adList.ecpm,
+      adType: 'NATIVE',
+      adPositionId: this.adUnitId,
+      clickCount: clickCount
+    }
+    console.log('竞价相关参数', ecpmParam);
+    $utils.conversionUpload(this, ecpmParam)
+  },
+
   close() {
-    this.addClickNum()
     this.hasAdList = false
     // prompt.showToast({
     //   message: "关闭"
@@ -2163,6 +2166,20 @@ export default {
   },
   complete: function () {
     console.info('complete')
+  },
+  heideReminder(e) {
+    // this.showReminder = false;
+    console.log(e);
+    const { detail = '' } = e;
+    if (!detail) {
+    } else {
+      console.log('这是什么', detail.data);
+      if (detail.data === 'showVackTisp') {
+        this.showVackTisp = false
+      } else if (detail.data === 'showReminder') {
+        this.showReminder = false
+      }
+    }
   },
   latencyShowReminder: function () {
     this.timer = null;

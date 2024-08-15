@@ -13,6 +13,7 @@
         onerror="error"
         onadclick="adClick"
         onadclose="close"
+        onadshow="adShow"
       >
         <div class="container">
           <!-- 头部图片 -->
@@ -107,6 +108,7 @@ export default {
       adId: "",
       adObj: "",
       showClik: false,
+      ecpm: ''
     }
   },
   props: {
@@ -126,6 +128,7 @@ export default {
         adUnitId: this.adId, // 原生信息流广告广告位id
         type: 'native', // 原生信息流广告
         adCount: 1,
+        ecpm: true,
         success: (data) => {
           console.log(data, '返回广告成功3');
           this.adList = data.adList[0];
@@ -137,11 +140,11 @@ export default {
           }
         },
         fail: (data, code) => {
-          this.hasAdList = false;
+
           this.$emit('emitClose', {
             data: 'showReminder'
           })
-          console.log(data, '返回广告失败延时弹窗');
+          console.log(data, '返回广告失败3');
           if (code === 205) {
             this.hasAdList = true;
             this.adList = data.adList[0]
@@ -159,22 +162,42 @@ export default {
     }
   },
   error(errCode, errMsg) {
-    console.log('没有报错回调吗', errCode, errMsg);
-    // this.$emit('emitClose', {
-    //   data: 'showReminder'
-    // })
-
+    this.$emit('emitClose', {
+      data: 'showReminder'
+    })
+    console.log('没有报错回调吗');
     if (this.debug) {
       prompt.showToast({
         message: `ad load error: errCode = ${errCode}, errMsg = ${errMsg}`
       });
     }
   },
+
+  adShow(evt) {
+    console.log('小说广告show: ', evt)
+
+    this.conversionUp('0')
+  },
   adClick() {
     console.log('没有点击回调吗');
-    $utils.conversionUpload(this);
-    $utils.buriedPointReport(this, 'click', this.adId)
+
+
+    this.conversionUp('1')
+
     this.$emit('emitHideTransparency')
+    //后台单个埋点 - 事件：广告点击
+
+    $utils.buriedPointReport(this, 'click', this.adId)
+  },
+  conversionUp(clickCount) {
+    let ecpmParam = {  //竞价相关参数
+      ecpm: this.adList.ecpm,
+      adType: 'NATIVE',
+      adPositionId: this.adId,
+      clickCount: clickCount
+    }
+    console.log('竞价相关参数', ecpmParam);
+    $utils.conversionUpload(this, ecpmParam)
   },
   close() {
     console.log('没有关闭回调吗');
@@ -236,8 +259,8 @@ export default {
           position: absolute;
           justify-content: center;
           align-items: center;
-          top: 20px;
-          right: 20px;
+          top: 30px;
+          right: 40px;
           border-radius: 50%;
         }
       }

@@ -13,6 +13,7 @@
         onerror="error"
         onadclick="adClick"
         onadclose="close"
+        onadshow="adShow"
       >
         <div class="container">
           <div class="tisp-title">
@@ -122,6 +123,7 @@ export default {
         adUnitId: this.adId, // 原生信息流广告广告位id
         type: 'native', // 原生信息流广告
         adCount: 1,
+        ecpm: true,
         success: (data) => {
           console.log(data, '返回广告成功4');
           this.adList = data.adList[0];
@@ -153,7 +155,6 @@ export default {
     }
   },
   error(errCode, errMsg) {
-    console.log('一直报错回调', errCode, errMsg);
     this.$emit('emitClose', {
       data: 'showVackTisp'
     })
@@ -165,9 +166,27 @@ export default {
   },
   adClick() {
     console.log('没有点击回调吗');
-    $utils.conversionUpload(this)
-    $utils.buriedPointReport(this, 'click', this.adId)
+    
+    this.conversionUp('1')
     this.$emit('emitHideTransparency')
+    $utils.buriedPointReport(this, 'click', this.adId)
+    //后台单个埋点 - 事件：广告点击
+  },
+  
+  adShow(evt) {
+    console.log('小说广告show: ', evt)
+
+    this.conversionUp('0')
+  },
+   conversionUp(clickCount) {
+    let ecpmParam = {  //竞价相关参数
+      ecpm: this.adList.ecpm,
+      adType: 'NATIVE',
+      adPositionId: this.adId,
+      clickCount: clickCount
+    }
+    console.log('竞价相关参数', ecpmParam);
+    $utils.conversionUpload(this, ecpmParam)
   },
   close() {
     console.log('没有关闭回调吗');
@@ -178,7 +197,7 @@ export default {
   },
   backHome() {
     $router.replace({
-      uri: "pages/displayDesktop"
+      uri: "Page_MainTab"
     })
   }
 }
