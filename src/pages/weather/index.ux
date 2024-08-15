@@ -112,28 +112,32 @@ export default {
     },//明天天气
     hour3Forcast: [],//3小时间隔
     nowhour: 0//当前小时
+  },
 
+  props: {
+    index: {
+      type: String,
+      default: 1
+    },
+    currentIndex: {
+      type: Number,
+      default: 0
+    }
   },
   onInit() {
-
-    //暂时写死位置，不请求
-    // this.getLocation()
-
-    //位置默认广州
-    this.nowWeather()
+    this.$watch('currentIndex', 'watchPropsChange')//监听tab游标
   },
-  getLocation() {
-    var that = this
-    $geolocation.getLocation({
-      success: function (data) {
-        console.log(`handling success: longitude = ${data.longitude}, latitude = ${data.latitude}`)
-        that.nowWeather(data.longitude, data.latitude)
-      },
-      fail: function (data, code) {
-        console.log(`handling fail, code = ${code}, errorMsg=${data}`)
 
-      }
-    })
+  /**
+       * 监听数据变化，你可以对数据处理后，设置值到data上
+       */
+  watchPropsChange(newV, oldV) {
+    console.log(`监听数据变化：`, newV, oldV)
+    if (newV === 1 && (oldV === 0 || oldV === 2)) {//点击到天气页
+      //请求地理权限
+      this.getLocation()
+    }
+
   },
 
   nowWeather: function (lng, lat) {
@@ -163,9 +167,66 @@ export default {
       }
     }
 
-    // $utils.getWeatherInfo(onCatchCallback, lng, lat)
+    $utils.getWeatherInfo(onCatchCallback, lng, lat)
 
-    $utils.getWeatherInfo2(onCatchCallback, '广州')
+    // $utils.getWeatherInfo2(onCatchCallback, '广州')
+  },
+  getLocation() {
+    var that = this
+    $geolocation.getLocation({
+      success: function (data) {
+        console.log(`handling success: longitude = ${data.longitude}, latitude = ${data.latitude}`)
+        that.nowWeather(data.longitude, data.latitude)
+      },
+      fail: function (data, code) {
+        // console.log(`handling fail, code = ${code}, errorMsg=${data}`)
+
+        switch (code) {
+          case 201:
+            $prompt.showToast({
+              message: "用户拒绝，获取定位权限失败。",
+              duration: 3000
+            });
+            break;
+          case 202:
+            $prompt.showToast({
+              message: "参数错误，请检查输入。",
+              duration: 3000
+            });
+            break;
+          case 203:
+            $prompt.showToast({
+              message: "服务不可用，请稍后再试。",
+              duration: 3000
+            });
+            break;
+          case 204:
+            $prompt.showToast({
+              message: "请求超时，请检查网络连接。",
+              duration: 3000
+            });
+            break;
+          case 205:
+            $prompt.showToast({
+              message: "当前国家不在服务范围内。",
+              duration: 3000
+            });
+            break;
+          case 1000:
+            $prompt.showToast({
+              message: "系统定位服务关闭，请打开定位开关。",
+              duration: 3000
+            });
+            break;
+          default:
+            $prompt.showToast({
+              message: "未知错误，请重试。",
+              duration: 3000
+            });
+            break;
+        }
+      }
+    })
   },
 
   //自动滑动到当前时刻

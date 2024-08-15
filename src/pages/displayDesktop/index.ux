@@ -196,7 +196,7 @@ export default {
     if (!this.$app.$def.globalData.isShwoAd) {
       this.show = false
       const that = this;
-      this.exhibitionIndex = 5;
+      this.exhibitionIndex = 3;
       setTimeout(() => {
         that.exhibitionIndex = that.selectedTab
       })
