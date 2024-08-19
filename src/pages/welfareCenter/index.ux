@@ -72,7 +72,7 @@
 
     <div
       class="daily-benefits {{isStartNoot?'startNoot':''}}"
-      if="{{dailybenefitsList[0].isShowTask ||  dailybenefitsList[1].isShowTask || dailybenefitsList[2].isShowTask}}"
+      if="{{dailybenefitsList[0].isShowTask ||  dailybenefitsList[1].isShowTask || dailybenefitsList[2].isShowTask ||dailybenefitsList[3].isShowTask}}"
       @click="heideStartNoot"
     >
       <div class="title"><text class="title-txt">每日福利</text></div>
@@ -243,6 +243,14 @@ export default {
         type: 'roulette',
         isShowTask: false
       },
+      {
+        title: '拆福袋',
+        subheading: '拼手气拆福袋，每日8次机会',
+        id: 4,
+        btnTxt: '去抽奖',
+        type: 'redbao',
+        isShowTask: false
+      },
     ],
     isStartNoot: false,
     rewardedVideoAd: null,
@@ -277,7 +285,7 @@ export default {
     this.getSignday()
     device.getInfo({
       success: function (res) {
-        let adBrand = $ad.getProvider() ||'huawei'//华为手机有可能为返回空
+        let adBrand = $ad.getProvider() || 'huawei'//华为手机有可能为返回空
         const phoninfo = res;
         that.brand = adBrand;
 
@@ -349,6 +357,10 @@ export default {
         return
       }
       this.rewardedVideoAd.show()
+    } else if (type === 'redbao') {
+      $router.push({
+        uri: 'pages/luckyBagOpen'
+      })
     }
   },
   //点击 签到
@@ -791,7 +803,8 @@ export default {
       const taskMap = {
         0: 'isDailyOpenRedPacketEntry',
         1: 'isWatchVideoEarnGoldEntry',
-        2: 'isWheelOfFortuneEntry'
+        2: 'isWheelOfFortuneEntry',
+        3: 'isOpenTheLuckyBagEntry'
       };
       this.dailybenefitsList.forEach((taskItem, index) => {
         // 检查索引是否在映射对象中  

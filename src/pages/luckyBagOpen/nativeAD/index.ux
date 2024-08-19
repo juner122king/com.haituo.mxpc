@@ -1,0 +1,370 @@
+<template>
+  <div class="item-container">
+    <image
+      style="width: 528px; height: 708px"
+      src="/Common/img/ad/icon_gx.png"
+    ></image>
+    <image
+      style="width: 340px; height: 94px ;  margin-bottom: 30px;"
+      src="/Common/img/ad/bt_cpd.png"
+      onclick="completeAdRSA"
+    ></image>
+    <div class="container" if="{{ isShow }}">
+      <block for="{{adList}}">
+        <ad
+          adId="{{$item.adId}}"
+          adunitid="{{ adunitid }}"
+          class="ad-native"
+          onload="adLoad(evt)"
+          onerror="adError(err,evt)"
+          onadclick="reportNativeClick()"
+          onadshow="adShow"
+          type="native"
+        >
+          <div class="ad-content">
+            <block if="{{$item.creativeType===13}}">
+              <ad-clickable-area
+                type="video"
+                class="ad-video"
+              ></ad-clickable-area>
+            </block>
+            <block if="{{$item.creativeType===3 && $item.materialType===100}}">
+              <ad-clickable-area type="click" class="btn">
+                <text class="title">{{ $item.clickBtnTxt }} </text>
+              </ad-clickable-area>
+            </block>
+            <block else>
+              <ad-clickable-area type="click" if="{{$item.imgUrlList}}">
+                <image class="ad-image" src="{{$item.imgUrlList[0]}}"></image>
+              </ad-clickable-area>
+            </block>
+
+            <div class="ad-footer" if="{{$item.title}}">
+              <ad-clickable-area type="click">
+                <image class="ad-icon" src="{{ $item.icon }}"></image>
+                <text class="title">{{ $item.title }} 广告</text>
+              </ad-clickable-area>
+            </div>
+            <div class="ad-close" onclick="closeAd"><text>关闭</text></div>
+          </div>
+        </ad>
+      </block>
+    </div>
+
+    <div
+      if="{{showTclayer}}"
+      class="tc-layer"
+      onclick="reportNativeClick()"
+    ></div>
+  </div>
+</template>
+
+<script>
+const { adCodeData } = require('../../../config.js').default
+let nativeAd;
+module.exports = {
+
+  props: {
+    showTclayer: {
+      type: Boolean,
+      default: false,
+      required: true,
+    },
+  },
+  data: {
+    hasAdList: false,
+    adList: [],
+    adData: { // 此处广告的初始值需严格按照文档来
+      imgUrlList: [],
+      title: '',
+      desc: '',
+      clickBtnTxt: ''
+    },
+    adunitid: '',
+    isShow: true
+
+  },
+  onInit() {
+    let branch = $ad.getProvider();
+    let adid = adCodeData[branch ? branch : 'HUAWEI'].nativeAd_cfd
+    console.info('原生广告id ', adid)
+    this.adUnitId = adid
+
+    this.adPreloaded()
+  },
+  adPreloaded() {
+    $ad.preloadAd({
+      adUnitId: this.adUnitId,//原生信息流2.0广告位标识
+      adCount: 1,//预期返回的数据条数：取值范围1-3，其他数据则报错,此为必填字段
+      type: 'native',//所属广告位类型
+      ecpm: true,
+      success: (data) => {
+        console.log(data, '预加载成功')//1112以下版本或adCount不传参，会返回‘success’,1112+版本会返回广告数据
+        //存储预加载数据
+        this.adList = data.adList//一次成功返回有1-3个数据，参照对应的adCount数（小概率情况下小于 adCount 数）
+        this.isShow = true;
+
+      },
+      fail: (err, code) => {
+        console.log(err, code, '预加载失败')
+      }
+    })
+  },
+
+  adLoad(evt) {
+    if (evt && evt.adData) {
+      const adData = JSON.parse(evt.adData)
+      this.adData = adData
+      console.log('adLoad', adData, '信息流广告加载成功');
+      this.isShow = true
+    } else {
+      this.isShow = false
+    }
+  },
+  adShow(evt) {
+    console.log('adShow: ', evt)
+
+    this.conversionUp('0')
+  },
+  reportNativeClick(evt) {
+
+    console.log('adClick: ', evt)
+
+    this.conversionUp('1')
+    $utils.buriedPointReport(this, 'click', this.adUnitId)
+    //广告或透明层被点击后隐藏透明层
+    this.showTclayer = false
+
+  },
+
+  conversionUp(clickCount) {
+    let ecpmParam = {  //竞价相关参数
+      ecpm: this.adData.ecpm,
+      adType: 'NATIVE',
+      adPositionId: this.adUnitId,
+      clickCount: clickCount
+    }
+    console.log('竞价相关参数', ecpmParam);
+    $utils.conversionUpload(this, ecpmParam)
+  },
+  adError(err, evt) {
+    if (err) {
+      console.log('adError 信息流广告加载出错：', err)
+    } else if (evt) {
+      console.log('adError 信息流广告展示失败：', evt.errCode, evt.errMsg)
+    }
+  },
+  closeAd: function () {
+    this.isShow = false;
+  },
+
+  completeAdRSA() {
+    console.log('点击拆福袋');
+    //友盟事件打点
+    $umeng_stat.trackEvent('xyfddhj_chai', '点击');
+    //先判断广告没有没加载出来，没有就直接返回不执行接口
+
+    if (!this.isShow) {
+      console.log('广告展示不成功,拆红包不成功');
+      $prompt.showToast({
+        message: '拆红包失败！请重试',
+        gravity: 'center'
+      });
+
+      this.$emit('emitClose')
+      return
+    }
+
+
+    var adType = 'NATIVE'
+    var adId = this.adUnitId
+    var channel = this.$app.$def.dataApp.channel
+    var countMax = this.$app.$def.dataApp.countMax
+    var brand = this.$app.$def.dataApp.brand
+    // 构建参数对象
+    const params = {
+      adType,
+      adId,
+      channel,
+      countMax,
+      brand
+    };
+
+    $apis.example.completeAdRSA(params).then((res) => {
+
+      console.log(`完成广告----------> jumpLink:${res.data.jumpLink}, 完成次数：${res.data.count} 当次奖励：${res.data.awardAmount}`);
+
+      //先判断有没有返回跳转链接，有就跳
+      if (res.data.jumpLink) {
+        $router.push({
+          uri: res.data.jumpLink
+        });
+
+      } else {
+        var mes = ''
+        if (res.data.awardAmount) {
+          mes = '恭喜获得0.01元红包'
+        } else {
+          if (res.data.count > 8) {
+            mes = '今天活动次数已用完'
+          } else {
+            mes = '再来一次'
+          }
+        }
+        $prompt.showToast({
+          message: mes,
+          gravity: 'center'
+        })
+      }
+
+      this.$emit('emitEvt', {
+        count: res.data.count
+      })
+    }).catch(err => {
+      console.log(err, '点击拆福袋错误');
+      $prompt.showToast({
+        message: JSON.parse(err).message,
+        gravity: 'center'
+      });
+    });
+  }
+
+}
+</script>
+<style lang="less">
+.tc-layer {
+  width: 100%;
+  height: 850px;
+  position: absolute;
+  bottom: 100px;
+}
+
+.item-container {
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  margin-bottom: 30px;
+  position: fixed;
+  top: 0;
+  left: 0;
+}
+.container {
+  flex-direction: column;
+  align-items: flex-end;
+}
+.stackstyle {
+  width: 540px;
+  height: 306px;
+  align-items: flex-end;
+}
+.img {
+  width: 100%;
+  height: 100%;
+  border-radius: 20px;
+}
+.closeImg {
+  margin-bottom: 30px;
+  width: 48px;
+  height: 48px;
+}
+
+.ad-close {
+  width: 50px;
+  height: 30px;
+  background-color: gray;
+  opacity: 0.5;
+  position: absolute;
+  right: 0;
+  margin-right: 20px;
+  text {
+    font-size: 20px;
+    padding: 5px;
+    color: #ffffff;
+  }
+}
+.alert {
+  font-size: 40px;
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+
+.ad-video {
+  width: 100%;
+  height: 415px;
+}
+.btn {
+  height: 80px;
+  width: 60%;
+  background-color: #00bfff;
+  color: #ffffff;
+  border-radius: 20px;
+  margin-bottom: 20px;
+}
+.btn:active {
+  background-color: #058fbd;
+}
+.adbtn {
+  width: 200px;
+  height: 50px;
+  color: #ffffff;
+  background-color: #00bfff;
+  border-radius: 8px;
+  position: absolute;
+  align-self: flex-end;
+  bottom: 20px;
+  right: 20px;
+}
+.adbtn:active {
+  background-color: #058fbd;
+}
+.adsource {
+  background-color: rgba(0, 0, 0, 0.5);
+  padding: 5px;
+  color: #ffffff;
+  position: absolute;
+  top: 0;
+  font-size: 18px;
+  border-top-left-radius: 20px;
+  padding-left: 10px;
+  padding-right: 10px;
+}
+.adtitle {
+  background-color: rgba(0, 0, 0, 0.5);
+  padding: 5px;
+  color: #ffffff;
+  font-size: 18px;
+  padding-left: 10px;
+  padding-right: 10px;
+  border-bottom-left-radius: 20px;
+}
+
+.ad-content {
+  padding: 0 30px;
+  height: 500px;
+  flex-direction: column;
+  .ad-image {
+    width: 100%;
+    object-fit: cover;
+    border-radius: 10px;
+  }
+  .ad-video {
+    width: 100%;
+    height: 100%;
+    border-radius: 10px;
+  }
+  .ad-footer {
+    height: 10%;
+    width: 100%;
+    align-items: center;
+    margin-top: 20px;
+    .ad-icon {
+      width: 30px;
+      height: 30px;
+      margin-right: 20px;
+    }
+  }
+}
+</style>

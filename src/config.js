@@ -10,6 +10,7 @@ const adCodeData = {
     fiction2: '', //原生小说广告页id
     fiction3: '', //原生小说广告页id
     fiction4: '', //原生小说广告页id
+    nativeAd_cfd:'y82ss9y9f7',
   },
   xiaomi: {
     nativeAd: '3ebda492da8090a8e28b3544df52da61', //原生
@@ -17,6 +18,7 @@ const adCodeData = {
     stimulateAd: '182b9c7d8701f5c50a0d5f1cb9fcf2b0',
     banner: 'f25c41f2e050f7bd045186ba095b6c8c',
     lotteryPageNativeAd: '3ebda492da8090a8e28b3544df52da61',
+    nativeAd_cfd:'y82ss9y9f7',
   },
   OPPO: {
     lotteryPageNativeAd: '1686568',//场景-转盘弹出层
@@ -38,10 +40,12 @@ const adCodeData = {
     tableScreen: 'l4ai02av3y',
     stimulateAd: 'o0rbevcepx',
     lotteryPageNativeAd: 'b9flx2el39',
+    nativeAd_cfd:'y82ss9y9f7',
   },
   huawei: {
     banner: 'w4brvyloy0',
     nativeAd: 'y82ss9y9f7', //原生
+    nativeAd_cfd:'y82ss9y9f7',
     tableScreen: 'l4ai02av3y',
     stimulateAd: 'o0rbevcepx',
     lotteryPageNativeAd: 'b9flx2el39',
