@@ -134,8 +134,17 @@ export default {
     }
   },
   reportAdClick(adId) {
-    this.ad.reportAdClick({ adId });
-    $utils.conversionUpload(this)
+    this.ad.reportAdClick({ adId })
+
+    let ecpmParam = {  //竞价相关参数
+      ecpm: this.adList.ecpm ? this.adList.ecpm : '0',
+      adType: 'NATIVE',
+      adPositionId: this.adUnitId,
+      clickCount: '1'
+    }
+    console.log('竞价相关参数', ecpmParam);
+    $utils.conversionUpload(this, ecpmParam)
+
     $utils.buriedPointReport(this, 'click', this.adUnitId)
     try {
       this.$emit("close", {

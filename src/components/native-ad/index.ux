@@ -94,7 +94,8 @@ module.exports = {
     let adParams = {
       adUnitId: this.native.adUnitId, // 原生自渲染2.0广告广告位id
       type: 'native',          // 原生自渲染2.0广告类型 
-      adCount: 1
+      adCount: 1,
+      ecpm: true,
     }
     const that = this;
     console.log(adParams, 'adParams查看编码');
@@ -130,7 +131,15 @@ module.exports = {
   },
   reportNativeClick(e) {
     console.info(" 原生广告被点击了", e);
-    $utils.conversionUpload(this)
+
+    let ecpmParam = {  //竞价相关参数
+      ecpm: this.adList.ecpm,
+      adType: 'NATIVE',
+      adPositionId: this.native.adUnitId,
+      clickCount: '1'
+    }
+    console.log('竞价相关参数', ecpmParam);
+    $utils.conversionUpload(this, ecpmParam)
     $utils.buriedPointReport(this, 'click', this.native.adUnitId)
     //广告或透明层被点击后隐藏透明层
     this.showTclayer = false;

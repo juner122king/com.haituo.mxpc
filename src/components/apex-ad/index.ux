@@ -142,6 +142,7 @@ export default {
         adUnitId: this.adUnitId, // 原生信息流广告广告位id
         type: 'native', // 原生信息流广告
         adCount: 1,
+        ecpm: true,
         success: (data) => {
           console.log(data, '返回广告成功');
           this.adList = data.adList[0];
@@ -184,7 +185,16 @@ export default {
   adClick() {
     console.log('没有点击回调吗');
     this.$emit('adclick');
-    $utils.conversionUpload(this)
+
+    let ecpmParam = {  //竞价相关参数
+      ecpm: this.adList.ecpm,
+      adType: 'NATIVE',
+      adPositionId: this.adUnitId,
+      clickCount: '1'
+    }
+    console.log('竞价相关参数', ecpmParam);
+    $utils.conversionUpload(this, ecpmParam)
+
     $utils.buriedPointReport(this, 'click', this.adUnitId)
   },
   close() {

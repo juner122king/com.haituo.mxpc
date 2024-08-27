@@ -359,7 +359,8 @@ export default {
       this.rewardedVideoAd.show()
     } else if (type === 'redbao') {
       $router.push({
-        uri: 'pages/luckyBagOpen'
+        // uri: 'pages/luckyBagOpen'
+        uri:'hap://app/com.haituo.mxpc/pages/advertisingCampaigns?channelValue=ucdtsgk1&type=oppo&adId=$ad$&imei=__IMEI__&oaid=__OAID__&ts=__TS__&ownerId=$ownerid$&requestId=$req$'
       })
     }
   },
