@@ -12,6 +12,8 @@ const $ad = require('@service.ad')
 const $device = require('@system.device')
 const $geolocation = require('@system.geolocation')
 const $shortcut = require('@system.shortcut')
+const $processData = require('./helper/processData').default
+
 /* @desc: 注入方法至全局 global,以便页面调用 */
 const hook2global = global.__proto__ || global
 hook2global.$utils = $utils
@@ -23,6 +25,8 @@ hook2global.$ad = $ad
 hook2global.$device = $device
 hook2global.$geolocation = $geolocation
 hook2global.$shortcut = $shortcut
+hook2global.$processData = $processData
+
 export default {
   onCreate() {
     $umeng_stat.init(this);   //在onCreate函数中加入该行代码，必须添加！！
@@ -35,8 +39,6 @@ export default {
     transparentLayerHits: 0
   },
   dataApp: {
-
-
     actiParam: '',
     transparentLayerHits: 0,
     conversionlicks: 0,//点击上传次数为0则不做上传处理

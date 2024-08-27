@@ -32,7 +32,7 @@ export default {
         subTitle: "点击右侧按钮体验",
         btn: "去体验",
         disable: true,
-        jumpPath: "hap://app/com.haituo.setpplanet/Page_cfd/"
+        jumpPath: "hap://app/com.haituo.setpplanet/pages/luckyBagOpen/"
       }
     ]
 

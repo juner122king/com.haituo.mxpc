@@ -1,8 +1,8 @@
 {
   "package": "com.haituo.mxpc",
   "name": "喵星测评",
-  "versionName": "1.0.6",
-  "versionCode": 106,
+  "versionName": "1.0.7",
+  "versionCode": 107,
   "minPlatformVersion": 1100,
   "icon": "/Common/logo.png",
   "designWidth": 750,
@@ -107,9 +107,6 @@
       "setting/test": {
         "component": "index"
       },
-      "Page_cfd": {
-        "component": "index"
-      },
       "pages/luckyBagOpen": {
         "component": "index"
       },
@@ -134,13 +131,6 @@
     "titleBarBackgroundColor": "#f2f2f2",
     "titleBarTextColor": "#414141",
     "pages": {
-      "Page_cfd": {
-        "titleBar": false,
-        "menu": false,
-        "statusBarImmersive": true,
-        "statusBarBackgroundOpacity": 0,
-        "titleBarBackgroundOpacity": 0
-      },
       "pages/luckyBagOpen": {
         "titleBar": false,
         "menu": false,

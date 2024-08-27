@@ -237,7 +237,7 @@ module.exports = {
     this.getPopUps()
 
     //获取后台设置的 转化点击次数
-    // this.getClickCount()
+    this.getClickCount()
 
   },
   onReady(options) {

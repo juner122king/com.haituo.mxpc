@@ -209,7 +209,7 @@ export default {
   },
   onMovieredClick() {
     $router.push({
-      uri: 'Page_cfd'
+      uri: 'pages/luckyBagOpen'
     })
   },
   //获取小说页面是否开启跳转红包页面悬浮组件

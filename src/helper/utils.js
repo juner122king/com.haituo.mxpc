@@ -3,7 +3,6 @@
  */
 import $device from '@system.device'
 import prompt from '@system.prompt'
-import ad from '@service.ad'
 const config = require('../config').default
 const { JSEncrypt } = require('../libs/jsencrypt/lib/index')
 // 节流阀
