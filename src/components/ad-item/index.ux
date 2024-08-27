@@ -166,15 +166,12 @@ export default {
     // })
   },
   onHide() {
-    $umeng_stat.pause(this);//在onHide方法的第一行加入此代码
-    //App业务代码
   },
   onReady(options) {
     console.info("native ad onReady");
     this.showNativeAd();
   },
   onShow(options) {
-    $umeng_stat.resume(this) //在onShow方法的第一行加入此代码
     if (this.native.isShow) {
       this.reportNativeShow();
     }

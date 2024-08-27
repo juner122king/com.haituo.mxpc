@@ -2,34 +2,92 @@
 /**
  * 应用级别的配置，供所有页面公用
  */
-import './umenganalysis.es.min';   //必须添加！！！
-const $utils = require('./helper/utils').default
-const $apis = require('./helper/apis').default
-const $router = require('@system.router')
-const $storage = require("@system.storage")
-const $prompt = require("@system.prompt")
-const $ad = require('@service.ad')
-const $device = require('@system.device')
-const $geolocation = require('@system.geolocation')
-const $shortcut = require('@system.shortcut')
-const $processData = require('./helper/processData').default
-
-/* @desc: 注入方法至全局 global,以便页面调用 */
-const hook2global = global.__proto__ || global
-hook2global.$utils = $utils
-hook2global.$apis = $apis
-hook2global.$router = $router
-hook2global.$storage = $storage
-hook2global.$prompt = $prompt
-hook2global.$ad = $ad
-hook2global.$device = $device
-hook2global.$geolocation = $geolocation
-hook2global.$shortcut = $shortcut
-hook2global.$processData = $processData
-
-export default {
+module.exports = {
   onCreate() {
-    $umeng_stat.init(this);   //在onCreate函数中加入该行代码，必须添加！！
+    const $utils = require('./helper/utils').default
+    const $apis = require('./helper/apis').default
+    const $router = require('@system.router')
+    const $storage = require("@system.storage")
+    const $prompt = require("@system.prompt")
+    const $ad = require('@service.ad')
+    const $device = require('@system.device')
+    const $geolocation = require('@system.geolocation')
+    const $shortcut = require('@system.shortcut')
+    const $processData = require('./helper/processData').default
+    const $config = require('./config.js').default
+    /* @desc: 注入方法至全局 global,以便页面调用 */
+    const hook2global = global.__proto__ || global
+    hook2global.$utils = $utils
+    hook2global.$apis = $apis
+    hook2global.$router = $router
+    hook2global.$storage = $storage
+    hook2global.$prompt = $prompt
+    hook2global.$ad = $ad
+    hook2global.$device = $device
+    hook2global.$geolocation = $geolocation
+    hook2global.$shortcut = $shortcut
+    hook2global.$processData = $processData
+    hook2global.$config = $config
+    console.info('Application onCreate');
+
+    this.openScreenAction()
+  },
+  openScreenAction() {
+    console.log('执行openScreenAction');
+    const that = this;
+    let adBrand = $ad.getProvider().toLowerCase();
+    console.log('广告adBrand:', adBrand);
+
+    if (adBrand !== 'oppo') return; // 只处理oppo广告
+    let openScrrenId = $config.adCodeData[adBrand].openScreen;
+    // let openScrrenId = '1686572';
+
+    console.log('开屏广告id:', openScrrenId);
+
+    $ad.onSplashStatus({
+      reserved: true,
+      callback: (data) => {
+        console.log(`监听开屏广告状态成功!data${JSON.stringify(data)}`);
+        let onSplashStatusData = data;
+        let splashData = {
+          ...that._def.dataApp.actiParam,
+          openScreenStatusCode: onSplashStatusData.statusCode
+        };
+
+        if (onSplashStatusData.statusCode == '-100') {
+          console.log('这是-100');
+          return;
+        }
+
+        // 提取ECPM处理逻辑
+        let ecpm = that.getEcpm(onSplashStatusData);
+
+        // 处理竞价参数
+        let ecpmParam = {
+          ecpm: ecpm,
+          adType: 'OPEN_SCREEN',
+          adPositionId: openScrrenId,
+          clickCount: onSplashStatusData.statusCode == 0 ? '0' : '1'
+        };
+
+        // 上传竞价参数
+        $utils.conversionUpload(that, ecpmParam, splashData);
+        // 埋点报告处理
+        if (onSplashStatusData.statusCode !== 0) {
+          $utils.buriedPointReport(that, 'Splash', openScrrenId, splashData);
+        }
+      }
+    })
+  },
+  // 提取ECPM获取逻辑的函数
+  getEcpm(onSplashStatusData) {
+    let ecpm = '';
+    try {
+      ecpm = onSplashStatusData.data.ecpm || onSplashStatusData.data.cpm || this._def.dataApp.openScreenEcpm;
+    } catch (error) {
+      ecpm = this._def.dataApp.openScreenEcpm || 0;
+    }
+    return ecpm;
   },
   globalData: {
     adloadingfailure: false, //广告是否加载失败
@@ -39,11 +97,19 @@ export default {
     transparentLayerHits: 0
   },
   dataApp: {
-    actiParam: '',
-    transparentLayerHits: 0,
     conversionlicks: 0,//点击上传次数为0则不做上传处理
     clicksOnAdsNow: 0,
-
-  }
+    transparentLayerHits: 0,
+    actiParam: { // 上报参数
+      channelValue: "",
+      oaid: "",
+      type: ""
+    },
+    isEnabled: false,
+    myOaid: 0,
+    requParamHead: { //完成任务请求头加
+    },
+    openScreenEcpm: 0
+  },
 }
 </script>

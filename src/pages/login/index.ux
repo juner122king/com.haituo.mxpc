@@ -110,12 +110,8 @@ export default {
     })
   },
   onShow: function () {
-    $umeng_stat.resume(this) //在onShow方法的第一行加入此代码
-    //App业务代码
   },
   onHide: function () {
-    $umeng_stat.pause(this);//在onHide方法的第一行加入此代码
-    //App业务代码
   },
   checkedRadio: function (e) {
     this.consentChecked = e.checked

@@ -92,10 +92,8 @@ export default {
     const that = this
     this.appInfo = app.getInfo()
     this.getAdPageEntrance()
-    console.log(this.appInfo, 'this.appInfo');
     // 监听属性变化
     this.$watch('currentIndex', 'watchCurrentIndex')
-    $umeng_stat.resume(this) //在onShow方法的第一行加入此代码
     device.getInfo({
       success: function (res) {
         that.brand = res.brand
@@ -135,8 +133,6 @@ export default {
     }
   },
   onHide: function () {
-    $umeng_stat.pause(this);//在onHide方法的第一行加入此代码
-    //App业务代码
   },
   getUserInfo: function () {
     user.getUserInfo().then((res) => {

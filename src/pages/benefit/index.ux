@@ -118,13 +118,11 @@ export default {
     // return true
   },
   onShow: function () {
-    $umeng_stat.resume(this) //在onShow方法的第一行加入此代码
     //App业务代码
     this.getUserInfo()
 
   },
   onHide: function () {
-    $umeng_stat.pause(this);//在onHide方法的第一行加入此代码
     //App业务代码
   },
   getUserInfo: function () {

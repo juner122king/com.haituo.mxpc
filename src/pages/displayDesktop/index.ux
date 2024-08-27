@@ -134,7 +134,6 @@ export default {
     $storage.get({
       key: 'consentPrivacy',
       success: function (data) {
-        console.log('有1了');
         if (data !== '1') {
           that.ishowTisp = true
           console.log('查看这个ishowTisp');
@@ -192,7 +191,6 @@ export default {
     // })
   },
   onShow: function () {
-    $umeng_stat.resume(this) //在onShow方法的第一行加入此代码
     if (!this.$app.$def.globalData.isShwoAd) {
       this.show = false
       const that = this;
@@ -205,8 +203,6 @@ export default {
 
   }, onHide: function () {
     console.log();
-    $umeng_stat.pause(this);//在onHide方法的第一行加入此代码
-    //App业务代码
   },
   changeTabactive: function (e) {
     for (let i = 0; i < this.datas.list.length; i++) {

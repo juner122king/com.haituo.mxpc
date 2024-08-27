@@ -77,7 +77,6 @@ export default {
 
     $shortcut.hasInstalled({
       success: function (ret) {
-        console.log('hasInstalled success ret---' + ret);
         this.isaddDesktop = ret
       }.bind(this),
       fail: function (erromsg, errocode) {

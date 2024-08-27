@@ -160,8 +160,6 @@ module.exports = {
 
   completeAdRSA() {
     console.log('点击拆福袋');
-    //友盟事件打点
-    $umeng_stat.trackEvent('xyfddhj_chai', '点击');
     //先判断广告没有没加载出来，没有就直接返回不执行接口
 
     if (!this.isShow) {

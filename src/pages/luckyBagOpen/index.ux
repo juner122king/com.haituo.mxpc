@@ -217,7 +217,7 @@ module.exports = {
       this.$app.$def.dataApp.actiParam = {
         ...e,
       }
-      $utils.buriedPointReport(this)
+       $utils.buriedPointReport(this, 'AppLaunch', '', '')
     }
 
     //处理回传链接
@@ -244,7 +244,6 @@ module.exports = {
     this.getAdCount()//原生广告位，获取次数
   },
   async onShow(options) {
-    $umeng_stat.resume(this)
   },
 
 
@@ -349,7 +348,6 @@ module.exports = {
 
   },
   onHide() {
-    $umeng_stat.pause(this);//在onHide方法的第一行加入此代码
   },
   //获取每日次数
   getAdCount() {
@@ -393,8 +391,6 @@ module.exports = {
   },
 
   openad() {
-    //友盟事件打点
-    $umeng_stat.trackEvent('xyfddhj_cfd', '点击');
     this.showDialog = true
     $utils.hideBanerAd()
 

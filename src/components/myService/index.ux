@@ -121,7 +121,6 @@ export default {
     const shortcut = require("@system.shortcut")
     shortcut.hasInstalled({
       success: function (ret) {
-        console.log('hasInstalled success ret---' + ret);
         if (ret) {
           $prompt.showToast({
             message: '桌面图标已创建',

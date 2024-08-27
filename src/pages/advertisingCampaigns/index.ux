@@ -232,7 +232,7 @@ export default {
       this.$app.$def.dataApp.actiParam = {
         ...e,
       }
-      $utils.buriedPointReport(this)
+      $utils.buriedPointReport(this,'AppLaunch','','')
     }
     const branch = $ad.getProvider()
     this.adObj = adCodeData[branch]
@@ -245,10 +245,8 @@ export default {
     this.delayedDisplay()
   },
   onShow(options) {
-    $umeng_stat.resume(this)
   },
   onHide() {
-    $umeng_stat.pause(this);//在onHide方法的第一行加入此代码
     this.timer = null;
   },
   onBackPress() {

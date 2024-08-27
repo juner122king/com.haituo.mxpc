@@ -37,10 +37,7 @@ export default {
     title: '我已了解以上后果，同意注销账号。',
     isChecked: false
   }, onShow: function () {
-    $umeng_stat.resume(this) //在onShow方法的第一行加入此代码
   }, onHide: function () {
-    $umeng_stat.pause(this);//在onHide方法的第一行加入此代码
-    //App业务代码
   },
   changeChecked: function () {
     console.log('点击了');
