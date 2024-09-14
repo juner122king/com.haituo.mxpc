@@ -1,8 +1,12 @@
 
 <import name="my-navbar" src="apex-ui/components/navbar/index"></import>
 <import name="back-to-ads" src="../advertisingCampaigns/components/back-to-ads.ux"></import>
+<import name="bottom-native" src="../advertisingCampaigns/components/bottom-native.ux"></import>
+<import name="reminder-ads" src="../advertisingCampaigns/components/reminder-ads.ux"></import>
+<import name="transparency-mask" src="../../components/transparency-mask/index.ux"></import>
+
 <template>
-  <div class="doc-page"     style="background-color: {{backgroundcolor}}">
+  <div class="doc-page"    style="background-color: {{backgroundcolor}}">
        <my-navbar></my-navbar>
       <div class="page-wrapper-child"  >
         <reader-div  id="readerdiv"
@@ -202,6 +206,12 @@
             <text>左滑继续阅读</text>
           </div>
         </div>
+            <transparency-mask
+            sportTitle="小说文章页"
+            if="{{showTransparency}}"
+            onemit-hide-transparency="hideTransparency"
+            ></transparency-mask>
+
             </ad>
           </div>
         </reader-div>
@@ -341,22 +351,31 @@
 
       </div>
 <!-- bottom ad -->
-  <div  class="banner-wrap">
+ <div  class="banner-wrap">
       <bottom-native
       ad-unitId="{{lastAdId}}"
       ad-list="{{adList}}"
       show-transparency="{{ showTransparency}}"
       onemit-hide-transparency="hideTransparency"
+      sport-title="小说文章页"
     ></bottom-native>
         </div>
 
-
+<!--延迟提示 -->
       <reminder-ads
-      if="{{showReminder}}"
-      show-transparency="{{ showTransparency}}"
+      if="{{showReminder && branch !== 'vivo'}}"
+      show-transparency="{{showTransparency}}"
       onemit-hide-transparency="hideTransparency"
       onemit-close="heideReminder"
+      sport-title="小说文章页"
     ></reminder-ads>
+
+<!-- 延迟提示 taku插屏广告 -->
+    <task-interstitial
+      if="{{showReminder && branch === 'vivo'}}"
+      onemit-close="heideReminder"
+      sport-title="小说文章页"
+    ></task-interstitial>
 
        <!-- 返回时弹出框 -->
     <back-to-ads
@@ -364,7 +383,9 @@
       show-transparency="{{ showTransparency}}"
       onemit-hide-transparency="hideTransparency"
       onemit-close="heideReminder"
+      sport-title="小说文章页"
     ></back-to-ads>
+
   </div>
 </template>
 
@@ -1250,9 +1271,6 @@
 }
 </style>
 
-<import name="bottom-native" src="../advertisingCampaigns/components/bottom-native.ux"></import>
-<import name="reminder-ads" src="../advertisingCampaigns/components/reminder-ads.ux"></import>
- 
 <script>
 const { adCodeData } = require('../../config.js').default
 let $animation = null
@@ -1450,9 +1468,17 @@ export default {
     } else {
       console.log('这是什么', detail.data);
       if (detail.data === 'showVackTisp') {
-        this.showVackTisp = false
+        this.showVackTisp = false;
+        if (detail.closeType === 'close') {
+          this.addClickNum()
+        }
+
       } else if (detail.data === 'showReminder') {
         this.showReminder = false
+        if (detail.closeType === 'close') {
+          this.addClickNum()
+        }
+
       }
     }
   },
@@ -2162,7 +2188,8 @@ export default {
   hideTransparency() {
     console.log('点击了关闭广告');
     this.showTransparency = false;
-
+    this.addClickNum()
+      // this.$emit('emitHideTransparency')
   },
   complete: function () {
     console.info('complete')

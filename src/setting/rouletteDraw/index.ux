@@ -239,7 +239,7 @@ export default {
     const { callback = '', type = 'jh', channelValue = '', corp_id = '' } = e;
     if (Object.keys(e).length > 0) {
       console.log('进来判断');
-      this.$app.$def.globalData.actiParam = {
+      this.$app.$def.dataApp.actiParam = {
         ...e,
       }
       $utils.getConversionlicks(this)

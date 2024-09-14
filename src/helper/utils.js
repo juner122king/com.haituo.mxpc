@@ -212,11 +212,33 @@ async function conversionUpload(that, ecpmParam, splashData = {}) {
         oaid: oaid
       })
       .then((res) => {
-        console.log(res, '转换成功')
+        console.log(res, '普通上报成功')
       })
       .catch((err) => {
-        console.log(err, '转换失败')
+        console.log(err, '普通上报失败')
       })
+
+    if (param.type === 'uc') {
+      console.log('UC上报参数==', param)
+      $apis.task
+        .postConvertUploadUC({
+          ...param,
+          ecpm: ecpmParam.ecpm,
+          adType: ecpmParam.adType,
+          adPositionId: ecpmParam.adPositionId,
+          clickCount: ecpmParam.clickCount,
+          pid: manufacturer || branch,
+          deviceId: param.oaid || '',
+          type: param.type,
+          oaid: oaid
+        })
+        .then((res) => {
+          console.log(res, 'UC上报成功')
+        })
+        .catch((err) => {
+          console.log(err, 'UC上报失败')
+        })
+    }
   } catch (error) {
     console.log('转换失败', error)
   }
@@ -411,10 +433,10 @@ function changeGlobalParam(that, name, data = '', changeType = 'get') {
   try {
     let type = name && data ? 'set' : changeType
     if (type === 'get') {
-      return name ? that.$app.$def.globalData[name] : that.$app.$def.globalData
+      return name ? that.$app.$def.dataApp[name] : that.$app.$def.dataApp
     } else if (type === 'set') {
-      that.$app.$def.globalData[name] = data
-      return that.$app.$def.globalData[name]
+      that.$app.$def.dataApp[name] = data
+      return that.$app.$def.dataApp[name]
     }
   } catch (error) { }
 }
@@ -423,7 +445,7 @@ function changeGlobalParam(that, name, data = '', changeType = 'get') {
  */
 function judgingAd(context) {
   let param = {
-    ...context.$app.$def.globalData.actiParam,
+    ...context.$app.$def.dataApp.actiParam,
   }
   let type = param.type || ''
   if (type) {
@@ -453,7 +475,7 @@ function analyzeAdvertiserId(context) {
     backurl = '',
     corp_id = '',
     callback = '',
-  } = context.$app.$def.globalData.actiParam
+  } = context.$app.$def.dataApp.actiParam
   if (backurl) {
     return backurl
   } else if (callback) {
@@ -471,15 +493,14 @@ async function buriedPointReport(these, event = 'AppLaunch', adId = '', splashDa
       type: '',
       ...splashData,
     }
-
-    if (event !== 'Splash') {
+    if (event !== 'Splash' && event !== 'SplashLaunch') {
       //不是开屏正常逻辑
       const isEnabled = these.$app.$def.dataApp.isEnabled
       if (event === 'AppLaunch' && isEnabled) {
-        console.log('取消启动上报', isEnabled)
+        // console.log('取消启动上报', isEnabled)
         return
       } else {
-        console.log('成功启动上报')
+        // console.log('成功启动上报')
         these.$app.$def.dataApp.isEnabled = true
       }
       checkPaem = {
@@ -488,21 +509,28 @@ async function buriedPointReport(these, event = 'AppLaunch', adId = '', splashDa
       }
     }
 
-
     console.log(checkPaem, '查看是否有参数')
-    if (Object.keys(checkPaem).length <= 0) {
-      //无值的情况直接删除
-      return
-    }
-
     let token = await $storage.get({
       key: 'AUTH_TOKEN_DATA',
     })
-    token = JSON.parse(token.data)
-    console.log('查看这个token', token)
-    const that = this
-    let adBrand = $ad.getProvider()
+
+    try {
+      token = JSON.parse(token.data)
+    } catch (error) {
+      console.log('无token状态')
+      token = {
+        userId: 'null',
+        appId: '',
+      }
+    }
+    let adBrand = $ad.getProvider().toLowerCase()
     let urlQuery = convertToQueryString(checkPaem)
+    const eventData = {
+      click: '$AdClick',
+      Splash: '$AdClick',
+      AppLaunch: '$AppLaunch',
+      SplashLaunch: '$AppLaunch',
+    }
     $device.getInfo({
       success: function (ret) {
         let phoninfo = ret
@@ -510,12 +538,7 @@ async function buriedPointReport(these, event = 'AppLaunch', adId = '', splashDa
         let param = {
           ...checkPaem,
           ...splashData,
-          event:
-            event === 'click'
-              ? '$AdClick'
-              : event === 'Splash'
-                ? '$AdClick'
-                : '$AppLaunch',
+          event: eventData[event],
           cid: checkPaem.channelValue,
           pid: manufacturer || adBrand,
           appId: token.appId || 'SC_0001',
@@ -533,20 +556,36 @@ async function buriedPointReport(these, event = 'AppLaunch', adId = '', splashDa
             urlQuery: urlQuery,
           },
         }
-
-        console.log('查看上报参数', param)
+        console.log('查看埋点上报参数', param)
         $apis.task
           .postTrackCapture({ ...param })
           .then((res) => {
-            console.log('埋点上报成功', res)
+            console.log('上报成功', res)
           })
           .catch((err) => {
-            console.log(err, '埋点上传失败')
+            console.log(err, '上传失败')
           })
       },
     })
   } catch (error) {
-    console.log(error, '埋点上传错误')
+    console.log(error, '上传错误')
+    $apis.task
+      .postTrackCapture({
+        event: event === 'click' ? '$AdClick' : '$AppLaunch',
+        appId: 'SC_0001',
+        properties: {
+          analysis: {
+            adId: adId,
+            title: adId,
+          },
+        },
+      })
+      .then((res) => {
+        console.log('上报成功', res)
+      })
+      .catch((err) => {
+        console.log(err, '上传失败')
+      })
   }
 }
 
@@ -600,7 +639,6 @@ const getWeatherInfo2 = async (onCatchCallback, area) => {
     .catch(onCatchCallback)
 
 }
-
 
 export default {
   throttle,

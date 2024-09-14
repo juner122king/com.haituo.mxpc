@@ -1,4 +1,4 @@
-
+<import name="transparency-mask" src="../../../components/transparency-mask/index.ux"></import>
 <import name="icon" src="apex-ui/components/icon/index"></import>
 <!-- 停留3秒显示弹窗 -->
 <template>
@@ -80,6 +80,11 @@
           </div>
         </div>
       </ad>
+      <transparency-mask
+        sportTitle="退出前看个广告弹窗"
+        onemit-hide-transparency="hideTransparency"
+        if="{{showTransparency}}"
+      ></transparency-mask>
     </div>
   </div>
 </template>
@@ -166,19 +171,19 @@ export default {
   },
   adClick() {
     console.log('没有点击回调吗');
-    
+
     this.conversionUp('1')
     this.$emit('emitHideTransparency')
     $utils.buriedPointReport(this, 'click', this.adId)
     //后台单个埋点 - 事件：广告点击
   },
-  
+
   adShow(evt) {
     console.log('小说广告show: ', evt)
 
     this.conversionUp('0')
   },
-   conversionUp(clickCount) {
+  conversionUp(clickCount) {
     let ecpmParam = {  //竞价相关参数
       ecpm: this.adList.ecpm,
       adType: 'NATIVE',
@@ -192,14 +197,18 @@ export default {
     console.log('没有关闭回调吗');
     this.hasAdList = false;
     this.$emit('emitClose', {
-      data: 'showVackTisp'
+      data: 'showVackTisp',
+      closeType: "close"
     })
   },
   backHome() {
     $router.replace({
-      uri: "Page_MainTab"
+      uri: "pages/displayDesktop"
     })
-  }
+  },
+  hideTransparency() {
+    this.$emit('emitHideTransparency')
+  },
 }
 </script>
 

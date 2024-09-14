@@ -1,4 +1,4 @@
-
+<import name="transparency-mask" src="../../../components/transparency-mask/index.ux"></import>
 <import name="icon" src="apex-ui/components/icon/index"></import>
 <!-- 停留3秒显示弹窗 -->
 <template>
@@ -84,6 +84,11 @@
           </div>
         </div>
       </ad>
+      <transparency-mask
+        sportTitle="停留自弹窗"
+        onemit-hide-transparency="hideTransparency"
+        if="{{showTransparency}}"
+      ></transparency-mask>
     </div>
   </div>
 </template>
@@ -114,8 +119,15 @@ export default {
   props: {
     showTransparency: {
       default: false
+    },
+    sportTitle: {
+      default: '停留自弹窗'
     }
   },
+  hideTransparency() {
+    this.$emit('emitHideTransparency')
+  },
+
   onInit() {
     const branch = $ad.getProvider()
     this.adObj = adCodeData[branch]
@@ -203,7 +215,8 @@ export default {
     console.log('没有关闭回调吗');
     this.hasAdList = false;
     this.$emit('emitClose', {
-      data: 'showReminder'
+      data: 'showReminder',
+      closeType: "close"
     })
   }
 }

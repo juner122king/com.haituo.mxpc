@@ -17,6 +17,7 @@
   "dependencies": {
     "apex-ui": "^1.9.5",
     "base64-arraybuffer": "^1.0.2",
+    "pdt-mini-ui": "^1.5.4",
     "qa-spin": "^1.0.0",
     "url-encode": "^1.0.5"
   },

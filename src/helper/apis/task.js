@@ -52,6 +52,16 @@ const postConvertUpload = (data) => {
   })
 }
 
+// 转换上报-UC
+const postConvertUploadUC = (data) => {
+  return request({
+    method: 'POST',
+    url: `/qa/mini/basic/ad/quickApp/open/convert/upload/uc`,
+    data,
+  })
+}
+
+
 // 获取手势返回配置信息
 const getClickControlReyurn = (data) => {
   return request({
@@ -116,6 +126,14 @@ const postTrackCapture = (data) => {
   })
 }
 
+// 获取点击控制审核状态
+const getClickReviewControl = (data) => {
+  return request({
+    method: 'GET',
+    url: `/qa/mini/basic/clickControl/audit/status/${data.branch}`,
+  })
+}
+
 let task = {
   getCompleteCount,
   postCompleteAd,
@@ -128,7 +146,9 @@ let task = {
   getAdJumpLink,
   getAdPageEntrance,
   getConversionlicks,
-  postTrackCapture
+  postTrackCapture,
+  getClickReviewControl,
+  postConvertUploadUC
 }
 
 export default task

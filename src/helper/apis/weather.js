@@ -15,7 +15,6 @@ const get7dayWeather = (data) => {
 
 //获取7天当前天气-城市
 const get7dayWeatherforArea = (data) => {
-
   // 构建完整的URL
   const url = `https://route.showapi.com/9-2?appKey=${data.appKey}&area=${data.area}&needMoreDay=${data.needMoreDay}&need3HourForcast=${data.need3HourForcast}`
   return request({

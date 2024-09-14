@@ -217,7 +217,7 @@ module.exports = {
       this.$app.$def.dataApp.actiParam = {
         ...e,
       }
-       $utils.buriedPointReport(this, 'AppLaunch', '', '')
+      $utils.buriedPointReport(this, 'AppLaunch', '', '')
     }
 
     //处理回传链接
@@ -244,8 +244,9 @@ module.exports = {
     this.getAdCount()//原生广告位，获取次数
   },
   async onShow(options) {
+    let actiParam = this.$app.$def.dataApp.actiParam;
+    this.$app.$sensors.pageShow({ channel: actiParam.channelValue });
   },
-
 
   //透明层展示比例判断
   isShowTclayerOfBL() {
@@ -451,13 +452,14 @@ module.exports = {
   },
 
   back() {
-    let u = 'Page_MainTab'
-    if (this.returnPage) {
-      u = this.returnPage
-    }
-    $router.push({
-      uri: u
-    })
+    // let u = 'pages/displayDesktop'
+    // if (this.returnPage) {
+    //   u = this.returnPage
+    // }
+    // $router.push({
+    //   uri: u
+    // })
+    $router.back()
   },
 
   onBackPress() {

@@ -274,7 +274,7 @@ export default {
     const { callback = '', oaid = '', type = '', channelValue = '', corp_id = '' } = e
     if (Object.keys(e).length > 0) {
       console.log('进来了');
-      this.$app.$def.globalData.actiParam = {
+      this.$app.$def.dataApp.actiParam = {
         ...e,
       }
       $utils.getConversionlicks(this)
@@ -415,7 +415,7 @@ export default {
   }, 4000),
   // 打开广告
   openAd: $utils.throttle(function () {
-    this.$app.$def.globalData.isShwoAd = false
+    this.$app.$def.dataApp.isShwoAd = false
     if (this.showAdItem) {
       this.completionTask()
       return
@@ -427,7 +427,7 @@ export default {
     this.$set('awardData.txt', '打开并领取')
   }),
   receiveAward: function () {
-    this.$app.$def.globalData.isShwoAd = false
+    this.$app.$def.dataApp.isShwoAd = false
     this.closePop()
     // console.log('红包框');
     // if (this.adTaskCompletions) {
@@ -440,12 +440,12 @@ export default {
     console.log('无次数关闭')
     this.closePop()
     this.getAdJumpLink()
-    this.$app.$def.globalData.isShwoAd = false
+    this.$app.$def.dataApp.isShwoAd = false
   },
   closePop: function (e) {
     this.tispBoxType = ''
     this.showAdItem = false
-    this.$app.$def.globalData.isShwoAd = false
+    this.$app.$def.dataApp.isShwoAd = false
   },
   getCompleteCount() {
 
@@ -478,7 +478,7 @@ export default {
     //   message: "红包意外关闭稍后重试",
     //   gravity: "center"
     // })
-    this.$app.$def.globalData.isShwoAd = false
+    this.$app.$def.dataApp.isShwoAd = false
     if (e.detail && e.detail.data === 'error') {
       $utils.showToast('请稍后再试')
       return
@@ -503,7 +503,7 @@ export default {
       .then((res) => {
         console.log(res, '完成任务、')
         this.getUserInfo()
-        this.$app.$def.globalData.isShwoAd = true
+        this.$app.$def.dataApp.isShwoAd = true
         this.getCompleteCount()
         if (res.data.awardAmount) {
           this.awardData = {
@@ -525,7 +525,7 @@ export default {
               },
             ],
             success: function (data) {
-              that.$app.$def.globalData.isShwoAd = false
+              that.$app.$def.dataApp.isShwoAd = false
               console.log('handling callback', data)
             },
             cancel: function () {
@@ -563,7 +563,7 @@ export default {
     })
   },
   getTransparentLayerL: function () {
-    let result = this.$app.$def.globalData.actiParam.oaid
+    let result = this.$app.$def.dataApp.actiParam.oaid
     if (!result) {
       return
     }

@@ -1,0 +1,147 @@
+<template>
+  <div class="transparency-mask">
+    <ad
+      if="{{hasAdList}}"
+      adId="{{adList.adId}}"
+      class="box"
+      show="{!!adList.adId}}"
+      onerror="error"
+      onadclick="adClick"
+      onadclose="close"
+      type="native"
+      closeBtnPosition="left-top"
+    >
+    </ad>
+  </div>
+</template>
+<script>
+const { adCodeData } = require('../../config.js').default
+export default {
+  data: {
+    adList: '',
+    branch: "",
+    adObj: {},
+    adId: "",
+    hasAdList: true
+  },
+  props: {
+    isShow: {
+      default: true
+    },
+    sportTitle: {
+      default: '全覆盖透明层'
+    }
+  },
+  onInit() {
+    let idIndex = this.$app.$def.dataApp.showTransparencyMask;
+    const branch = $ad.getProvider().toLowerCase()
+    this.branch = branch;
+    this.adObj = adCodeData[branch]
+    if (adCodeData[branch]) {
+      this.adId = this.adObj[`fiction${idIndex}`];
+      this.preloadAd()
+      this.$app.$def.dataApp.showTransparencyMask++;
+      if (this.$app.$def.dataApp.showTransparencyMask > 5) {
+        this.$app.$def.dataApp.showTransparencyMask = 1
+      }
+    }
+  },
+  preloadAd() {
+    try {
+      const that = this;
+      console.log(this.adId, '查看广告id编码');
+      require('@service.ad').preloadAd({
+        adUnitId: this.adId, // 原生信息流广告广告位id
+        type: 'native', // 原生信息流广告
+        adCount: 1,
+        ecpm: true,
+        success: (data) => {
+          this.adList = data.adList[0]
+          console.log(this.adList, '查看遮罩是否有广告返回');
+          this.hasAdList = true;
+          if (this.debug) {
+            prompt.showToast({
+              message: `ad load success`
+            })
+          }
+        },
+        fail: (data, code) => {
+          console.log(data, code, '遮罩返回广告失败1');
+          this.hasAdList = false;
+          if (code === 205) {
+            this.hasAdList = true;
+            this.adList = data.adList[0]
+          } else {
+            if (this.debug) {
+              prompt.showToast({
+                message: `ad load fail!data= ${JSON.stringify(data)},code= ${code}`
+              })
+            }
+          }
+        }
+      })
+    } catch (e) {
+      console.log(e, e.message);
+    }
+  },
+  // 埋点上报
+  sensorsTrack(e) {
+    try {
+      const { title = '', type = 1, defaultTxt = `${this.sportTitle}-透明层`, adPositionId = '' } = e;
+      let apid = adPositionId || this.adId;
+      this.$app.$sensors.track(`${type === 1 ? '$AppClick' : '$AppClick'}`, {
+        analysis: {
+          title: `${defaultTxt}${title ? ('-' + title) : ""}${title.includes('广告位') ? '-' + apid : ''}`,
+          formId: apid
+        }
+      })
+    } catch (error) {
+      console.log(error, '埋点报错');
+    }
+  },
+  adClick() {
+    this.conversionUp('1')
+    $utils.buriedPointReport(this, 'click', this.adId)
+    this.sensorsTrack({ title: "广告位" })
+    this.$emit('emitHideTransparency')
+    this.hasAdList = false;
+    this.preloadAd()
+  },
+  conversionUp(clickCount) {
+    let ecpmParam = {  //竞价相关参数
+      ecpm: this.ecpm,
+      adType: 'NATIVE',
+      adPositionId: this.adId,
+      clickCount: clickCount
+    }
+    console.log('竞价相关参数', ecpmParam);
+    $utils.conversionUpload(this, ecpmParam)
+  },
+  close(type = '') {
+    if (type) {
+      let str = `x${type}`
+      this.sensorsTrack({ title: str })
+    }
+    console.log('没有关闭回调吗');
+    this.hasAdList = false;
+    this.$emit('emitClose', {
+      data: 'showReminder'
+    })
+  }
+}
+</script>
+
+<style>
+.transparency-mask {
+  width: 100%;
+  height: 100%;
+  position: fixed;
+  left: 0;
+  right: 0;
+}
+.box {
+  width: 100%;
+  height: 100%;
+  /* background-color: #fcf; */
+}
+</style>

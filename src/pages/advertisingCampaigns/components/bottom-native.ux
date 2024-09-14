@@ -1,5 +1,6 @@
 
 <import name="icon" src="apex-ui/components/icon/index"></import>
+
 <template>
   <div>
     <div class="bottom-native" if="{{hasAdList}}">

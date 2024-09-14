@@ -127,7 +127,7 @@ export default {
   onInit(e) {
     const { callback = '' } = e;
     if (callback) {
-      this.$app.$def.globalData.actiParam = {
+      this.$app.$def.dataApp.actiParam = {
         ...e
       }    }
     const that = this;
@@ -191,7 +191,7 @@ export default {
     // })
   },
   onShow: function () {
-    if (!this.$app.$def.globalData.isShwoAd) {
+    if (!this.$app.$def.dataApp.isShwoAd) {
       this.show = false
       const that = this;
       this.exhibitionIndex = 3;

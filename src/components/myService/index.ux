@@ -73,6 +73,8 @@ export default {
         type: 'tisp',
         isjump: 'true',
         path: "setting/aboutUs",
+        // path: "activity/mysteryPopups",
+        // path: "pages/advertisingCampaigns",
         iShow: true
       },
       {

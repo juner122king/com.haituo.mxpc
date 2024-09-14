@@ -1,0 +1,274 @@
+<template>
+  <div class="wrapper" onclick="clickPopover">
+    <div class="{{showRedPack?'coner':'conerno'}}" onclick="clickPopover">
+      <image
+        if="showRedPack"
+        class="img-popover"
+        src="{{`/Common/img/ad/kai${showBgIndex}.png`}}"
+      ></image>
+      <div class="Popover-2" else>
+        <image class="btn" src="/Common/img/ad/bt_cpd.png"></image>
+      </div>
+      <image
+        if="showRedPack"
+        class="close"
+        src="/Common/img/ad/icon_x.png"
+      ></image>
+    </div>
+    <div class="complaint" onclick="complaint"></div>
+    <ad
+      adId="{{adList.adId}}"
+      class="box"
+      show="{!!adList.adId}}"
+      onerror="error"
+      onadclick="adClick"
+      onadclose="close"
+      type="native"
+      closeBtnPosition="left-top"
+      if="{{hasAdList && !isAudit}}"
+      onadshow="adSuccShow"
+    >
+    </ad>
+  </div>
+</template>
+
+<script>
+const { adCodeData } = require('../../config.js').default
+export default {
+  private: {
+    title: '欢迎体验快应用开发',
+    branch: "",
+    adObj: "",
+    adId: '',
+    adList: "",
+    hasAdList: true,
+    showBgIndex: 1, // 默认显示第一张图片，
+    maxNum: 5,//最多显示到第5张
+    showRedPack: false, // 控制红包显示
+    visitCount: 0, // 访问计数器
+    isAudit: false
+  },
+  onInit: function (e) {
+    if (Object.keys(e).length > 0) {
+      console.log('进来了', e);
+      this.$app.$def.dataApp.actiParam = {
+        ...e,
+      }
+      $utils.buriedPointReport(this, 'AppLaunch', '', '')
+    }
+    //处理回传链接
+    $utils.saveHapUri(this, e)
+
+    this.visitCount = 0 // 访问计数器
+    const branch = $ad.getProvider().toLowerCase()
+    this.branch = branch;
+    this.adObj = adCodeData[branch]
+
+    this.getClickReviewControl()
+  },
+  onShow() {
+
+    let actiParam = this.$app.$def.dataApp.actiParam;
+    this.$app.$sensors.pageShow({ channel: actiParam.channelValue });
+    // 生成一个1到3的随机数
+    // this.showBgIndex = Math.floor(Math.random() * 3) + 1;
+    // 如果计数大于1，表示是从其他页面返回，显示红包
+    if (this.visitCount > 0) {
+      this.showRedPack = true
+    }
+    if (this.adObj) {
+      let ids = ['fiction1', 'fiction2', 'fiction3', 'nativeAd']
+      let key = ids[Math.floor(Math.random() * 4)];
+      this.adId = this.adObj[key]
+      this.preloadAd()
+    }
+  },
+  clickPopover(evt) {  //关闭弹窗 查看透明层；
+    console.log('跳转几次');
+    // 阻止事件冒泡
+    if (evt) {
+      evt.stopPropagation()
+    }
+    if (this.showRedPack) {
+      setTimeout(() => {
+        this.showBgIndex = this.showBgIndex < 5 ? this.showBgIndex + 1 : 1;
+      }, 100)
+    }
+    this.showRedPack = false;
+    if (this.isAudit) {
+      $router.push({
+        uri: "pages/luckyBagOpen"
+      })
+      return
+    }
+
+  },
+  preloadAd() {
+    try {
+      const that = this;
+      console.log(this.adId, '查看广告id编码');
+      require('@service.ad').preloadAd({
+        adUnitId: this.adId, // 原生信息流广告广告位id
+        type: 'native', // 原生信息流广告
+        adCount: 1,
+        ecpm: true,
+        success: (data) => {
+          console.log(data, '查看能返回多少广告');
+          this.adList = data.adList[0]
+          console.log(this.adList, '返回广告成功');
+          this.hasAdList = true;
+
+          if (this.debug) {
+            prompt.showToast({
+              message: `ad load success`
+            })
+          }
+        },
+        fail: (data, code) => {
+          console.log(data, code, '返回广告失败1');
+          this.hasAdList = true;
+          if (code === 205) {
+            this.hasAdList = true;
+            this.adList = data.adList[0]
+          } else {
+            if (this.debug) {
+              prompt.showToast({
+                message: `ad load fail!data= ${JSON.stringify(data)},code= ${code}`
+              })
+            }
+          }
+        }
+      })
+    } catch (e) {
+      console.log(e, e.message);
+    }
+  },
+  adClick() {
+    // 每次显示页面时，增加一次计数
+    this.visitCount++;
+    this.conversionUp('1')
+    $utils.buriedPointReport(this, 'click', this.adId)
+
+    this.hasAdList = false;
+    this.preloadAd()
+    this.clickPopover()
+
+  },
+  adSuccShow(e) {
+    console.log(e, '广告成功展示');
+    this.conversionUp('0')
+  },
+  conversionUp(clickCount) {
+    let ecpmParam = {  //竞价相关参数
+      ecpm: this.adList.ecpm,
+      adType: 'NATIVE',
+      adPositionId: this.adId,
+      clickCount: clickCount
+    }
+    console.log('竞价相关参数', ecpmParam);
+    $utils.conversionUpload(this, ecpmParam)
+  },
+  error(e) {
+    console.log(e, '广告返回失败');
+    this.preloadAd()
+  },
+  close(e) {
+    console.log(e, '广告关闭');
+  },
+  /***
+   * 是否自动打开
+   */
+  getClickReviewControl() {
+    const branch = $ad.getProvider().toUpperCase();
+    $apis.task.getClickReviewControl({ branch: branch }).then((res) => {
+      console.log(res, '查看是否在审核');
+      if (!res.data) {
+        this.showRedPack = true;
+      }
+      this.isAudit = res.data;
+    })
+  },
+  complaint(evt) {
+    // 阻止事件冒泡
+    if (evt) {
+      evt.stopPropagation()
+    }
+    console.log('跳转举报');
+    $router.push({
+      uri: 'setting/feedback'
+    })
+  }
+
+}
+</script>
+
+<style lang="less">
+.wrapper {
+  width: 100%;
+  height: 100%;
+  background-image: url("http://cdn.ihaituo.cn/qa/pro/app/029e30f6272517f887af64ab30d2f0b7.png");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 100% 100%;
+
+  .complaint {
+    width: 90px;
+    height: 170px;
+    /* background-color: #fcf; */
+    position: fixed;
+    bottom: 250px;
+    left: 0;
+  }
+}
+
+.img-popover {
+  width: 630px;
+  object-fit: contain;
+  height: auto;
+}
+.Popover-2 {
+  width: 100%;
+  height: 800px;
+  background-size: 100% 800px;
+  background-repeat: no-repeat;
+  justify-content: center;
+  align-items: flex-end;
+  .btn {
+    width: 500px;
+    height: 130px;
+    object-fit: contain;
+    top: -70px;
+  }
+}
+.box {
+  position: fixed;
+  top: 0px;
+  left: 0px;
+  width: 100%;
+  height: 100%;
+
+  /* background-color: #fcf; */
+}
+
+.coner {
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.8);
+  align-items: center;
+  flex-direction: column;
+  position: fixed;
+  justify-content: center;
+  top: 0px;
+  left: 0px;
+}
+.conerno {
+  width: 0;
+  height: 0;
+  position: fixed;
+}
+.close {
+  margin-top: 50px;
+  width: 80px;
+  height: 80px;
+}
+</style>

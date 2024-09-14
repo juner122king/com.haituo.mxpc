@@ -1,9 +1,16 @@
 <script>
-/**
- * 应用级别的配置，供所有页面公用
- */
+
+import sensors from 'pdt-mini-ui/utils/quickapp-track.js'
+
 module.exports = {
   onCreate() {
+
+    console.info('Application onCreate');
+    sensors.init(this);
+    sensors.appLaunch()
+    this.$sensors = sensors;
+
+
     const $utils = require('./helper/utils').default
     const $apis = require('./helper/apis').default
     const $router = require('@system.router')
@@ -28,8 +35,6 @@ module.exports = {
     hook2global.$shortcut = $shortcut
     hook2global.$processData = $processData
     hook2global.$config = $config
-    console.info('Application onCreate');
-
     this.openScreenAction()
   },
   openScreenAction() {
@@ -40,8 +45,6 @@ module.exports = {
 
     if (adBrand !== 'oppo') return; // 只处理oppo广告
     let openScrrenId = $config.adCodeData[adBrand].openScreen;
-    // let openScrrenId = '1686572';
-
     console.log('开屏广告id:', openScrrenId);
 
     $ad.onSplashStatus({
@@ -72,10 +75,14 @@ module.exports = {
 
         // 上传竞价参数
         $utils.conversionUpload(that, ecpmParam, splashData);
-        // 埋点报告处理
-        if (onSplashStatusData.statusCode !== 0) {
-          $utils.buriedPointReport(that, 'Splash', openScrrenId, splashData);
+        let event = onSplashStatusData.statusCode == 0 ? 'SplashLaunch' : 'Splash'
+        // 旧埋点处理
+        $utils.buriedPointReport(that, event, openScrrenId, splashData);
+
+        if (onSplashStatusData.statusCode == 0) { //接入新埋点，只需要广告显示就执行
+          sensors.pageShow({ channel: splashData.channelValue, formId: openScrrenId })
         }
+
       }
     })
   },
@@ -89,27 +96,22 @@ module.exports = {
     }
     return ecpm;
   },
-  globalData: {
-    adloadingfailure: false, //广告是否加载失败
-    isShwoAd: false,//是否正在奖励广告,
-    conversionlicks: 0,//点击上传次数为0则不做上传处理
-    clicksOnAdsNow: 0,
-    transparentLayerHits: 0
-  },
   dataApp: {
     conversionlicks: 0,//点击上传次数为0则不做上传处理
     clicksOnAdsNow: 0,
-    transparentLayerHits: 0,
+    transparentLayerHits: 1,
     actiParam: { // 上报参数
       channelValue: "",
       oaid: "",
       type: ""
     },
     isEnabled: false,
+    isShwoAd: false,//是否正在奖励广告,
     myOaid: 0,
     requParamHead: { //完成任务请求头加
     },
-    openScreenEcpm: 0
+    openScreenEcpm: 0,
+    showTransparencyMask: 1,//当前获取的广告id次数 最大为5
   },
 }
 </script>

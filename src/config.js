@@ -11,7 +11,7 @@ const adCodeData = {
     fiction2: '42294ef0f3684d4dbf761d1b058f3c76', //原生小说广告页id
     fiction3: '208313808c11462f873dcf20c1faa18f', //原生小说广告页id
     fiction4: 'a623e39a11bf48b6b31e36ee9a7691b5', //原生小说广告页id
-    banner: '3aae67431134438f9028c1d513f48098',
+    banner: '',
     nativeAd_cfd: '56c08fb035f84e91a5d33a3c1de6b584',
   },
   xiaomi: {

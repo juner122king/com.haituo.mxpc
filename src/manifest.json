@@ -124,6 +124,9 @@
       },
       "pages/testing/detail": {
         "component": "index"
+      },
+      "activity/mysteryPopups": {
+        "component": "index"
       }
     }
   },
@@ -198,6 +201,13 @@
         "menu": false,
         "statusBarImmersive": true,
         "statusBarBackgroundOpacity": 0
+      },
+      "activity/mysteryPopups": {
+        "titleBar": false,
+        "menu": false,
+        "statusBarImmersive": true,
+        "statusBarBackgroundOpacity": 0,
+        "titleBarBackgroundOpacity": 0
       }
     }
   }

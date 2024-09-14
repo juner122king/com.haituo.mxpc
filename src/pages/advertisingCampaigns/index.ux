@@ -3,6 +3,7 @@
 <import name="back-to-ads" src="./components/back-to-ads.ux"></import>
 <import name="icon" src="apex-ui/components/icon/index"></import>
 <import name="my-navbar" src="apex-ui/components/navbar/index"></import>
+
 <template>
   <div class="advertising-page">
     <my-navbar></my-navbar>
@@ -232,9 +233,11 @@ export default {
       this.$app.$def.dataApp.actiParam = {
         ...e,
       }
-      $utils.buriedPointReport(this,'AppLaunch','','')
+      $utils.buriedPointReport(this, 'AppLaunch', '', '')
     }
     const branch = $ad.getProvider()
+
+    console.log('ac广告商', branch);
     this.adObj = adCodeData[branch]
     this.adId = adCodeData[branch].fiction1;
     this.preloadAd()
@@ -245,6 +248,8 @@ export default {
     this.delayedDisplay()
   },
   onShow(options) {
+    let actiParam = this.$app.$def.dataApp.actiParam;
+    this.$app.$sensors.pageShow({ channel: actiParam.channelValue });
   },
   onHide() {
     this.timer = null;
@@ -405,18 +410,25 @@ export default {
   // 关闭
   heideReminder(e) {
     // this.showReminder = false;
-    this.addClickNum()
-    console.log(e);
+
+    console.log(e, '点击了关闭全透明层');
     const { detail = '' } = e;
     if (!detail) {
     } else {
       console.log('这是什么', detail.data);
       if (detail.data === 'showVackTisp') {
         this.showVackTisp = false
+        if (detail.closeType === 'close') {
+          this.addClickNum()
+        }
       } else if (detail.data === 'showReminder') {
-        this.showReminder = false
+        this.showReminder = false;
+        if (detail.closeType === 'close') {
+          this.addClickNum()
+        }
       }
     }
+
   },
   /**
    *关闭倒计时窗口
