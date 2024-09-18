@@ -36,9 +36,29 @@ const postTrackCapture = (data) => {
   })
 }
 
+// 获取自定义广告配置
+const getAdConfigView = (data) => {
+  return request({
+    method: 'GET',
+    url: `/qa/mini/basic/adConversion/adConfigView`,
+    data,
+  })
+}
+
+// 自定义图片详情详情
+const getAdConversionImg = (data) => {
+  return request({
+    method: 'GET',
+    url: `/qa/mini/basic/adConversionImg/img`,
+    data,
+  })
+}
+
 export default {
   getWheelOfFortuneInfo,
   getStartLottery,
   getDrawPrizeRecord,
   postTrackCapture,
+  getAdConfigView,
+  getAdConversionImg,
 }

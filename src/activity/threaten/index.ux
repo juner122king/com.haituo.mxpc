@@ -1,0 +1,592 @@
+<import name="icon" src="apex-ui/components/icon/index"></import>
+<template>
+  <div
+    class="threaten"
+    style="{{`background-image: url(${bgimgList[showBgIndex]})`}}"
+  >
+    <div
+      class="ad-container"
+      if="{{ hasAdList && adState && currentTask.linkType == 'YS' }}"
+    >
+      <ad
+        adId="{{adList.adId}}"
+        class="box"
+        show="{{!!adList.adId}}"
+        onerror="error"
+        onadclick="adClick"
+        onadclose="close"
+        type="native"
+        closeBtnPosition="left-top"
+        onadshow="adSuccShow"
+      >
+        <ad-clickable-area type="click" class="container">
+          <div
+            class="ad-text {{showBgIndex === 0 || showBgIndex === 1?'position-center':showBgIndex === 2?'position-bottom': 'position-top' }}"
+          >
+            <ad-clickable-area type="click">
+              <image
+                class="ad-image"
+                src="{{adList.imgUrlList? adList.imgUrlList[0]: adList.icon}}"
+                if="{{adList.creativeType !==13}}"
+              ></image>
+            </ad-clickable-area>
+            <ad-clickable-area
+              type="video"
+              class="ad-image"
+              if="{{adList.creativeType===13}}"
+            >
+            </ad-clickable-area>
+          </div>
+        </ad-clickable-area>
+      </ad>
+    </div>
+
+    <div class="tap" onclick="clickPopover" else></div>
+  </div>
+</template>
+
+<script>
+const { adCodeData, appId } = require('../../config.js').default
+
+export default {
+  private: {
+    title: '欢迎体验快应用开发',
+    branch: '',
+    adObj: '',
+    defaultAd: {
+      desc: 'vivo流量联盟，提供最优质的商业化解决方案。流量联盟广告联盟。',
+      title: 'vivo流量联盟',
+      icon: '广告',
+      clickBtnTxt: '点击安装',
+      img: 'https://cdn.ihaituo.cn/pro/sy/admin/advertising/3639bdbde8e84397a297ad54f89ac4c3.jpg',
+    },
+    adId: '',
+    adList: '',
+    hasAdList: false,
+    showBgIndex: 0, // 默认显示第一张图片，
+    maxNum: 5, //最多显示到第5张
+    showRedPack: false, // 控制红包显示
+    visitCount: 0, // 访问计数器
+    isfristReqCoun: true,
+    isAudit: false,
+    adState: true,
+    taskData: {}, //获取任务数据
+    maxTaskNum: 0, //最大任务数
+    currentTaskNum: 0, //当前任务数
+    taskState: '', //当前任务状态
+    rewardedVideoAd: null, //激励广告
+    rewardedVideoAdState: true, //激励广告状态
+    currentTask: null, // 新增属性，用于跟踪当前任务状态
+    bgimgList: [
+      'http://cdn.ihaituo.cn/qa/pro/app/43150de1270ff5c9771dbb9593ee7ac3.png',
+      'http://cdn.ihaituo.cn/qa/pro/app/04ff0ae1a7bbadfd461de4e5a5a15f2f.png',
+      'http://cdn.ihaituo.cn/qa/pro/app/1f0bffde7d5c9014573ceb1bfc29f65a.png',
+      'http://cdn.ihaituo.cn/qa/pro/app/908f0d5c60ede2359228593c26e8a2f7.png',
+    ],
+  },
+  onInit: function (e) {
+    // 初始化全局参数
+    if (Object.keys(e).length > 0) {
+      this.$app.$def.dataApp.actiParam = {
+        ...e,
+      }
+    }
+
+    // 延迟执行埋点报告
+    setTimeout(() => {
+      $utils.buriedPointReport(this)
+    }, 1000)
+
+    // 重置访问计数器
+    this.visitCount = 0
+
+    // 获取广告提供商
+    const branch = $ad.getProvider().toLowerCase()
+    this.branch = branch
+    this.adObj = adCodeData[branch]
+    this.getAdConversionImg()
+    // 获取广告数据
+    this.getPageAdData()
+  },
+  onShow() {
+    let actiParam = this.$app.$def.dataApp.actiParam
+    this.$app.$sensors.pageShow({
+      channel: actiParam.channelValue,
+      formId: this.adId,
+      ...actiParam,
+    })
+  },
+  /***
+   * 点击弹窗
+   */
+  clickPopover(evt) {
+    // 阻止事件冒泡
+    if (evt) {
+      evt.stopPropagation()
+    }
+    this.startTask()
+  },
+  /**
+  启动任务
+  */
+  startTask() {
+    // 根据当前任务类型执行相应操作
+    switch (this.currentTask.linkType) {
+      case 'JL':
+        if (this.rewardedVideoAdState) {
+          this.showVideoAd()
+        }
+        break
+      case 'KYY':
+        $router.push({ uri: this.currentTask.adIdOrPackage })
+        break
+      default:
+        console.log('Unknown task type:', this.currentTask.linkType)
+    }
+    // 兜底
+    if (
+      (this.currentTask.linkType === 'YS' && !this.adState) ||
+      (this.currentTask.linkType === 'JL' && !this.rewardedVideoAdState) ||
+      this.currentTask.linkType === '无任务'
+    ) {
+      $router.push({ uri: this.taskData.backEndLink })
+      return
+    }
+    //计数大于1或自动开启开红包展示
+    setTimeout(() => {
+      console.log('更新礼包显示', this.currentTask.linkType)
+      // 更新礼包显示
+      this.showBgIndex = (this.showBgIndex + 1) % this.bgimgList.length
+    }, 1800)
+    // 设置下一个任务
+    this.settingUpTasks()
+  },
+  /***
+   * 预加载原生广告
+   */
+  preloadAd(id) {
+    try {
+      console.log(id, '查看广告id编码')
+      const that = this
+      let adId = id
+      this.adId = id
+
+      require('@service.ad').preloadAd({
+        type: 'native', // 原生信息流广告
+        adCount: 1,
+        adUnitId: adId, // 原生信息流广告广告位id,
+        ecpm: true,
+        adid: adId, // 原生信息流广告广告位id,
+        success: (data) => {
+          this.adList = data.adList[0]
+          console.log(this.adList, '查看原生广告数据')
+          this.hasAdList = true
+          this.adState = true
+          if (this.debug) {
+            prompt.showToast({
+              message: `ad load success`,
+            })
+          }
+        },
+        fail: (data, code) => {
+          console.log(data, code, '返回广告失败1')
+          this.hasAdList = true
+          if (code === 205) {
+            this.hasAdList = true
+            this.adList = data.adList[0]
+          } else {
+            this.adState = false
+            if (this.debug) {
+              prompt.showToast({
+                message: `ad load fail!data= ${JSON.stringify(
+                  data
+                )},code= ${code}`,
+              })
+            }
+          }
+        },
+      })
+    } catch (e) {
+      console.log(e, '是这里报错吗')
+    }
+  },
+  adClick() {
+    let ecpmParam = {
+      //竞价相关参数
+      ecpm: this.adList.ecpm,
+      adType: 'NATIVE',
+      adPositionId: this.adId,
+      clickCount: '1',
+    }
+    // 每次显示页面时，增加一次计数
+    this.visitCount++
+    console.log('竞价相关参数', ecpmParam)
+    $utils.conversionUpload(this, 'NATIVE', this.adId, true, this.ecpm)
+    $utils.buriedPointReport(this, 'click', this.adId)
+    this.hasAdList = false
+    // 点击广告后，执行下一个任务
+    this.startTask()
+  },
+  adSuccShow(e) {
+    if (this.branch === 'oppo') {
+      let ecpm = this.adList.ecpm
+      this.ecpm = ecpm
+      console.log('查看ecpm', ecpm)
+      $utils.conversionUpload(this, 'NATIVE', this.adId, false, ecpm)
+    }
+    console.log(e, '广告成功展示')
+    this.sensorsTrack({
+      title: '广告曝光',
+    })
+  },
+  error(e) {
+    this.adState = false
+    console.log(e, '广告返回失败')
+  },
+  close(e) {
+    console.log(e, '广告关闭')
+  },
+  // 埋点上报  曝光埋点事件 $WebShow
+  sensorsTrack(e) {
+    try {
+      const {
+        title = '广告曝光',
+        type = 1,
+        defaultTxt = '恐吓页',
+        adPositionId = '',
+      } = e
+      let apid = adPositionId || this.adId
+      this.$app.$sensors.track(`${type === 1 ? '$WebShow' : '$AppClick'}`, {
+        analysis: {
+          ...this.$app.$def.dataApp.actiParam,
+          title: `${defaultTxt}-${title}-${apid}`,
+          formId: apid,
+        },
+      })
+    } catch (error) {
+      console.log(error, '埋点报错')
+    }
+  },
+  /***
+   * 是否自动打开
+   */
+  getClickReviewControl() {
+    const branch = $ad.getProvider().toUpperCase()
+    $apis.task.getClickReviewControl({ branch: branch }).then((res) => {
+      if (!res.data) {
+        this.showRedPack = true
+      }
+      this.isAudit = res.data
+    })
+  },
+  complaint(evt) {
+    // 阻止事件冒泡
+    if (evt) {
+      evt.stopPropagation()
+    }
+    console.log('跳转举报')
+    $router.push({
+      uri: 'setting/feedback',
+    })
+  },
+  createRewardedVideoAd: function (adUnitId) {
+    try {
+      if (!adUnitId || this.rewardedVideoAd) {
+        if (!adUnitId) {
+          this.rewardedVideoAdState = false
+        }
+        return
+      }
+      const that = this
+      let rewardedVideoAd = $ad.createRewardedVideoAd({
+        adUnitId: adUnitId,
+      })
+      this.rewardedVideoAd = rewardedVideoAd
+      if (!rewardedVideoAd) {
+        // 不支持广告
+        this.rewardedVideoAd = null
+        this.rewardedVideoAdState = false
+        return
+      }
+      rewardedVideoAd.onLoad((e) => {
+        that.rewardedVideoAdState = true
+        console.log('激励视频广告加载成功', e)
+        if (that.brand === 'oppo') {
+          const data = that.rewardedVideoAd.getECPM()
+          console.log(`getECPM: 激励视频获取实时竞价结果成功!ecpm=${data.ecpm}`)
+          that.emcp = data.ecpm
+          $utils.conversionUpload(
+            that,
+            'REWARDED_VIDEO',
+            adUnitId,
+            false,
+            data.ecpm
+          )
+        }
+      })
+      rewardedVideoAd.onClose((e) => {
+        console.log(e, '监听用户点击关闭广告 按钮的事件')
+        if (that.branch !== 'vivo') {
+          that.rewardedVideoAd.load()
+        }
+        if (e.isEnded) {
+          $utils.conversionUpload(
+            that,
+            'REWARDED_VIDEO',
+            adUnitId,
+            true,
+            that.ecpm
+          )
+          $utils.buriedPointReport(that, 'click', adUnitId)
+        }
+      })
+
+      rewardedVideoAd.onError((e) => {
+        console.log(e, '激励广告错误')
+        that.rewardedVideoAd = ''
+        that.rewardedVideoAdState = false
+      })
+
+      if (this.branch !== 'vivo') {
+        rewardedVideoAd.load()
+      }
+    } catch (error) {
+      console.log(error)
+    }
+  },
+  /**
+   * 展示激励广告
+   */
+  showVideoAd() {
+    if (this.branch !== 'vivo') {
+      try {
+        console.log('进来了展示激励')
+        this.rewardedVideoAd.show()
+      } catch (e) {
+        console.log(e, '怎么激励失败')
+        $router.push({ uri: this.taskData.backEndLink })
+      }
+    } else {
+      this.rewardedVideoAd
+        .load()
+        .then(() => {
+          this.rewardedVideoAd.show()
+        })
+        .catch((e) => {
+          console.log(e, '怎么激励失败')
+          $router.push({ uri: this.taskData.backEndLink })
+        })
+    }
+  },
+  /**
+   * 设置任务
+   */
+  settingUpTasks() {
+    const { taskList } = this.taskData
+    this.currentTask = taskList[this.currentTaskNum]
+    console.log(this.currentTask, '查看当前任务2')
+    if (!this.currentTask) {
+      this.currentTask = {
+        linkType: '无任务',
+        adIdOrPackage: '',
+      }
+      console.log('No more tasks available')
+      return
+    }
+    console.log('Current task:', this.currentTask)
+    // 根据任务类型执行相应操作
+    switch (this.currentTask.linkType) {
+      case 'JL':
+        this.createRewardedVideoAd(this.currentTask.adIdOrPackage)
+        break
+      case 'YS':
+        this.preloadAd(this.currentTask.adIdOrPackage)
+        break
+      default:
+        console.log('Unknown task type:', this.currentTask.linkType)
+    }
+    // 更新任务计数器
+    this.currentTaskNum = (this.currentTaskNum + 1) % (this.maxTaskNum + 1)
+    console.log(this.currentTaskNum, '查看当前任务1')
+  },
+  /**
+   * 获取页面广告参数
+   */
+  async getPageAdData() {
+    // console.log(appId, '查看appId')
+    // console.log(this.branch, '查看branch')
+    $apis.activity
+      .getAdConfigView({
+        appId: appId,
+        type: this.branch,
+        path: 'threaten',
+      })
+      .then((res) => {
+        console.log(res, '查看自定义广告配置')
+        let result = res.data.adConversionModelList
+        let backEndLink = result.pop()
+        this.taskData = {
+          taskList: result,
+          backEndLink: backEndLink.adIdOrPackage,
+        }
+        console.log(this.taskData, '查看任务数据')
+        this.maxTaskNum = this.taskData.taskList.length - 1
+        this.settingUpTasks()
+      })
+      .catch((err) => {
+        this.taskData = {
+          taskList: [],
+          backEndLink: 'hap://app/com.haituo.bookkeeping/pages/displayDesktop',
+        }
+        this.settingUpTasks()
+      })
+  },
+
+  getAdConversionImg() {
+    $apis.activity
+      .getAdConversionImg({ path: 'threaten' })
+      .then((res) => {
+        // console.log(res, '查看广告图片数据')
+        if (res.data.imgData.length > 0) {
+          this.bgimgList = res.data.imgData
+        }
+      })
+      .catch((err) => {
+        console.log(err, '获取广告图片失败')
+      })
+  },
+}
+</script>
+
+<style lang="less">
+.threaten {
+  width: 100%;
+  height: 100%;
+  background-image: url('http://cdn.ihaituo.cn/qa/pro/app/029e30f6272517f887af64ab30d2f0b7.png');
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 100% 100%;
+  .tap {
+    width: 100%;
+    height: 100%;
+    position: fixed;
+    top: 0;
+    left: 0;
+  }
+}
+
+.ad-container {
+  width: 100%;
+  height: 100%;
+}
+
+.img-popover {
+  width: 630px;
+  object-fit: cover;
+}
+.box {
+  width: 100%;
+  height: 100%;
+  .container {
+    width: 100%;
+    height: 100%;
+    .ad-text {
+      width: 100%;
+      justify-content: center;
+      .ad-image {
+        width: 360px;
+        height: 160px;
+        border-radius: 10px;
+        object-fit: cover;
+      }
+    }
+
+    .position-center {
+      position: absolute;
+      top: 60%;
+    }
+
+    .position-top {
+      position: absolute;
+      top: 20px;
+    }
+
+    .position-bottom {
+      position: absolute;
+      bottom: 20px;
+
+      .ad-image {
+        width: 750px;
+        height: 160px;
+        object-fit: cover;
+      }
+    }
+  }
+}
+
+.simulating-exit {
+  width: 180px;
+  height: 65px;
+  border-radius: 32px;
+  border: 1px solid #fcf;
+  background-color: #ffd3db;
+  margin-top: 20px;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 12px;
+  position: absolute;
+  top: 20px;
+  right: 30px;
+}
+.image_finger {
+  position: absolute;
+  top: 950px;
+  left: 400px;
+  width: 150px;
+  height: 150px;
+  /* background-color: #00ffff; */
+  background-image: url(/assets/images/icon_sz.png);
+  animation-name: float;
+  animation-duration: 1500ms;
+  animation-iteration-count: infinite;
+  background-position: center;
+  background-size: 100%;
+}
+@keyframes float {
+  0% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-60px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
+  0% {
+    transform: translateX(0px);
+  }
+  50% {
+    transform: translateX(-60px);
+  }
+  100% {
+    transform: translateX(0px);
+  }
+}
+
+.coner {
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.8);
+  align-items: center;
+  flex-direction: column;
+  position: fixed;
+  justify-content: center;
+  top: 0px;
+  left: 0px;
+}
+.conerno {
+  width: 0;
+  height: 0;
+  position: fixed;
+}
+</style>

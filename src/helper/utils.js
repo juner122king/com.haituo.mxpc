@@ -541,7 +541,7 @@ async function buriedPointReport(these, event = 'AppLaunch', adId = '', splashDa
           event: eventData[event],
           cid: checkPaem.channelValue,
           pid: manufacturer || adBrand,
-          appId: token.appId || 'SC_0001',
+          appId: token.appId || 'mxpc',
           userId: token.userId,
           properties: {
             ...phoninfo,
@@ -572,7 +572,7 @@ async function buriedPointReport(these, event = 'AppLaunch', adId = '', splashDa
     $apis.task
       .postTrackCapture({
         event: event === 'click' ? '$AdClick' : '$AppLaunch',
-        appId: 'SC_0001',
+        appId: 'mxpc',
         properties: {
           analysis: {
             adId: adId,

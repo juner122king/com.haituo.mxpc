@@ -1,8 +1,8 @@
 {
   "package": "com.haituo.mxpc",
   "name": "喵星测评",
-  "versionName": "1.0.7",
-  "versionCode": 107,
+  "versionName": "1.0.8",
+  "versionCode": 108,
   "minPlatformVersion": 1100,
   "icon": "/Common/logo.png",
   "designWidth": 750,
@@ -127,6 +127,12 @@
       },
       "activity/mysteryPopups": {
         "component": "index"
+      },
+      "activity/randomGiftPack": {
+        "component": "index"
+      },
+      "activity/threaten": {
+        "component": "index"
       }
     }
   },
@@ -203,6 +209,20 @@
         "statusBarBackgroundOpacity": 0
       },
       "activity/mysteryPopups": {
+        "titleBar": false,
+        "menu": false,
+        "statusBarImmersive": true,
+        "statusBarBackgroundOpacity": 0,
+        "titleBarBackgroundOpacity": 0
+      },
+      "activity/randomGiftPack": {
+        "titleBar": false,
+        "menu": false,
+        "statusBarImmersive": true,
+        "statusBarBackgroundOpacity": 0,
+        "titleBarBackgroundOpacity": 0
+      },
+      "activity/threaten": {
         "titleBar": false,
         "menu": false,
         "statusBarImmersive": true,

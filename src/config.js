@@ -102,6 +102,7 @@ const appConfig = {
 }
 
 export default {
+  appId: 'mxpc',
   adCodeData,
   publicKey,
   privateKey,
