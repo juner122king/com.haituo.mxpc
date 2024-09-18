@@ -1,8 +1,8 @@
 {
   "package": "com.haituo.mxpc",
   "name": "喵星测评",
-  "versionName": "1.0.8",
-  "versionCode": 108,
+  "versionName": "1.0.9",
+  "versionCode": 109,
   "minPlatformVersion": 1100,
   "icon": "/Common/logo.png",
   "designWidth": 750,
@@ -137,6 +137,7 @@
     }
   },
   "display": {
+    "themeMode": 0,
     "titleBarBackgroundColor": "#f2f2f2",
     "titleBarTextColor": "#414141",
     "pages": {
