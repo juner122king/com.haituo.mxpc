@@ -114,7 +114,7 @@ export default {
   },
   watchCurrentIndex(newValue, oldValue) {
     if (parseInt(this.index) === this.currentIndex) {
-      this.showBanner = true
+      // this.showBanner = true
     }
   },
   onShow() {

@@ -127,10 +127,10 @@
       onemit-clone="cloneRetention"
       onemit-confirm="confirmRetention"
     ></retention-pop>
-    <my-banner
+    <!-- <my-banner
       if="{{!tispBoxType && !showretentionPop}}"
       display-type="bottom"
-    ></my-banner>
+    ></my-banner> -->
   </div>
 </template>
 <import name="info-bar" src="../../components/infoBar/index.ux"></import>
