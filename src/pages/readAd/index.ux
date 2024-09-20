@@ -1330,8 +1330,8 @@ export default {
     adStyle: {},
     tempStyle: {},
     defaultAd: {
-      desc: 'vivo流量联盟，提供最优质的商业化解决方案。流量联盟广告联盟。',
-      title: 'vivo流量联盟',
+      desc: '提供最优质的商业化解决方案。流量联盟广告联盟。',
+      title: '流量联盟',
       icon: '广告',
       clickBtnTxt: '点击安装'
     },
