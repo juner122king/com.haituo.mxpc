@@ -78,7 +78,7 @@ export default {
         //  path: "pages/luckyBagOpen",
         // path: 'activity/randomGiftPack',
         //  path: 'activity/threaten',
-        // path: "pages/advertisingCampaigns?id=1824287143754829826&type=uc&channelValue=test&sid=sid123&aid=aid321&uctrackid=uctrackid666",
+        // path: "activity/randomGiftPack?id=1824287143754829826&type=uc&channelValue=test33&sid=sid123&aid=aid321&uctrackid=uctrackid666",
 
         iShow: true
       },

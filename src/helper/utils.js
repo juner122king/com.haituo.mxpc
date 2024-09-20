@@ -198,6 +198,17 @@ async function conversionUpload(that, ecpmParam, splashData = {}) {
         param.oaid = oaidData.data.oaid
       }
     }
+    let buriedPointData = await $storage.get({
+      key: 'sensorsdata2015_quickapp',
+    })
+    try {
+      buriedPointData = JSON.parse(buriedPointData.data)
+    } catch (error) {
+      buriedPointData = {
+        distinct_id: '',
+      }
+    }
+
 
     $apis.task
       .postConvertUpload({
@@ -209,7 +220,8 @@ async function conversionUpload(that, ecpmParam, splashData = {}) {
         pid: manufacturer || branch,
         deviceId: param.oaid || '',
         type: param.type,
-        oaid: oaid
+        oaid: oaid,
+        distinctId: buriedPointData.distinct_id
       })
       .then((res) => {
         console.log(res, '普通上报成功')
@@ -230,7 +242,8 @@ async function conversionUpload(that, ecpmParam, splashData = {}) {
           pid: manufacturer || branch,
           deviceId: param.oaid || '',
           type: param.type,
-          oaid: oaid
+          oaid: oaid,
+          distinctId: buriedPointData.distinct_id
         })
         .then((res) => {
           console.log(res, 'UC上报成功')
@@ -513,14 +526,21 @@ async function buriedPointReport(these, event = 'AppLaunch', adId = '', splashDa
     let token = await $storage.get({
       key: 'AUTH_TOKEN_DATA',
     })
+    let buriedPointData = await $storage.get({
+      key: 'sensorsdata2015_quickapp',
+    })
 
     try {
       token = JSON.parse(token.data)
+      buriedPointData = JSON.parse(buriedPointData.data)
     } catch (error) {
       console.log('无token状态')
       token = {
         userId: 'null',
         appId: '',
+      }
+      buriedPointData = {
+        distinct_id: '',
       }
     }
     let adBrand = $ad.getProvider().toLowerCase()
@@ -554,6 +574,7 @@ async function buriedPointReport(these, event = 'AppLaunch', adId = '', splashDa
               title: adId,
             },
             urlQuery: urlQuery,
+            distinct_id: buriedPointData.distinct_id,
           },
         }
         console.log('查看埋点上报参数', param)

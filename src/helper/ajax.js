@@ -6,8 +6,10 @@ import $router from '@system.router'
 const config = require('../config').default
 const getUserId = async () => {
   let userId = await $device.getUserId()
+
   return userId.data.userId
 }
+
 const quit = () => {
   $prompt.showDialog({
     title: '警告',
@@ -31,20 +33,30 @@ const quit = () => {
 
 const getTokenData = () => {
   return new Promise(async (resolve, reject) => {
+    let branch = $ad.getProvider().toLowerCase()
     const example = require('./apis/example.js').default
     const deviceNum = await getUserId()
+    // console.log('查看这个channel值', actiParam)
+    // console.log('***************', deviceNum)
+    // let cid =
+    //   (
+    //     await $storage.get({
+    //       key: 'cid',
+    //     })
+    //   ).data || ''
     example
       .toLogin({
         loginType: 'DEVICE',
         appId: 'mxpc',
         deviceNum,
         loginAccount: deviceNum,
+        pid: branch.toLowerCase(), //应用平台
       })
       .then((data) => {
         resolve(data)
       })
       .catch((err) => {
-        console.log(err, '查看这个报错了')
+        console.log(err, '获取token报错')
         try {
           if (JSON.parse(err).code === '310001') {
             quit()
@@ -85,17 +97,24 @@ const request = (options) => {
       headers = {},
       isforeignAddress = false,
     } = options
-
     const authData =
       (await $storage.get({
         key: 'AUTH_TOKEN_DATA',
       })) || {}
 
     let accessToken = ''
+    let userId = ''
     try {
-      accessToken = authData.data ? JSON.parse(authData.data).accessToken : ''
+      if (authData.data) {
+        const parsedData = JSON.parse(authData.data)
+        accessToken = parsedData.accessToken || ''
+        userId = parsedData.userId || ''
+      } else {
+        accessToken = ''
+        userId = ''
+      }
     } catch (error) {
-      console.log(error)
+      console.log(error, '获取data有问题')
     }
     if (isAccessTokenExpired(authData) || !accessToken) {
       if (!options.url.includes('qa/mini/basic/user/login')) {
@@ -137,14 +156,31 @@ const request = (options) => {
         return retry
       }
     }
-
     headers.Authorization = accessToken || ''
+    if (url.includes('/qa/track/capture')) {
+      options.data.userId = userId
+      try {
+        if (!options.data.distinct_id) {
+          let buriedPointData = await $storage.get({
+            key: 'sensorsdata2015_quickapp',
+          })
+          if (buriedPointData && buriedPointData.data) {
+            buriedPointData = JSON.parse(buriedPointData.data)
+          } else {
+            throw new Error('Invalid buriedPointData')
+          }
+          options.data.distinct_id = buriedPointData.distinct_id
+        }
+      } catch (error) {
+        console.log(error)
+      }
+    }
     $fetch.fetch({
       url: isforeignAddress ? url : config.BASEHOST + url,
       method,
       data,
       header: {
-        'content-type': 'application/json;charset=utf-8', //默认值
+        'content-type': 'application/json', //默认值
         ...headers,
       },
       success: function (res) {
@@ -174,12 +210,12 @@ const request = (options) => {
               reject(res.data)
             }
           }
-        } catch (error) { }
+        } catch (error) {}
       },
       fail: function (err) {
         reject(err)
       },
-      complete: function (res) { },
+      complete: function (res) {},
     })
   })
 }

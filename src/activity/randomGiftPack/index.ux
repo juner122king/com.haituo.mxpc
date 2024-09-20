@@ -173,8 +173,9 @@ export default {
   preloadAd(id) {
     try {
       const that = this
-      console.log(this.adId, '查看广告id编码')
+      console.log(id, '查看广告id编码')
       let adId = id
+      that.adId = id
       require('@service.ad').preloadAd({
         type: 'native', // 原生信息流广告
         adCount: 1,
@@ -222,18 +223,23 @@ export default {
       adPositionId: this.adId,
       clickCount: '1',
     }
-    console.log('竞价相关参数', ecpmParam)
-    $utils.conversionUpload(this, 'NATIVE', this.adId, true, this.ecpm)
+    console.log('竞价相关参数1', ecpmParam)
+    $utils.conversionUpload(this, ecpmParam)
     $utils.buriedPointReport(this, 'click', this.adId)
     this.hasAdList = false
     this.clickPopover()
   },
   adSuccShow(e) {
     if (this.branch === 'oppo') {
-      let ecpm = this.adList.ecpm
-      this.ecpm = ecpm
-      console.log('查看ecpm', ecpm)
-      $utils.conversionUpload(this, 'NATIVE', this.adId, false, ecpm)
+      let ecpmParam = {
+        //竞价相关参数
+        ecpm: this.adList.ecpm,
+        adType: 'NATIVE',
+        adPositionId: this.adId,
+        clickCount: '0',
+      }
+      console.log('竞价相关参数2', ecpmParam)
+      $utils.conversionUpload(this, ecpmParam)
     }
     console.log(e, '广告成功展示')
     this.sensorsTrack({
@@ -315,13 +321,16 @@ export default {
           const data = rewardedVideoAd.getECPM()
           console.log(`getECPM: 激励视频获取实时竞价结果成功!ecpm=${data.ecpm}`)
           that.emcp = data.ecpm
-          $utils.conversionUpload(
-            that,
-            'REWARDED_VIDEO',
-            adUnitId,
-            false,
-            data.ecpm
-          )
+
+          let ecpmParam = {
+            //竞价相关参数
+            ecpm: data.ecpm,
+            adType: 'REWARDED_VIDEO',
+            adPositionId: adUnitId,
+            clickCount: '0',
+          }
+          console.log('竞价相关参数5', ecpmParam)
+          $utils.conversionUpload(that, ecpmParam)
         }
       })
       rewardedVideoAd.onClose((e) => {
@@ -330,13 +339,15 @@ export default {
           that.rewardedVideoAd.load()
         }
         if (e.isEnded) {
-          $utils.conversionUpload(
-            that,
-            'REWARDED_VIDEO',
-            adUnitId,
-            true,
-            that.ecpm
-          )
+          let ecpmParam = {
+            //竞价相关参数
+            ecpm: data.ecpm,
+            adType: 'REWARDED_VIDEO',
+            adPositionId: adUnitId,
+            clickCount: '1',
+          }
+          console.log('竞价相关参数6', ecpmParam)
+          $utils.conversionUpload(that, ecpmParam)
           $utils.buriedPointReport(that, 'click', adUnitId)
         }
       })
@@ -458,7 +469,7 @@ export default {
 .wrapper {
   width: 100%;
   height: 100%;
-  background-image: url('http://cdn.ihaituo.cn/qa/pro/app/029e30f6272517f887af64ab30d2f0b7.png');
+  background-image: url("http://cdn.ihaituo.cn/qa/pro/app/029e30f6272517f887af64ab30d2f0b7.png");
   background-repeat: no-repeat;
   background-position: center;
   background-size: 100% 100%;
@@ -480,7 +491,7 @@ export default {
 .Popover-2 {
   width: 100%;
   height: 800px;
-  background-image: url('/assets/images/Popover-2.png');
+  background-image: url("/assets/images/Popover-2.png");
   background-size: 100% 800px;
   background-repeat: no-repeat;
   justify-content: center;
