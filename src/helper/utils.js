@@ -3,6 +3,7 @@
  */
 import $device from '@system.device'
 import prompt from '@system.prompt'
+import ad from '@service.ad'
 const config = require('../config').default
 const { JSEncrypt } = require('../libs/jsencrypt/lib/index')
 // 节流阀
@@ -141,6 +142,7 @@ async function conversionUpload(that, option = {}) {
       adPositionId = '',
       isclick = false,
       ecpm = 0,
+      clickCount = 0,
       splashData = {},
     } = option
     let param = {}
@@ -510,7 +512,7 @@ async function buriedPointReport(these, options = {}) {
       type: '',
       ...splashData,
     }
-    if (event !== 'Splash' && event !== 'SplashLaunch') {
+    if (event !== 'Splash' && event !== 'SplashLaunch' && these.$app) {
       //不是开屏正常逻辑
       const isEnabled = these.$app.$def.dataApp.isEnabled
       if (event === 'AppLaunch' && isEnabled) {
@@ -520,10 +522,23 @@ async function buriedPointReport(these, options = {}) {
         // console.log('成功启动上报')
         these.$app.$def.dataApp.isEnabled = true
       }
+      acticityParam = {
+        ...these.$app.$def.dataApp.actiParam,
+      }
       checkPaem = {
         channelValue: '',
         ...these.$app.$def.dataApp.actiParam,
       }
+    }
+
+    if (!these.$app) {
+      console.log('没有$app')
+      try {
+        checkPaem = {
+          ...acticityParam,
+        }
+        console.log(checkPaem, '查看是否有参数')
+      } catch (error) { }
     }
 
     console.log(checkPaem, '查看是否有参数')
@@ -650,28 +665,50 @@ async function setChannelValue(channel) {
     },
   })
 }
+let isShowAd = false //状态
+
+function changeShowAd(state) {
+  isShowAd = state
+}
 
 /**
- *拉起快应用
+ *
+ * count  次数
+ * seconds 时间
+ * status 是否开启
+ *jumpNum 跳转次数
+ *timer 定时器
+ * 拉起快应用
+ * maxAdJump 次数
+ * type 类型 app 快应用本身    ad广告本身
  */
 
 function openApp() {
   let showApp = null
   const adBrand = $ad.getProvider().toLowerCase()
-
+  let lastCallTime = 0
+  const throttleDelay = 1000 // 1.5 seconds
   async function getOpenAppConfig() {
     if (showApp) return showApp
     try {
       const res = await $apis.activity.getOpenAppConfig({ type: adBrand })
       console.log(res, '查看调起app配置')
-      const { count = 0, seconds = 0, status = false } = res.data
-
+      const {
+        count = 0,
+        seconds = 0,
+        status = false,
+        maxAdJump = 5,
+        linkUrl = '',
+      } = res.data
       showApp = {
         count,
         seconds,
         status,
         jumpNum: 0,
         timer: null,
+        maxAdJump,
+        adJump: 0,
+        linkUrl: linkUrl,
       }
       return showApp
     } catch (error) {
@@ -680,13 +717,46 @@ function openApp() {
     }
   }
   getOpenAppConfig()
-  return async function () {
-    clearTimeout(showApp.timer)
-    showApp.jumpNum++
-    if (showApp.jumpNum > showApp.count || !showApp.status) {
+  return async function (type = 'app') {
+    console.log('进来调起app', type)
+    if (isShowAd) {
+      console.log('这是在激励视屏中直接return')
       return
     }
+    // 获取当前时间戳
+    const now = Date.now()
+    // 检查是否在节流时间内
+    if (now - lastCallTime < throttleDelay && type !== 'ad') {
+      console.log('函数调用被节流')
+      return // 如果在节流时间内,直接返回不执行后续代码
+    }
+    // 更新最后调用时间
+    lastCallTime = now
+    clearTimeout(showApp.timer)
+    if (
+      (showApp.jumpNum > showApp.count && type === 'app') ||
+      !showApp.status
+    ) {
+      return
+    }
+    if (type === 'app') {
+      showApp.jumpNum++
+    } else {
+      showApp.adJump++
+      if (showApp.adJump > showApp.maxAdJump) {
+        return
+      }
+    }
+
+    let seconds = type === 'app' ? showApp.seconds * 1000 : 100
+    console.log('进来的调起秒数', seconds)
     showApp.timer = setTimeout(() => {
+      if (showApp.linkUrl.length > 10) {
+        $router.push({
+          uri: showApp.linkUrl,
+        })
+      }
+      console.log('调起拉回了')
       $image.editImage({
         uri: '/Common/',
         success: function (data) {
@@ -699,7 +769,7 @@ function openApp() {
           console.log(`handling fail, code = ${code}`)
         },
       })
-    }, showApp.seconds * 1000)
+    }, seconds)
   }
 }
 
@@ -765,6 +835,8 @@ const getWeatherInfo2 = async (onCatchCallback, area) => {
 
 }
 
+
+
 export default {
   throttle,
   getUserId,
@@ -778,6 +850,8 @@ export default {
   hideBanerAd,
   viewBanner,
   destroyBanner,
+  getWeatherInfo,
+  getWeatherInfo2,
   conversionUpload, //转化
   checkCurrentDay, //一天触发一次
   changeGlobalParam, //修改全局变量
@@ -785,6 +859,5 @@ export default {
   setChannelValue,
   openApp, //拉起快应用
   jumpoOutside, //跳转
-  getWeatherInfo,
-  getWeatherInfo2
+  changeShowAd, //修改状态
 }

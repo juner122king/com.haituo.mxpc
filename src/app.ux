@@ -2,6 +2,8 @@
 
 import sensors from 'pdt-mini-ui/utils/quickapp-track.js'
 import TOPON_AD_SDK from '@topon/quick-app-sdk/app.js'//https://help.takuad.com/docs/HJu6VU# taku广告
+// 标准版
+import YLHQuickAppSDK from 'ylh-quick-app-ad-sdk';//https://developers.adnet.qq.com/doc/quick_app/ 优量汇
 module.exports = {
   onCreate() {
 
@@ -23,6 +25,7 @@ module.exports = {
     const $processData = require('./helper/processData').default
     const $config = require('./config.js').default
     const $adFun = require('./helper/adFun').default
+    const $image = require('@system.image')
 
     /* @desc: 注入方法至全局 global,以便页面调用 */
     const hook2global = global.__proto__ || global
@@ -38,13 +41,15 @@ module.exports = {
     hook2global.$processData = $processData
     hook2global.$config = $config
     hook2global.$adFun = $adFun
+    hook2global.$image = $image
+
 
     try {
       this.instance = new TOPON_AD_SDK({
         app: this,
         appId: 'a66bea7a2100a8', // 请替换为您在topon开发者后台上的appId（您在topon开发者后台上所创建的应用ID）
         appKey: 'a546935753f67f81f33cf2582de03af0b', // 请替换为您在topon开发者后台上的 app key（topon开发者后台 => 账户信息 => key即为appKey）
-
+        config: { ylhAppId: '' }//优量汇App ID，集成优量汇时必填，
       })
     } catch (error) {
       console.log('接入TOPON广告报错', error);
@@ -53,6 +58,14 @@ module.exports = {
     //开屏埋点
     $adFun.openScreen(this)
     this.openApp = $utils.openApp() //重写方法
+
+    try {
+      const config = {
+        appId: '' // 注意：appId为 必填字段
+      };
+      new YLHQuickAppSDK(this, config)
+    } catch (error) {
+    }
   },
   onHide() {
     this.openApp()
@@ -74,6 +87,7 @@ module.exports = {
     },
     openScreenEcpm: 0,
     showTransparencyMask: 1,//当前获取的广告id次数 最大为5
+    isShowAd: false, //是否展示广告
   },
 }
 </script>

@@ -1,0 +1,158 @@
+<template>
+  <div class="bottomNative">
+    <block if="{{hasAdList && adId}}">
+      <ad
+        adId="{{adList.adId}}"
+        class="box"
+        show="{{!!adList.adId}}"
+        onerror="adError"
+        onadclick="adClick"
+        onadclose="close"
+        type="native"
+        closeBtnPosition="left-top"
+        onadshow="adSuccShow"
+      >
+        <ad-clickable-area class="ad-title" style="width: 100%; height: 100%">
+          <text class="page-title" style="font-size: 1px">{{
+            adList.title
+          }}</text>
+        </ad-clickable-area>
+        <ad-clickable-area
+          class="ad-image"
+          style="width: 100%; height: 100%"
+          if="{{adList.imgUrlList}}"
+        >
+          <image src="{{adList.imgUrlList[0]}}" style="height: 1px"></image>
+        </ad-clickable-area>
+      </ad>
+    </block>
+  </div>
+</template>
+
+<script>
+export default {
+  data: {
+    hasAdList: false,
+    adList: {},
+  },
+  props: {
+    adId: {
+      default: '',
+    },
+  },
+  onInit() {
+    this.preloadAd(this.adId)
+  },
+  preloadAd(id) {
+    try {
+      const that = this
+      console.log(this.adId, '查看广告id编码')
+      let adId = id
+      this.adId = id
+      require('@service.ad').preloadAd({
+        type: 'native', // 原生信息流广告
+        adCount: 1,
+        adUnitId: adId, // 原生信息流广告广告位id,
+        ecpm: true,
+        adid: adId, // 原生信息流广告广告位id,
+        success: (data) => {
+          this.adList = data.adList[0]
+          console.log(this.adList, '查看最底部原生广告数据')
+          this.hasAdList = true
+          if (this.debug) {
+            prompt.showToast({
+              message: `ad load success`,
+            })
+          }
+        },
+        fail: (data, code) => {
+          this.sensorsTrack(
+            {
+              errData: data,
+            },
+            'error'
+          )
+          console.log(data, code, '返回广告失败1')
+          this.hasAdList = true
+          if (code === 205) {
+            this.hasAdList = true
+            this.adList = data.adList[0]
+          } else {
+            if (this.debug) {
+              prompt.showToast({
+                message: `ad load fail!data= ${JSON.stringify(
+                  data
+                )},code= ${code}`,
+              })
+            }
+          }
+        },
+      })
+    } catch (e) {
+      console.log(e, e.message)
+    }
+  },
+  adSuccShow() {
+    $utils.conversionUpload(this, {
+      adType: 'NATIVE',
+      adPositionId: this.adId,
+      isclick: false,
+      ecpm: this.adList.ecpm,
+    })
+    this.sensorsTrack({}, 'show')
+    console.log('adSuccShow')
+  },
+  adError(errCode, errMsg) {
+    this.sensorsTrack(
+      {
+        errData: {
+          errCode: errCode.errCode,
+          errMsg: errCode.errMsg,
+        },
+      },
+      'error'
+    )
+  },
+  adClick() {
+    console.log('adClick')
+    $utils.conversionUpload(this, {
+      adType: 'NATIVE',
+      adPositionId: this.adId,
+      isclick: true,
+      ecpm: this.adList.ecpm,
+    })
+    this.hasAdList = false
+    $utils.buriedPointReport(this, { event: 'click', adId: this.adId })
+    this.sensorsTrack({}, 'click')
+    this.$emit('emitClose')
+    this.$app.openApp('ad')
+  },
+  close() {
+    console.log('close')
+  },
+  // 埋点上报  曝光埋点事件 $WebShow
+  sensorsTrack(e = {}, type = 'show') {
+    try {
+      const { formId = '', subTitle = '', errData = {} } = e
+      let apid = formId || this.adId
+      $adFun.newBurialSite(this, {
+        eventName: type, // 事件名
+        formId: apid, // 广告id
+        subTitle: subTitle, //页面名
+        ...this.$app.$def.dataApp.actiParam,
+        errData: errData,
+      })
+    } catch (error) {
+      console.log(error, '埋点报错')
+    }
+  },
+}
+</script>
+
+<style>
+.box {
+  width: 100%;
+  height: 250px;
+  /* background-color: #fcf; */
+}
+</style>

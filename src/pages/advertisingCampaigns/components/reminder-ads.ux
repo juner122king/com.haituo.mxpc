@@ -106,7 +106,7 @@
       <transparency-mask
         sportTitle="停留自弹窗"
         onemit-hide-transparency="hideTransparency"
-        if="{{showTransparency && branch !== 'xiaomi'}}"
+        if="{{showTransparency }}"
       ></transparency-mask>
     </div>
   </div>

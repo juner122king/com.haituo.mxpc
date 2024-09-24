@@ -20,7 +20,8 @@
     "base64-arraybuffer": "^1.0.2",
     "pdt-mini-ui": "^1.5.4",
     "qa-spin": "^1.0.0",
-    "url-encode": "^1.0.5"
+    "url-encode": "^1.0.5",
+    "ylh-quick-app-ad-sdk": "^1.6.1060"
   },
   "devDependencies": {
     "@babel/runtime": "^7.12.5",

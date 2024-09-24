@@ -64,7 +64,7 @@
 
           <div class="click-item">
             <ad-clickable-area
-              if="{{branch !== 'xiaomi'}}"
+             
               type="button"
               class="click-txt"
               vaule="{{

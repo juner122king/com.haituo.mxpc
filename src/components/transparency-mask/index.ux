@@ -12,13 +12,25 @@
         closeBtnPosition="left-top"
         onadshow="adSuccShow"
       >
-        <ad-clickable-area type="click" class="click-son"> </ad-clickable-area>
+        <ad-clickable-area class="ad-title" style="width: 100%; height: 100%">
+          <text class="page-title" style="font-size: 1px">{{
+            adList.title
+          }}</text>
+        </ad-clickable-area>
+        <ad-clickable-area class="ad-image" style="width: 100%; height: 100%">
+          <image
+            src="{{adList.imgUrlList[0]}}"
+            style="height: 1px"
+            if="{{adList.imgUrlList[0]}}"
+          ></image>
+        </ad-clickable-area>
       </ad>
     </div>
   </div>
 </template>
 
 <script>
+const these = this
 const { adCodeData } = require('../../config.js').default
 export default {
   data: {
@@ -26,7 +38,7 @@ export default {
     branch: '',
     adObj: {},
     adId: '',
-    hasAdList: true,
+    hasAdList: false,
   },
   props: {
     isShow: {
@@ -49,6 +61,9 @@ export default {
         this.$app.$def.dataApp.showTransparencyMask = 1
       }
     }
+  },
+  onShow() {
+    console.log('遮罩广告onShow')
   },
   preloadAd() {
     try {
@@ -114,6 +129,7 @@ export default {
     }
   },
   adError(errCode, errMsg) {
+    console.log('遮罩广告报错', errCode)
     this.sensorsTrack(
       {
         errData: {
@@ -125,7 +141,6 @@ export default {
     )
   },
   adClick(e) {
-    console.log('小说页面透明层点击,this=', this)
     $utils.conversionUpload(this, {
       adType: 'NATIVE',
       adPositionId: this.adId,
@@ -138,22 +153,21 @@ export default {
     })
     this.sensorsTrack({ title: '广告位' })
     this.$emit('emitHideTransparency')
-    this.hasAdList = false
     this.preloadAd()
     this.sensorsTrack(e, 'click')
+    this.hasAdList = false
   },
   close(type = '') {
     if (type) {
       let str = `x${type}`
     }
-    console.log('没有关闭回调吗')
     this.hasAdList = false
+    console.log('没有关闭回调吗')
     this.$emit('emitClose', {
       data: 'showReminder',
     })
   },
   adSuccShow(e) {
-    console.log('小说页面透明层显示')
     this.sensorsTrack(e, 'show')
     $utils.conversionUpload(this, {
       adType: 'NATIVE',

@@ -1,4 +1,5 @@
 <import name="icon" src="apex-ui/components/icon/index"></import>
+<import name="bottom-native" src="../components/bottomNative.ux"></import>
 <template>
   <div
     class="wrapper"
@@ -10,8 +11,11 @@
       <icon type="close" size="80" color="#ffffff"></icon>
     </div>
 
-    <div class="complaint" onclick="complaint"></div>
-    <!-- <image class="image_finger"></image> -->
+    <div class="complaint" if="{{complaintStatus}}">
+      <div class="imageBox">
+        <image src="{{complaintImg}}" onclick="complaint"></image>
+      </div>
+    </div>
     <ad
       adId="{{adList.adId}}"
       class="box"
@@ -21,10 +25,19 @@
       onadclose="close"
       type="native"
       closeBtnPosition="left-top"
-      if="{{ hasAdList  && adState && currentTask.linkType == 'YS' && !isAudit}}"
+      if="{{ hasAdList  && adState && currentTask.linkType == 'YS' && !isAudit  }}"
       onadshow="adSuccShow"
     >
     </ad>
+    <div
+      class="bottom-ad"
+      if="{{currentTask.bottomAdId && hasAdList  && adState && currentTask.linkType == 'YS' && !isAudit }}"
+    >
+      <bottom-native
+        ad-id="{{currentTask.bottomAdId}}"
+        onemit-close="bottomAdClick"
+      ></bottom-native>
+    </div>
   </div>
 </template>
 
@@ -52,6 +65,7 @@ export default {
     rewardedVideoAd: null, //激励广告
     rewardedVideoAdState: false, //激励广告状态
     currentTask: {
+      isLinkQa: false,
       linkType: '',
       adIdOrPackage: '',
     }, // 新增属性，用于跟踪当前任务状态
@@ -64,6 +78,12 @@ export default {
       '/assets/images/Popover-5.png',
     ], //弹窗图片
     adUnitId: '', //激励广告id
+    rewardedVideoAdTime: null, //激励广告延时
+    rewardedVideoAdPlayCount: 0, //激励视频已播放次数
+    changeImageTime: null, //当前换图时间
+    complaintStatus: false, //举报状态
+    complaintImg:
+      'http://cdn.ihaituo.cn/qa/pro/temporary/63d3e397c404d4d7049ad6167fe6dbc7.png', //举报图片
   },
   onInit: function (e) {
     // 初始化全局参数
@@ -90,6 +110,7 @@ export default {
     this.getImageList()
   },
   onShow() {
+    $utils.changeShowAd(false)
     let actiParam = this.$app.$def.dataApp.actiParam
     this.$app.$sensors.pageShow({
       channel: actiParam.channelValue,
@@ -100,15 +121,23 @@ export default {
       console.log('这里展示红包1')
       //计数大于1或自动开启开红包展示
       this.showRedPack = true
+      this.changeImage('onhide')
+    }
+    if (this.rewardedVideoAd) {
+      this.openRewardedVideoAd()
     }
   },
   onHide() {
-    console.log('onHide')
-    setTimeout(() => {
-      this.changeImage()
-    }, 1000)
+    this.clearRewardedVideoAdTime() //清除激励广告 再重新进来的时候开启
+    console.log('页面onHide', Date.now())
   },
-  changeImage() {
+  changeImage(type) {
+    //1秒内不会重复调用
+    if (this.changeImageTime && Date.now() - this.changeImageTime < 1000) {
+      return
+    }
+    this.changeImageTime = Date.now()
+    console.log(type, '查看类型')
     this.showBgIndex = (this.showBgIndex + 1) % this.imageList.length
   },
   /***
@@ -128,16 +157,11 @@ export default {
     }
     this.startTask()
   },
-  jumpoOutside(link = '') {
-    $utils.jumpoOutside({
-      url: link || this.taskData.backEndLink,
-      ...this.$app.$def.dataApp.actiParam,
-    })
-  },
   /**
   启动任务
   */
   startTask() {
+    this.checkAndJumpQaLink()
     console.log('启动任务')
     console.log(this.currentTask, '查看当前任务')
     this.showRedPack = true
@@ -168,8 +192,8 @@ export default {
       setTimeout(() => {
         console.log('更新礼包显示', this.currentTask.linkType)
         // 更新礼包显示
-        this.changeImage()
-      }, 1800)
+        this.changeImage('kyy')
+      }, 800)
     }
     // 设置下一个任务
     this.settingUpTasks()
@@ -180,7 +204,7 @@ export default {
   preloadAd(id) {
     try {
       const that = this
-      console.log(this.adId, '查看广告id编码')
+      console.log(id, '原生广告开启查看广告id')
       let adId = id
       this.adId = id
       require('@service.ad').preloadAd({
@@ -191,7 +215,7 @@ export default {
         adid: adId, // 原生信息流广告广告位id,
         success: (data) => {
           this.adList = data.adList[0]
-          // console.log(this.adList, '返回广告成功');
+          console.log(this.adList, '返回广告成功')
           this.hasAdList = true
           this.adState = true
           if (this.debug) {
@@ -207,8 +231,9 @@ export default {
             },
             'error'
           )
-          console.log(data, code, '返回广告失败1')
-          this.hasAdList = true
+          console.log(data, code, '返回广告失败页面原生')
+          this.hasAdList = false
+          this.adState = false
           if (code === 205) {
             this.hasAdList = true
             this.adList = data.adList[0]
@@ -242,6 +267,7 @@ export default {
     this.hasAdList = false
     this.clickPopover()
     this.sensorsTrack(e, 'click')
+    this.$app.openApp('ad')
   },
   adSuccShow(e) {
     $utils.conversionUpload(this, {
@@ -250,7 +276,7 @@ export default {
       isclick: false,
       ecpm: this.adList.ecpm,
     })
-    console.log(e, '广告成功展示')
+    // console.log(e, '广告成功展示')
     this.sensorsTrack(e, 'show')
   },
   adError(errCode, errMsg) {
@@ -284,11 +310,12 @@ export default {
     }
   },
   /***
-   * 是否自动打开
+   * 是否自动打开 跟审核状态挂钩
    */
   getClickReviewControl() {
     const branch = $ad.getProvider().toUpperCase()
     $apis.task.getClickReviewControl({ branch: branch }).then((res) => {
+      console.log('查看是否自动开启', res.data)
       if (!res.data) {
         this.showRedPack = true
       }
@@ -355,6 +382,7 @@ export default {
           })
           $utils.buriedPointReport(that, { event: 'click', adId: adUnitId })
         }
+        $utils.changeShowAd(false)
       })
 
       rewardedVideoAd.onError((e) => {
@@ -362,6 +390,7 @@ export default {
         that.rewardedVideoAd = ''
         that.rewardedVideoAdState = false
         that.sensorsTrack(e, 'error')
+        $utils.changeShowAd(false)
       })
 
       if (this.branch !== 'vivo') {
@@ -379,6 +408,7 @@ export default {
       try {
         console.log('进来了展示激励')
         this.rewardedVideoAd.show()
+        $utils.changeShowAd(true)
         this.sensorsTrack({ formId: this.adUnitId }, 'show')
       } catch (e) {
         console.log(e, '怎么激励失败')
@@ -389,6 +419,7 @@ export default {
         .load()
         .then(() => {
           this.rewardedVideoAd.show()
+          $utils.changeShowAd(true)
           this.sensorsTrack({ formId: this.adUnitId }, 'show')
         })
         .catch((e) => {
@@ -398,12 +429,43 @@ export default {
     }
   },
   /**
+   * 判断是否能跳转QA链接
+   */
+  checkAndJumpQaLink() {
+    if (!this.taskData.isLinkQa && this.currentTask.linkType === 'YS') {
+      return console.log('任务数据中isLinkQa参数不允许跳转')
+    }
+    if (this.currentTask.qaLink) {
+      this.jumpoOutside(this.currentTask.qaLink)
+    } else {
+      console.log('当前任务中没有QA链接')
+    }
+  },
+  //跳转方法
+  jumpoOutside(link = '') {
+    console.log(link, '查看跳转链接')
+    $utils.jumpoOutside({
+      url: link || this.taskData.backEndLink.adIdOrPackage,
+      ...this.$app.$def.dataApp.actiParam,
+    })
+  },
+  bottomAdClick() {
+    this.hasAdList = false
+    this.settingUpTasks()
+  },
+  onBackPress() {
+    return true
+  },
+  /**
    * 设置任务
    */
   settingUpTasks() {
     const { taskList } = this.taskData
     this.currentTask = taskList[this.currentTaskNum]
+    console.log(taskList, '查看任务列表')
+    console.log(this.currentTaskNum, '查看当前任务数')
     console.log(this.currentTask, '查看当前任务')
+
     if (!this.currentTask) {
       this.currentTask = {
         linkType: '无任务',
@@ -427,7 +489,6 @@ export default {
 
     // 更新任务计数器
     this.currentTaskNum = (this.currentTaskNum + 1) % (this.maxTaskNum + 1)
-    console.log(this.currentTaskNum, '查看当前任务数')
   },
   /**
    * 获取页面广告参数
@@ -441,24 +502,25 @@ export default {
       })
       .then((res) => {
         // console.log(res, '查看自定义广告配置')
-        let result = res.data.adConversionModelList
-        let backEndLink = result.pop()
+        const { adConversionModel, adConversionModelList } = res.data
         this.taskData = {
-          taskList: result,
-          backEndLink: backEndLink.adIdOrPackage,
+          taskList: adConversionModelList,
+          backEndLink: adConversionModel,
+          ...res.data,
         }
-        console.log(this.taskData, '查看任务数据')
-        if (result < 1) {
+        console.log(this.taskData, '查看当前任务数据')
+        if (adConversionModelList.length < 1) {
           return
         }
         this.maxTaskNum = this.taskData.taskList.length - 1
-
         this.settingUpTasks()
+        this.openRewardedVideoAd()
       })
       .catch((err) => {
+        console.log('获取数据失败了么 ', err)
         this.taskData = {
           taskList: [],
-          backEndLink: 'hap://app/com.haituo.bookkeeping/pages/displayDesktop',
+          backEndLink: 'hap://app/com.haituo.mrxyy/pages/displayDesktop',
         }
         this.settingUpTasks()
       })
@@ -472,7 +534,31 @@ export default {
         let result = res.data
         this.imageList = result.imgData
         this.bgImg = result.bgImg
+        this.complaintStatus = result.complaintStatus
+        this.complaintImg = result.complaintImg || this.complaintImg
       })
+  },
+  //延时开启激励广告
+  openRewardedVideoAd() {
+    if (
+      !this.taskData.rewardedStatus ||
+      this.rewardedVideoAdPlayCount >= this.taskData.rewardedCount ||
+      !this.taskData.rewardedId
+    ) {
+      // 任务开关
+      return
+    }
+    this.createRewardedVideoAd(this.taskData.rewardedId)
+    this.rewardedVideoAdTime = setTimeout(() => {
+      this.rewardedVideoAd.show()
+      $utils.changeShowAd(true)
+      this.rewardedVideoAdPlayCount++
+      console.log(this.rewardedVideoAdPlayCount, '查看激励广告播放次数')
+    }, this.taskData.rewardedSeconds * 1000)
+  },
+  //清除激励广告
+  clearRewardedVideoAdTime() {
+    clearTimeout(this.rewardedVideoAdTime)
   },
 }
 </script>
@@ -487,11 +573,10 @@ export default {
   background-size: 100% 100%;
 
   .complaint {
-    width: 90px;
-    height: 170px;
-    /* background-color: #fcf; */
+    width: 55px;
+    height: 110px;
     position: fixed;
-    bottom: 250px;
+    bottom: 200px;
     left: 0;
   }
 }
@@ -592,5 +677,11 @@ export default {
   width: 0;
   height: 0;
   position: fixed;
+}
+
+.bottom-ad {
+  position: fixed;
+  bottom: 0;
+  left: 0;
 }
 </style>

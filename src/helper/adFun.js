@@ -11,8 +11,6 @@ const { JSEncrypt } = require('../libs/jsencrypt/lib/index')
 function openScreen(these) {
   const adBrand = $ad.getProvider().toLowerCase()
   if (adBrand !== 'oppo') return
-
-  let openScrrenId = config.adCodeData[adBrand].openScreen;
   $ad.onSplashStatus({
     reserved: true,
     callback: (data) => {
@@ -23,6 +21,11 @@ function openScreen(these) {
       }
       if (statusCode === '-100') {
         console.log('这是-100')
+        these.sensors.track('$WebShow', {
+          analysis: {
+            title: `开屏广告-广告曝光失败-${config.adCodeData.oppo.openScreen}`,
+          },
+        })
         return
       }
       const handleError = (action, error) => {
@@ -41,7 +44,7 @@ function openScreen(these) {
         try {
           $utils.conversionUpload(these, {
             adType: 'OPEN_SCREEN',
-            adPositionId: openScrrenId,
+            adPositionId: config.adCodeData.oppo.openScreen,
             isclick: false,
             ecpm: ecpm,
             splashData: splashData,
@@ -53,7 +56,7 @@ function openScreen(these) {
         try {
           $utils.buriedPointReport(these, {
             event: 'SplashLaunch',
-            adId: openScrrenId,
+            adId: config.adCodeData.oppo.openScreen,
             splashData: splashData,
           })
         } catch (error) {
@@ -63,13 +66,13 @@ function openScreen(these) {
         try {
           sensors.pageShow({
             channel: splashData.channelValue,
-            formId: openScrrenId,
+            formId: config.adCodeData.oppo.openScreen,
             ...splashData,
           })
         } catch (error) {
           handleError('埋点', error)
         }
-        trackSensors('$WebShow', { title: '开屏广告-广告曝光-' + openScrrenId })
+        trackSensors('$WebShow', { title: `开屏广告-广告曝光-${config.adCodeData.oppo.openScreen}` })
       } else if (statusCode == 100) {
         let ecpm
         try {
@@ -81,7 +84,7 @@ function openScreen(these) {
         try {
           $utils.buriedPointReport(these, {
             event: 'Splash',
-            adId: openScrrenId,
+            adId: config.adCodeData.oppo.openScreen,
             splashData: splashData,
           })
         } catch (error) {
@@ -90,7 +93,7 @@ function openScreen(these) {
         try {
           $utils.conversionUpload(these, {
             adType: 'OPEN_SCREEN',
-            adPositionId: openScrrenId,
+            adPositionId: config.adCodeData.oppo.openScreen,
             isclick: true,
             ecpm: ecpm,
             splashData: splashData,
@@ -98,7 +101,7 @@ function openScreen(these) {
         } catch (error) {
           handleError('转换', error)
         }
-        trackSensors('$AppClick', { title: '开屏广告-广告位-' + openScrrenId })
+        trackSensors('$AppClick', { title: `开屏广告-广告位-${config.adCodeData.oppo.openScreen}` })
       }
     },
   })
@@ -135,32 +138,43 @@ function newBurialSite(
   these,
   rest = { eventName: 'show', formId: '', subTitle: '' }
 ) {
+  const eventData = {
+    //事件
+    show: ' $WebShow',
+    click: '$AppClick',
+    error: '$WebShow',
+  }
+  const titleData = {
+    //标题
+    show: '广告曝光',
+    click: '广告位',
+    error: '广告曝光失败',
+  }
   try {
     const { eventName, formId, subTitle } = rest
-    console.log(rest, '查看新埋点参数')
+    // console.log(rest, '查看新埋点参数')
     let locationData = $router.getState()
-    console.log(locationData, '获取页面名')
-    let pageName = pageLocation[locationData.name] //根据地址获取页面名
-    const eventData = {
-      //事件
-      show: ' $WebShow',
-      click: '$AppClick',
-      error: '$WebShow',
-    }
-    const titleData = {
-      //标题
-      show: '广告曝光',
-      click: '广告位',
-      error: '广告曝光失败',
-    }
+    // console.log(locationData, '获取页面名')
+    let pageName = locationData
+      ? pageLocation[locationData.name]
+      : '无页面名称获取' //根据地址获取页面名
+
+    let title = `${pageName + (subTitle ? '-' + subTitle : '')}-${titleData[eventName]
+      }-${formId}`
+    these.$app.$sensors.track(eventData[eventName], {
+      analysis: {
+        formId,
+        ...rest,
+        title,
+      },
+    })
+  } catch (error) {
     let title = `${pageName + (subTitle ? '-' + subTitle : '')}-${titleData[eventName]
       }-${formId}`
     these.$app.$sensors.track(eventData[eventName], {
       formId,
-      ...rest,
       title,
     })
-  } catch (error) {
     console.log(error, '函数埋点错误')
   }
 }
