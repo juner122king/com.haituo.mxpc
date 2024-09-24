@@ -105,12 +105,13 @@ export default {
                     that.bannerAD.style.top = that.displayType === 'top' ? that.fixedHead : that.bottomHead
                 }
                 console.log(that.bannerAD.style, '查看最终高度');
-                that.showBannerAd()
+                // that.showBannerAd()
             }
         })
     },
     getAdProvider: function () {
         this.provider = ad.getProvider();
+
         // prompt.showToast({
         //     message: "getProvider : " + this.provider,
         //     duration: 2000,
@@ -118,43 +119,53 @@ export default {
         // });
     },
     showBannerAd: function () {
-        const that = this;
-        this.getAdProvider();
-        if (!Object.keys(adCodeData).includes(this.provider) || !adCodeData[this.provider].banner) { //没有厂商直接弹出
-            this.ishow = false;
-            return
-        }
-        // if (bannerAd) {
-        //     bannerAd.destroy();
-        // }
-
-        bannerAd = ad.createBannerAd({
-            adUnitId: adCodeData[this.provider].banner,
-            style: this.bannerAD.style,
-            adIntervals: this.bannerAD.adIntervals
-        });
-        // console.info("the device does not support ad.annerAd.style=" + JSON.stringify(bannerAd.style));
-        bannerAd.onLoad(e => {
-            console.info("load bannerAd  onload success 广告位id:",adCodeData[this.provider].banner);
-            console.info("load bannerAd  onload success e=" + JSON.stringify(e));
-            console.info("show bannerAd  style:" + JSON.stringify(bannerAd.style));
-            if (this.provider === 'xiaomi') {
-                bannerAd.style.width = 750;
-                bannerAd.style.top = this.bottomHead
+        try {
+            const that = this;
+            this.getAdProvider();
+            let ad = $ad.getProvider().toLowerCase();
+            console.log(ad, '这个是什么ad-------------------');
+            if (!ad) {
+                return
             }
+            if (!Object.keys(adCodeData).includes(this.provider) && !adCodeData[this.provider].banner) { //没有厂商直接弹出
+                this.ishow = false;
+                return
+            }
+            // if (bannerAd) {
+            //     bannerAd.destroy();
+            // }
+            console.log(this.provider, '这是什么广告？banner');
+            console.log(adCodeData[this.provider]);
+            bannerAd = $ad.createBannerAd({
+                adUnitId: adCodeData[this.provider].banner,
+                style: this.bannerAD.style,
+                adIntervals: this.bannerAD.adIntervals
+            });
+            // console.info("the device does not support ad.annerAd.style=" + JSON.stringify(bannerAd.style));
+            bannerAd.onLoad(e => {
+                console.info("load bannerAd  onload success");
+                console.info("load bannerAd  onload success e=" + JSON.stringify(e));
+                console.info("show bannerAd  style:" + JSON.stringify(bannerAd.style));
+                if (this.provider === 'xiaomi') {
+                    bannerAd.style.width = 750;
+                    bannerAd.style.top = this.bottomHead
+                }
 
-            this.ishow = true;
-        });
-        bannerAd.onError(e => {
-            this.ishow = false;
-            console.error("load bannerAd  onError " + JSON.stringify(e));
-        });
-        bannerAd.onClose(e => {
-            this.ishow = false;
-            console.info("load bannerAd  onClose");
-        });
-        console.info("create bannerAd  success:");
-        bannerAd.show();
+                this.ishow = true;
+            });
+            bannerAd.onError(e => {
+                this.ishow = false;
+                console.error("load bannerAd  onError " + JSON.stringify(e));
+            });
+            bannerAd.onClose(e => {
+                this.ishow = false;
+                console.info("load bannerAd  onClose");
+            });
+            console.info("create bannerAd  success:");
+            bannerAd.show();
+        } catch (error) {
+            console.log(error, '没有banner');
+        }
     },
     hideBanerAd: function () {
         if (bannerAd) {

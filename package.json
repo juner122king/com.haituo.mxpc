@@ -15,6 +15,7 @@
     "prettier-watcher": "onchange '**/*.md' \"src/**/**/*.{ux,js,json,less,scss,css,pcss,md,vue}\" -- prettier --write {{changed}}"
   },
   "dependencies": {
+    "@topon/quick-app-sdk": "^4.2.40",
     "apex-ui": "^1.9.5",
     "base64-arraybuffer": "^1.0.2",
     "pdt-mini-ui": "^1.5.4",

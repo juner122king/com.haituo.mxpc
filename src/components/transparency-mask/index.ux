@@ -1,46 +1,50 @@
 <template>
-  <div class="transparency-mask">
-    <ad
-      if="{{hasAdList}}"
-      adId="{{adList.adId}}"
-      class="box"
-      show="{!!adList.adId}}"
-      onerror="error"
-      onadclick="adClick"
-      onadclose="close"
-      type="native"
-      closeBtnPosition="left-top"
-    >
-    </ad>
+  <div>
+    <div class="transparency-mask" if="{{hasAdList}}">
+      <ad
+        adId="{{adList.adId}}"
+        class="box"
+        show="{!!adList.adId}}"
+        onerror="adError"
+        onadclick="adClick"
+        onadclose="close"
+        type="native"
+        closeBtnPosition="left-top"
+        onadshow="adSuccShow"
+      >
+        <ad-clickable-area type="click" class="click-son"> </ad-clickable-area>
+      </ad>
+    </div>
   </div>
 </template>
+
 <script>
 const { adCodeData } = require('../../config.js').default
 export default {
   data: {
     adList: '',
-    branch: "",
+    branch: '',
     adObj: {},
-    adId: "",
-    hasAdList: true
+    adId: '',
+    hasAdList: true,
   },
   props: {
     isShow: {
-      default: true
+      default: true,
     },
     sportTitle: {
-      default: '全覆盖透明层'
-    }
+      default: '全覆盖透明层',
+    },
   },
   onInit() {
-    let idIndex = this.$app.$def.dataApp.showTransparencyMask;
+    let idIndex = this.$app.$def.dataApp.showTransparencyMask
     const branch = $ad.getProvider().toLowerCase()
-    this.branch = branch;
+    this.branch = branch
     this.adObj = adCodeData[branch]
     if (adCodeData[branch]) {
-      this.adId = this.adObj[`fiction${idIndex}`];
+      this.adId = this.adObj[`fiction${idIndex}`]
       this.preloadAd()
-      this.$app.$def.dataApp.showTransparencyMask++;
+      this.$app.$def.dataApp.showTransparencyMask++
       if (this.$app.$def.dataApp.showTransparencyMask > 5) {
         this.$app.$def.dataApp.showTransparencyMask = 1
       }
@@ -48,8 +52,8 @@ export default {
   },
   preloadAd() {
     try {
-      const that = this;
-      console.log(this.adId, '查看广告id编码');
+      const that = this
+      console.log(this.adId, '查看广告id编码')
       require('@service.ad').preloadAd({
         adUnitId: this.adId, // 原生信息流广告广告位id
         type: 'native', // 原生信息流广告
@@ -57,91 +61,126 @@ export default {
         ecpm: true,
         success: (data) => {
           this.adList = data.adList[0]
-          console.log(this.adList, '查看遮罩是否有广告返回');
-          this.hasAdList = true;
+          console.log(this.adList, '查看遮罩是否有广告返回')
+          this.hasAdList = true
           if (this.debug) {
             prompt.showToast({
-              message: `ad load success`
+              message: `ad load success`,
             })
           }
         },
         fail: (data, code) => {
-          console.log(data, code, '遮罩返回广告失败1');
-          this.hasAdList = false;
+          console.log(data, code, '遮罩返回广告失败1')
+
+          this.sensorsTrack(
+            {
+              errData: data,
+            },
+            'error'
+          )
+          this.hasAdList = false
           if (code === 205) {
-            this.hasAdList = true;
+            this.hasAdList = true
             this.adList = data.adList[0]
           } else {
             if (this.debug) {
               prompt.showToast({
-                message: `ad load fail!data= ${JSON.stringify(data)},code= ${code}`
+                message: `ad load fail!data= ${JSON.stringify(
+                  data
+                )},code= ${code}`,
               })
             }
           }
-        }
+        },
       })
     } catch (e) {
-      console.log(e, e.message);
+      console.log(e, e.message)
     }
   },
   // 埋点上报
-  sensorsTrack(e) {
+  sensorsTrack(e = {}, type = 'show') {
     try {
-      const { title = '', type = 1, defaultTxt = `${this.sportTitle}-透明层`, adPositionId = '' } = e;
-      let apid = adPositionId || this.adId;
-      this.$app.$sensors.track(`${type === 1 ? '$AppClick' : '$AppClick'}`, {
-        analysis: {
-          title: `${defaultTxt}${title ? ('-' + title) : ""}${title.includes('广告位') ? '-' + apid : ''}`,
-          formId: apid
-        }
+      const { formId = '', subTitle = '', errData = {} } = e
+      let apid = formId || this.adId
+      $adFun.newBurialSite(this, {
+        eventName: type, // 事件名
+        formId: apid, // 广告id
+        subTitle: `透明层`, //页面名
+        ...this.$app.$def.dataApp.actiParam,
+        errData: errData,
       })
     } catch (error) {
-      console.log(error, '埋点报错');
+      console.log(error, '埋点报错')
     }
   },
-  adClick() {
-    this.conversionUp('1')
-    $utils.buriedPointReport(this, 'click', this.adId)
-    this.sensorsTrack({ title: "广告位" })
-    this.$emit('emitHideTransparency')
-    this.hasAdList = false;
-    this.preloadAd()
+  adError(errCode, errMsg) {
+    this.sensorsTrack(
+      {
+        errData: {
+          errCode: errCode.errCode,
+          errMsg: errCode.errMsg,
+        },
+      },
+      'error'
+    )
   },
-  conversionUp(clickCount) {
-    let ecpmParam = {  //竞价相关参数
-      ecpm: this.ecpm,
+  adClick(e) {
+    console.log('小说页面透明层点击,this=', this)
+    $utils.conversionUpload(this, {
       adType: 'NATIVE',
       adPositionId: this.adId,
-      clickCount: clickCount
-    }
-    console.log('竞价相关参数', ecpmParam);
-    $utils.conversionUpload(this, ecpmParam)
+      isclick: true,
+      ecpm: this.adList.ecpm,
+    })
+    $utils.buriedPointReport(this, {
+      event: 'click',
+      adId: this.adId,
+    })
+    this.sensorsTrack({ title: '广告位' })
+    this.$emit('emitHideTransparency')
+    this.hasAdList = false
+    this.preloadAd()
+    this.sensorsTrack(e, 'click')
   },
   close(type = '') {
     if (type) {
       let str = `x${type}`
-      this.sensorsTrack({ title: str })
     }
-    console.log('没有关闭回调吗');
-    this.hasAdList = false;
+    console.log('没有关闭回调吗')
+    this.hasAdList = false
     this.$emit('emitClose', {
-      data: 'showReminder'
+      data: 'showReminder',
     })
-  }
+  },
+  adSuccShow(e) {
+    console.log('小说页面透明层显示')
+    this.sensorsTrack(e, 'show')
+    $utils.conversionUpload(this, {
+      adType: 'NATIVE',
+      adPositionId: this.adId,
+      isclick: false,
+      ecpm: this.adList.ecpm,
+    })
+  },
 }
 </script>
 
-<style>
+<style lang="less">
 .transparency-mask {
   width: 100%;
   height: 100%;
   position: fixed;
   left: 0;
   right: 0;
+  /* background-color: #fcf; */
 }
 .box {
   width: 100%;
   height: 100%;
   /* background-color: #fcf; */
+  .click-son {
+    width: 100%;
+    height: 100%;
+  }
 }
 </style>

@@ -3,6 +3,18 @@
 <import name="back-to-ads" src="./components/back-to-ads.ux"></import>
 <import name="icon" src="apex-ui/components/icon/index"></import>
 <import name="my-navbar" src="apex-ui/components/navbar/index"></import>
+<import
+  name="task-interstitial"
+  src="../../components/takuInterstitial/index.ux"
+></import>
+<import
+  name="coin-win-motivator"
+  src="../../components/coinWinMotivator/index.ux"
+></import>
+<import
+  name="transparency-mask"
+  src="../../components/transparency-mask/index.ux"
+></import>
 
 <template>
   <div class="advertising-page">
@@ -11,7 +23,7 @@
     <div class="advertising-title">
       <text class="m-heading">正品内容免费读</text>
       <text class="s-heading">广告收益是为了激励作者提供优质内容</text>
-      <div class="thank-you-s-peech">
+      <div class="thank-you-speech">
         <text class="line"></text>
         <text class="txt">感谢你的支持</text>
         <text class="line"></text>
@@ -23,12 +35,12 @@
         adId="{{adList.adId}}"
         class="ad-native"
         show="{!!adList.adId}}"
-        onerror="error"
+        onerror="adError"
         onadclick="adClick"
         onadclose="close"
         type="native"
-        onadshow="adShow"
         closeBtnPosition="left-top"
+        onadshow="adSuccShow"
       >
         <div class="container">
           <div class="agreement">
@@ -66,7 +78,7 @@
                 type="close"
                 size="50"
                 color="#FFFFFF"
-                @click="close"
+                @click="close(1)"
               ></icon>
             </div>
           </div>
@@ -100,7 +112,7 @@
                   type="close"
                   size="45"
                   color="#FFFFFF"
-                  @click="close"
+                  @click="close(2)"
                 ></icon>
               </div>
               <ad-clickable-area type="logo"> </ad-clickable-area>
@@ -139,8 +151,8 @@
 
           <div
             class="swipe-left-btn"
-            @swipe="appearSwipe"
-            @click="appearSwipe"
+            @swipe-left="appearSwipe(1)"
+            @click="appearSwipe(1)"
             if="{{!showTransparency}}"
           >
             <div style="left: 20px">
@@ -159,14 +171,16 @@
       if="{{showBanner}}"
       show-transparency="{{ showTransparency}}"
       onemit-hide-transparency="hideTransparency"
+      sport-title="正品内容免费读"
     ></bottom-native>
 
     <!--延迟提示 -->
     <reminder-ads
-      if="{{showReminder}}"
+      if="{{showReminder && branch !== 'vivo'}}"
       show-transparency="{{ showTransparency}}"
       onemit-hide-transparency="hideTransparency"
       onemit-close="heideReminder"
+      sport-title="正品内容免费读"
     ></reminder-ads>
 
     <!-- 返回时弹出框 -->
@@ -175,10 +189,25 @@
       show-transparency="{{ showTransparency}}"
       onemit-hide-transparency="hideTransparency"
       onemit-close="heideReminder"
+      sport-title="正品内容免费读"
     ></back-to-ads>
 
-    <!-- 看视频得红包悬浮件-->
-    <div if="isShowMoviered" class="moviered" onclick="onMovieredClick"></div>
+    <!-- taku插屏广告 -->
+    <task-interstitial
+      onemit-hide-transparency="hideTransparency"
+      if="{{showReminder && branch === 'vivo'}}"
+      onemit-close="heideReminder"
+      sport-title="正品内容免费读"
+    ></task-interstitial>
+
+    <!-- 看视频赢金币 -->
+    <coin-win-motivator onemit-change="winMotivator"></coin-win-motivator>
+
+    <!-- <transparency-mask
+      sportTitle=""
+      onemit-hide-transparency="hideTransparency"
+      if="{{showTransparency}}"
+    ></transparency-mask> -->
   </div>
 </template>
 
@@ -189,11 +218,11 @@ export default {
     adList: {},
     hasAdList: false,
     defaultAd: {
-      desc: '提供最优质的商业化解决方案。流量联盟广告联盟。',
-      title: '流量联盟',
+      desc: '广告流量联盟，为用户提供最优质的商业化解决方案。',
+      title: '广告流量联盟',
       icon: '广告',
       clickBtnTxt: '点击安装',
-      img: "http://cdn.bank-zone.cn/pro/sy/admin/advertising/3639bdbde8e84397a297ad54f89ac4c3.jpg"
+      img: 'https://cdn.ihaituo.cn/pro/sy/admin/advertising/3639bdbde8e84397a297ad54f89ac4c3.jpg',
     },
     btnTxt: '',
     adUnitId: '',
@@ -203,241 +232,303 @@ export default {
     showReminder: false,
     showVackTisp: false,
     showTransparency: true,
-    adTitle: "",
+    adTitle: '',
     timer: null,
     isfristReqCoun: true,
-    isShowMoviered: false,//是否显示页面跳转悬浮组件
+    branch: '',
+    ecpm: 0,
+    showWinMotivator: false,
   },
-  onMovieredClick() {
-    $router.push({
-      uri: 'pages/luckyBagOpen'
-    })
-  },
-  //获取小说页面是否开启跳转红包页面悬浮组件
-  getIsShowMovieredClick() {
-    $apis.task
-      .getUserwealEntry()
-      .then((res) => {
-        console.log(res, '获取福利入口信息')
-        this.isShowMoviered = res.data.isOpenNovelRedPacket
-      })
-      .catch((err) => {
-        console.log(err, '获取福利入口信息')
-      })
-  },
-
   onInit(e) {
-    const { callback = '', oaid = '', type = '', channelValue = '', corp_id = '' } = e
+    const {
+      callback = '',
+      oaid = '',
+      type = '',
+      channelValue = '',
+      corp_id = '',
+    } = e
     if (Object.keys(e).length > 0) {
-      console.log('进来了');
+      console.log('进来了')
       this.$app.$def.dataApp.actiParam = {
         ...e,
       }
-      $utils.buriedPointReport(this, 'AppLaunch', '', '')
+      // $utils.getConversionlicks(this)
+      // $utils.setChannelValue(channelValue)
     }
-    const branch = $ad.getProvider()
-
-    console.log('ac广告商', branch);
+    setTimeout(() => {
+      $utils.buriedPointReport(this)
+    }, 1000)
+    const branch = $ad.getProvider().toLowerCase()
+    this.branch = branch
     this.adObj = adCodeData[branch]
-    this.adId = adCodeData[branch].fiction1;
-    this.preloadAd()
-    this.getTransparentLayerL()
-    this.getIsShowMovieredClick()
+    console.log(this.branch, '这是什么参数')
+    if (adCodeData[branch]) {
+      this.adId = adCodeData[branch].fiction1
+      this.preloadAd()
+      this.getTransparentLayerL()
+    }
+  },
+  onShow() {
+    let actiParam = this.$app.$def.dataApp.actiParam
+    this.$app.$sensors.pageShow({
+      channel: actiParam.channelValue,
+      formId: this.adId,
+      ...actiParam,
+    })
+  },
+  onHide() {
+    this.timer = null
+
+    //App业务
   },
   onReady() {
     this.delayedDisplay()
   },
-  onShow(options) {
-    let actiParam = this.$app.$def.dataApp.actiParam;
-    this.$app.$sensors.pageShow({ channel: actiParam.channelValue });
-  },
-  onHide() {
-    this.timer = null;
-  },
   onBackPress() {
-    this.showVackTisp = true;
-    console.log('触发了怎么无效了');
+    this.showVackTisp = true
+    if (this.showReminder) {
+      this.sensorsTrack(
+        {
+          subTitle: '左右滑',
+          formId: this.adObj.fiction2,
+        },
+        'click'
+      )
+    }
     return true
+  },
+  // 埋点上报
+  sensorsTrack(e = {}, type = 'show') {
+    try {
+      const { formId = '', subTitle = '', errData = {} } = e
+      let apid = formId || this.adId
+      $adFun.newBurialSite(this, {
+        eventName: type, // 事件名
+        formId: apid, // 广告id
+        subTitle: subTitle,
+        errData: errData,
+        ...this.$app.$def.dataApp.actiParam,
+      })
+    } catch (error) {
+      console.log(error, '埋点报错')
+    }
   },
   /**
    * 展示
    */
   delayedDisplay() {
-    this.timer = null;
+    this.timer = null
     this.timer = setTimeout(() => {
-      this.showReminder = true;
-      console.log('怎么还没有触发', this);
+      if (this.showWinMotivator) {
+        return
+      }
+      this.showReminder = true
     }, 4000)
   },
   preloadAd() {
     try {
-      console.log(this.adId, '查看广告id编码');
+      const that = this
+      console.log(this.adId, '查看广告id编码')
       require('@service.ad').preloadAd({
         adUnitId: this.adId, // 原生信息流广告广告位id
         type: 'native', // 原生信息流广告
         adCount: 1,
         ecpm: true,
         success: (data) => {
-          console.log(data, '返回广告成功');
-
           this.adList = data.adList[0]
+          console.log(this.adList, '返回广告成功-广告投放页')
           this.showBanner = true
-          this.hasAdList = true;
+          this.hasAdList = true
           if (this.adList.appInfo) {
-            this.adList.appInfo.appSize = this.convertAppSize(this.adList.appInfo.appSize)
+            this.adList.appInfo.appSize = this.convertAppSize(
+              this.adList.appInfo.appSize
+            )
           }
           if (this.debug) {
             prompt.showToast({
-              message: `ad load success`
+              message: `ad load success`,
             })
           }
         },
         fail: (data, code) => {
-          console.log(data, code, '返回广告失败1');
-          this.hasAdList = true;
+          console.log(data, code, '返回广告失败1')
+          this.sensorsTrack({ errData: data }, 'error')
+          this.hasAdList = true
           if (code === 205) {
-            this.hasAdList = true;
+            this.hasAdList = true
             this.adList = data.adList[0]
           } else {
             if (this.debug) {
               prompt.showToast({
-                message: `ad load fail!data= ${JSON.stringify(data)},code= ${code}`
+                message: `ad load fail!data= ${JSON.stringify(
+                  data
+                )},code= ${code}`,
               })
             }
           }
-        }
+        },
       })
     } catch (e) {
-      console.log(e, e.message);
+      console.log(e, e.message)
     }
   },
   error(errCode, errMsg) {
-    console.log('没有报错回调吗');
-    this.appearSwipe()
+    console.log('没有报错回调吗', errCode, errMsg)
+    setTimeout(() => {
+      this.appearSwipe()
+    }, 500)
   },
-  adShow(evt) {
-    console.log('小说广告show: ', evt)
-
-    this.conversionUp('0')
-  },
-
-  adClick() {
-    console.log('查看点击的this');
-    this.showTransparency = false;
-    this.conversionUp('1')
-
-    this.addClickNum()
-    //后台单个埋点 - 事件：广告点击
-    $utils.buriedPointReport(this, 'click', this.adId)
-  },
-
-  conversionUp(clickCount) {
-    let ecpmParam = {  //竞价相关参数
-      ecpm: this.adList.ecpm,
+  adClick(e) {
+    console.log('查看点击的this')
+    this.showTransparency = false
+    console.log('没有点击回调吗')
+    $utils.conversionUpload(this, {
       adType: 'NATIVE',
       adPositionId: this.adId,
-      clickCount: clickCount
-    }
-    console.log('竞价相关参数', ecpmParam);
-    $utils.conversionUpload(this, ecpmParam)
+      isclick: true,
+      ecpm: this.adList.ecpm,
+    })
+
+    $utils.buriedPointReport(this, { event: 'click', adId: this.adId })
+    this.addClickNum()
+    this.hasAdList = false
+    this.preloadAd()
+    this.sensorsTrack(e, 'click')
   },
-  close() {
-    console.log('没有触发这个吗');
-    this.hasAdList = false;
+  close(type = '') {
+    if (type) {
+      let str = `x${type}`
+      this.sensorsTrack({ subTitle: `${str}` })
+    }
+    console.log('没有触发这个吗')
+    this.hasAdList = false
     this.appearSwipe()
   },
   convertAppSize(appSizeBytes) {
-    // 首先将字节转换为KB  
-    let kb = appSizeBytes / 1024;
+    // 首先将字节转换为KB
+    let kb = appSizeBytes / 1024
 
-    // 检查是否超过1MB（即1024KB）  
+    // 检查是否超过1MB（即1024KB）
     if (kb >= 1024) {
-      // 转换为MB并保留两位小数  
-      let mb = kb / 1024;
-      return mb.toFixed(2) + 'MB';
+      // 转换为MB并保留两位小数
+      let mb = kb / 1024
+      return mb.toFixed(2) + 'MB'
     } else {
-      // 保留两位小数并返回KB  
-      return kb.toFixed(2) + 'KB';
+      // 保留两位小数并返回KB
+      return kb.toFixed(2) + 'KB'
     }
   },
-  appearSwipe() {
+  appearSwipe(type) {
+    if (type == 1) {
+      this.sensorsTrack({ subTitle: '正版内容免费读-左滑继续阅读' })
+    }
     $router.replace({
-      uri: "pages/readAd"
+      uri: 'pages/readAd',
     })
   },
   getTransparentLayerL: function () {
     try {
-      const branch = $ad.getProvider();
+      const branch = $ad.getProvider().toLowerCase()
       let payam = {
-        brand: branch.toUpperCase()
+        brand: branch.toUpperCase(),
       }
-      if (!this.isfristReqCoun) { //如果不是初次进来的说明可以添加选项
+      if (!this.isfristReqCoun) {
+        //如果不是初次进来的说明可以添加选项
         payam.count = this.$app.$def.dataApp.transparentLayerHits
       }
 
       $apis.task
         .getTransparentLayer({ ...payam })
         .then((res) => {
-          console.log(res, '查看这个透明层获取');
+          console.log(res, '查看这个透明层获取')
           // 是否初次请求
           if (this.isfristReqCoun) {
-            this.isfristReqCoun = false;
+            this.isfristReqCoun = false
             if (res.data) {
               this.getTransparentLayerL()
             }
             return
           }
-          this.showTransparency = res.data;
-          console.log('查看触发透明层');
+          this.showTransparency = res.data
+          console.log('查看触发透明层')
         })
         .catch((err) => {
           console.log(err, '查看返回报错')
         })
     } catch (e) {
-      console.log(e, '获取失效');
+      console.log(e, '获取失效')
     }
   },
   // 关闭透明层
   hideTransparency() {
-    console.log('点击了关闭广告');
-    this.showTransparency = false;
+    console.log('点击了关闭广告')
+    this.showTransparency = false
     this.addClickNum()
   },
   addClickNum() {
-    this.$app.$def.dataApp.transparentLayerHits = this.$app.$def.dataApp.transparentLayerHits + 1
+    this.$app.$def.dataApp.transparentLayerHits =
+      this.$app.$def.dataApp.transparentLayerHits + 1
     this.getTransparentLayerL()
   },
   // 关闭
   heideReminder(e) {
     // this.showReminder = false;
 
-    console.log(e, '点击了关闭全透明层');
-    const { detail = '' } = e;
+    console.log(e, '点击了关闭全透明层')
+    const { detail = '' } = e
     if (!detail) {
     } else {
-      console.log('这是什么', detail.data);
+      console.log('这是什么', detail.data)
       if (detail.data === 'showVackTisp') {
         this.showVackTisp = false
         if (detail.closeType === 'close') {
           this.addClickNum()
         }
       } else if (detail.data === 'showReminder') {
-        this.showReminder = false;
+        this.showReminder = false
         if (detail.closeType === 'close') {
           this.addClickNum()
         }
       }
     }
-
   },
   /**
    *关闭倒计时窗口
    */
   hideReminder() {
-    console.log('关闭倒计时窗口');
-    this.showReminder = false;
-  }
-
+    console.log('关闭倒计时窗口')
+    this.showReminder = false
+  },
+  /**
+   * 激励广告是否打开
+   */
+  winMotivator(e) {
+    console.log(e, '查看数据')
+    if (e.detail.data === 'hide') {
+      this.showWinMotivator = false
+      this.delayedDisplay()
+    } else if (e.detail.data === 'show') {
+      this.showWinMotivator = true
+    }
+  },
+  /**
+   * 广告正常曝光
+   */
+  adSuccShow(e) {
+    $utils.conversionUpload(this, {
+      adType: 'NATIVE',
+      adPositionId: this.adId,
+      isclick: false,
+      ecpm: this.adList.ecpm,
+    })
+    this.sensorsTrack(e, 'show')
+  },
+  adError(errCode, errMsg) {
+    this.sensorsTrack({  errData: {
+          errCode: errCode.errCode,
+          errMsg: errCode.errMsg,
+        } }, 'error')
+  },
 }
 </script>
 

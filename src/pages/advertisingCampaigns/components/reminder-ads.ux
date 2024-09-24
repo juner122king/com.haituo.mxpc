@@ -1,19 +1,22 @@
-<import name="transparency-mask" src="../../../components/transparency-mask/index.ux"></import>
 <import name="icon" src="apex-ui/components/icon/index"></import>
+<import
+  name="transparency-mask"
+  src="../../../components/transparency-mask/index.ux"
+></import>
 <!-- 停留3秒显示弹窗 -->
 <template>
   <div>
-    <div class="reminder-ads" if="{{hasAdList}}">
+    <div class="reminder-ads">
       <ad
         class="ad-native"
         show="{!!adList.adId}}"
         adId="{{adList.adId}}"
         type="native"
         closeBtnPosition="right-top"
-        onerror="error"
+        onerror="adError"
         onadclick="adClick"
         onadclose="close"
-        onadshow="adShow"
+        onadshow="adSuccShow"
       >
         <div class="container">
           <!-- 头部图片 -->
@@ -40,7 +43,7 @@
                 type="close"
                 size="40"
                 color="#000000"
-                onclick="close"
+                onclick="close(1)"
               ></icon>
             </div>
           </div>
@@ -74,11 +77,27 @@
             <div class="foot-btn vertical-content">
               <ad-clickable-area
                 type="button"
+                if="{{branch !== 'xiaomi'}}"
                 class="click-item"
                 value="{{
                   btnTxt || adList.clickBtnTxt || defaultAd.clickBtnTxt
                 }}"
               >
+              </ad-clickable-area>
+
+              <ad-clickable-area
+                type="click"
+                else
+                class="click-item"
+                value="{{
+                  btnTxt || adList.clickBtnTxt || defaultAd.clickBtnTxt
+                }}"
+              >
+                <text class="ad-s-title-txt">
+                  {{
+                    btnTxt || adList.clickBtnTxt || defaultAd.clickBtnTxt
+                  }}</text
+                >
               </ad-clickable-area>
             </div>
           </div>
@@ -87,7 +106,7 @@
       <transparency-mask
         sportTitle="停留自弹窗"
         onemit-hide-transparency="hideTransparency"
-        if="{{showTransparency}}"
+        if="{{showTransparency && branch !== 'xiaomi'}}"
       ></transparency-mask>
     </div>
   </div>
@@ -103,122 +122,138 @@ export default {
       adList: {},
       hasAdList: false,
       defaultAd: {
-        desc: '提供最优质的商业化解决方案。流量联盟广告联盟。',
-        title: '流量联盟',
+        desc: '广告流量联盟，为用户提供最优质的商业化解决方案。',
+        title: '广告流量联盟',
         icon: '广告',
         clickBtnTxt: '点击安装',
-        img: "http://cdn.bank-zone.cn/pro/sy/admin/advertising/3639bdbde8e84397a297ad54f89ac4c3.jpg"
+        img: 'https://cdn.ihaituo.cn/pro/sy/admin/advertising/3639bdbde8e84397a297ad54f89ac4c3.jpg',
       },
       btnTxt: '',
-      adId: "",
-      adObj: "",
+      adId: '',
+      adObj: '',
       showClik: false,
-      ecpm: ''
+      ecpm: 0,
+      branch: '',
     }
   },
   props: {
     showTransparency: {
-      default: false
+      default: false,
     },
     sportTitle: {
-      default: '停留自弹窗'
-    }
+      default: '停留自弹窗',
+    },
   },
   hideTransparency() {
     this.$emit('emitHideTransparency')
   },
-
   onInit() {
-    const branch = $ad.getProvider()
+    const branch = $ad.getProvider().toLowerCase()
+    this.branch = branch
     this.adObj = adCodeData[branch]
-    this.adId = adCodeData[branch].fiction2;
+    this.adId = adCodeData[branch].fiction2
     this.preloadAd()
   },
   preloadAd() {
     try {
+      const that = this
       require('@service.ad').preloadAd({
         adUnitId: this.adId, // 原生信息流广告广告位id
         type: 'native', // 原生信息流广告
         adCount: 1,
         ecpm: true,
         success: (data) => {
-          console.log(data, '返回广告成功3');
-          this.adList = data.adList[0];
-          this.hasAdList = true;
+          console.log(data, '返回广告成功停留弹窗')
+          this.adList = data.adList[0]
+          this.hasAdList = true
           if (this.debug) {
             prompt.showToast({
-              message: `ad load success`
+              message: `ad load success`,
             })
           }
         },
         fail: (data, code) => {
-
+          this.sensorsTrack({ errData: data }, 'error')
+          this.hasAdList = false
           this.$emit('emitClose', {
-            data: 'showReminder'
+            data: 'showReminder',
           })
-          console.log(data, '返回广告失败3');
+          console.log(data, '返回广告失败延时弹窗')
           if (code === 205) {
-            this.hasAdList = true;
+            this.hasAdList = true
             this.adList = data.adList[0]
           } else {
             if (this.debug) {
               prompt.showToast({
-                message: `ad load fail!data= ${JSON.stringify(data)},code= ${code}`
+                message: `ad load fail!data= ${JSON.stringify(
+                  data
+                )},code= ${code}`,
               })
             }
           }
-        }
+        },
       })
     } catch (e) {
-      console.log(e, e.message);
+      console.log(e, e.message)
     }
   },
-  error(errCode, errMsg) {
-    this.$emit('emitClose', {
-      data: 'showReminder'
-    })
-    console.log('没有报错回调吗');
-    if (this.debug) {
-      prompt.showToast({
-        message: `ad load error: errCode = ${errCode}, errMsg = ${errMsg}`
-      });
+  adError(errCode, errMsg) {
+    this.sensorsTrack({      errData: {
+        errCode: errCode.errCode,
+        errMsg: errCode.errMsg,
+      }    }, 'error')
+  },
+  // 埋点上报
+  sensorsTrack(e = {}, type = 'show') {
+    try {
+      const { formId = '', subTitle = '', errData = '' } = e
+      let apid = formId || this.adId
+      $adFun.newBurialSite(this, {
+        eventName: type, // 事件名
+        formId: apid, // 广告id
+        subTitle: subTitle || `停留自弹窗`, //页面名
+        errData: errData,
+        ...this.$app.$def.dataApp.actiParam,
+      })
+    } catch (error) {
+      console.log(error, '埋点报错')
     }
   },
-
-  adShow(evt) {
-    console.log('小说广告show: ', evt)
-
-    this.conversionUp('0')
-  },
-  adClick() {
-    console.log('没有点击回调吗');
-
-
-    this.conversionUp('1')
-
-    this.$emit('emitHideTransparency')
-    //后台单个埋点 - 事件：广告点击
-
-    $utils.buriedPointReport(this, 'click', this.adId)
-  },
-  conversionUp(clickCount) {
-    let ecpmParam = {  //竞价相关参数
-      ecpm: this.adList.ecpm,
+  adSuccShow(e) {
+    $utils.conversionUpload(this, {
       adType: 'NATIVE',
       adPositionId: this.adId,
-      clickCount: clickCount
-    }
-    console.log('竞价相关参数', ecpmParam);
-    $utils.conversionUpload(this, ecpmParam)
+      isclick: false,
+      ecpm: this.adList.ecpm,
+    })
+    this.sensorsTrack(e, 'show')
   },
-  close() {
-    console.log('没有关闭回调吗');
-    this.hasAdList = false;
+  adClick(e) {
+    console.log('怎么触发b')
+    $utils.conversionUpload(this, {
+      adType: 'NATIVE',
+      adPositionId: this.adId,
+      isclick: true,
+      ecpm: this.adList.ecpm,
+    })
+    $utils.buriedPointReport(this, { event: 'click', adId: this.adId })
+    this.sensorsTrack(e, 'click')
+    this.$emit('emitHideTransparency')
+    this.hasAdList = false
+    this.preloadAd()
+  },
+  close(type = '') {
+    if (type) {
+      let str = `x${type}`
+      this.sensorsTrack({ subTitle: `停留自弹窗-${str}` }, 'click')
+    }
+    console.log('没有关闭回调吗')
+    this.hasAdList = false
     this.$emit('emitClose', {
       data: 'showReminder',
-      closeType: "close"
+      closeType: 'close',
     })
-  }
+  },
 }
 </script>
 
@@ -235,6 +270,14 @@ export default {
   left: 0;
   align-items: center;
   justify-content: center;
+
+  .fiex-centnet {
+    position: fixed;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+  }
+
   .ad-native {
     width: 100%;
     height: 800px;
@@ -242,7 +285,6 @@ export default {
     background-color: #ffffff;
     width: 690px;
     border-radius: 35px;
-
     .container {
       width: 100%;
       height: 750px;
@@ -272,8 +314,8 @@ export default {
           position: absolute;
           justify-content: center;
           align-items: center;
-          top: 30px;
-          right: 40px;
+          top: 20px;
+          right: 20px;
           border-radius: 50%;
         }
       }
@@ -335,6 +377,11 @@ export default {
             animation-duration: 1200ms;
             animation-timing-function: ease-out;
             animation-iteration-count: infinite;
+            justify-content: center;
+            align-items: center;
+            text {
+              color: #ffffff;
+            }
           }
           @keyframes scaleDraw {
             0% {

@@ -6,9 +6,10 @@
           adId="{{$item.adId}}"
           class="ad-native"
           show="{{adList.length > 0}}"
-          @error="errorAd"
-          @adclick="reportNativeClick"
-          @adclose="closeAd"
+          onerror="errorAd"
+          onadclick="reportNativeClick"
+          onadclose="closeAd"
+          onadshow="adSuccShow"
         >
           <div class="ad-content">
             <block if="{{$item.creativeType===4}}">
@@ -35,7 +36,7 @@
 
 <script>
 const { adCodeData } = require('../../config.js').default
-let nativeAd;
+let nativeAd
 module.exports = {
   props: {
     showTclayer: {
@@ -46,126 +47,173 @@ module.exports = {
     shwoType: {
       type: Boolean,
       default: false,
-    }
+    },
   },
   data: {
-    componentName: "ad",
-    provider: "",
+    componentName: 'ad',
+    provider: '',
 
     hasAdList: false,
     adList: [],
     defaultAd: {
-      desc: '提供最优质的商业化解决方案。流量联盟广告联盟。',
-      title: '流量联盟',
+      desc: '广告流量联盟，为用户提供最优质的商业化解决方案。',
+      title: '广告流量联盟',
       icon: '广告',
-      clickBtnTxt: '立即打开'
+      clickBtnTxt: '立即打开',
     },
     native: {
-      adUnitId: "",
+      adUnitId: '',
       isShow: false,
       adData: {},
       isShowImg: true,
       isShowVideo: true,
       isShowData: true,
-      errStr: "",
-      btnTxt: "",
-      adImgSrc: "",
-      adVideoSrc: ""
-    }
-
+      errStr: '',
+      btnTxt: '',
+      adImgSrc: '',
+      adVideoSrc: '',
+    },
   },
   onInit() {
     this.native.adUnitId = adCodeData.vivo.lotteryPageNativeAd
   },
   onReady(options) {
-    console.info("native ad onReady");
-    this.showNativeAd2();
+    console.info('native ad onReady')
+    this.showNativeAd2()
   },
   onShow(options) {
     if (this.native.isShow) {
-      this.reportNativeShow();
+      this.reportNativeShow()
     }
   },
   getAdProvider: function () {
-    this.provider = $ad.getProvider();
-
+    this.provider = $ad.getProvider().toLowerCase()
+  },
+  adSuccShow() {
+    $utils.conversionUpload(this, {
+      adType: 'NATIVE',
+      adPositionId: this.native.adUnitId,
+      isclick: false,
+      ecpm: this.adList.ecpm,
+    })
+    this.sensorsTrack({}, 'show')
   },
   showNativeAd2() {
     let adParams = {
-      adUnitId: this.native.adUnitId, // 原生自渲染2.0广告广告位id
-      type: 'native',          // 原生自渲染2.0广告类型 
-      adCount: 1
+      adUnitId: this.native.adUnitId + 99999, // 原生自渲染2.0广告广告位id
+      type: 'native', // 原生自渲染2.0广告类型
+      adCount: 1,
     }
-    const that = this;
-    console.log(adParams, 'adParams查看编码');
+    const that = this
+    console.log(adParams, 'adParams查看编码')
     $ad.preloadAd({
       ...adParams,
       success: (data) => {
-        console.log(data, '查看返回的广告');
+        console.log(data, '查看返回的广告')
         try {
-          this.adList = data.adList  // 一次成功返回有 1-3 个数据，参照对应的 adCount 数（小概率情况下小于 adCount 数）
-          this.native.isShow = true;
+          this.adList = data.adList // 一次成功返回有 1-3 个数据，参照对应的 adCount 数（小概率情况下小于 adCount 数）
+          this.native.isShow = true
         } catch (e) {
-          console.log(e);
+          console.log(e)
         }
       },
       fail: (data, code) => {
-        console.log(data, code, '返回广告失败');
+        this.sensorsTrack(
+          {
+            errData: data,
+          },
+          'error'
+        )
+        console.log(data, code, '返回广告失败')
         try {
           if (code === 205) {
             this.adList = data.adList // 错误码205时，表示缓存已满导致加载失败，此时从缓存返回最多3个广告数据
-            this.native.isShow = true;
+            this.native.isShow = true
           }
-
         } catch (e) {
-          console.log(e);
+          console.log(e)
         }
-      }
+      },
     })
   },
-  errorAd: function () {
+  errorAd: function (errCode, errMsg) {
     this.$emit('emitClone', {
-      data: 'error'
+      data: 'error',
     })
+    this.sensorsTrack(
+      {
+        errData: {
+          errCode: errCode.errCode,
+          errMsg: errCode.errMsg,
+        },
+      },
+      'error'
+    )
+  },
+  // 埋点上报
+  sensorsTrack(e = {}, type = 'show') {
+    try {
+      const { formId = '', errData = {}, subTitle = '' } = e
+      let apid = formId || this.native.adUnitId
+      $adFun.newBurialSite(this, {
+        eventName: type, // 事件名
+        formId: apid, // 广告id
+        subTitle: subTitle || '轮盘抽奖原生广告',
+        errData: errData,
+        ...this.$app.$def.dataApp.actiParam,
+      })
+    } catch (error) {
+      console.log(error, '埋点报错')
+    }
   },
   reportNativeClick(e) {
-    console.info(" 原生广告被点击了", e);
+    console.info(' 原生广告被点击了', e)
     //广告或透明层被点击后隐藏透明层
-    this.showTclayer = false;
+    this.showTclayer = false
     this.$emit('emitClone', {
-      data: 'clone'
+      data: 'clone',
     })
+    $utils.conversionUpload(this, {
+      adType: 'NATIVE',
+      adPositionId: this.native.adUnitId,
+      isclick: true,
+      ecpm: this.adList.ecpm,
+    })
+    $utils.buriedPointReport(this, {
+      event: 'click',
+      adId: this.native.adUnitId,
+    })
+    this.sensorsTrack({}, 'click')
   },
   listenNativeAdDownloadStatus(downloadstatus) {
-    if (downloadstatus === "INSTALLED") {
-      this.native.btnTxt = "OPEN";
+    if (downloadstatus === 'INSTALLED') {
+      this.native.btnTxt = 'OPEN'
     }
   },
   removeAdListen: function () {
     if (nativeAd) {
-      nativeAd.offDownloadProgress();
+      nativeAd.offDownloadProgress()
       nativeAd.offError(() => {
-        console.log("nativeAd offError");
-      });
+        console.log('nativeAd offError')
+      })
       nativeAd.offLoad(() => {
-        console.log("nativeAd offLoad");
-      });
-      nativeAd.offStatusChanged();
+        console.log('nativeAd offLoad')
+      })
+      nativeAd.offStatusChanged()
     }
   },
   onDestroy() {
     if (nativeAd) {
-      nativeAd.destroy();
+      nativeAd.destroy()
     }
   },
   closeAd: function (e) {
-    console.log(e, '查看这个关闭的效果');
-    this.native.isShow = false;
+    console.log(e, '查看这个关闭的效果')
+    this.native.isShow = false
     this.$emit('emitClone', {
-      data: 'clone'
+      data: 'clone',
     })
   },
-
 }
 </script>
 <style lang="less">

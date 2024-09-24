@@ -51,7 +51,7 @@ export default {
     .conent {
       width: 698px;
       height: 694px;
-      background-image: url(http://cdn.bank-zone.cn/pro/sy/admin/advertising/570de537e825484e9050832e6bfcbee2.png);
+      background-image: url(https://cdn.ihaituo.cn/pro/sy/admin/advertising/570de537e825484e9050832e6bfcbee2.png);
       background-size: 698px 694px;
     }
     .subimt-btn {

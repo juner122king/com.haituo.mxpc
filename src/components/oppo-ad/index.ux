@@ -11,10 +11,13 @@
         onadclick="adClick"
         onadclose="close"
         type="native"
+        onadshow="adSuccShow"
       >
         <div class="container">
           <!--大图左右展示头部展示 -->
-          <block if="{{adList.creativeType !== 8 && type === 'top-img'}}">
+          <block
+            if="{{(adList.creativeType !== 8 && adList.creativeType !== 13)   ||  (adBrand !== 'xiaomi'&& adList.creativeType !== 4)}}"
+          >
             <div class="vertical-content big-img">
               <ad-clickable-area
                 type="click"
@@ -32,6 +35,34 @@
                   <icon type="close" size="60"></icon>
                 </div>
               </div>
+            </div>
+          </block>
+
+          <block
+            if="{{adList.creativeType===13 || (adBrand === 'xiaomi'&& adList.creativeType == 4) }}"
+          >
+            <!-- 视频 -->
+            <div class="vertical-content big-img">
+              <div class="ad-text">
+                <ad-clickable-area class="content" type="click">
+                  <text>{{ adList.desc || defaultAd.desc }}</text>
+                </ad-clickable-area>
+                <div class="close-box" @click="close">
+                  <icon type="close" size="60"></icon>
+                </div>
+              </div>
+              <ad-clickable-area
+                type="click"
+                class="ad-video"
+                if="{{adBrand === 'xiaomi'}}"
+              >
+                <video autoplay="true" src="{{adList.imgUrlList[0]}}"></video>
+              </ad-clickable-area>
+
+              <ad-clickable-area
+                type="video"
+                class="ad-video"
+              ></ad-clickable-area>
             </div>
           </block>
 
@@ -122,108 +153,158 @@ export default {
       adList: {},
       hasAdList: false,
       defaultAd: {
-        desc: '提供最优质的商业化解决方案。流量联盟广告联盟。',
-        title: '流量联盟',
+        desc: '广告流量联盟，为用户提供最优质的商业化解决方案。',
+        title: '广告流量联盟',
         icon: '广告',
-        clickBtnTxt: '点击安装'
+        clickBtnTxt: '点击安装',
       },
       btnTxt: '',
-      adBrand: ''
+      adBrand: '',
     }
   },
   props: {
     adUnitId: {
-      default: ''
+      default: '',
     },
     debug: {
-      default: false
+      default: false,
     },
     type: {
-      default: 'top-img',//left-text-right-pic
-    }
+      default: 'top-img', //left-text-right-pic
+    },
   },
   onInit() {
+    this.adBrand = $ad.getProvider().toLowerCase()
     this.preloadAd()
-    this.adBrand = $ad.getProvider()
   },
+  onReady() {},
   preloadAd() {
+    const that = this
     try {
-
-
+      let ad = $ad.getProvider().toLowerCase()
+      if (!ad) {
+        return
+      }
       require('@service.ad').preloadAd({
         adUnitId: this.adUnitId, // 原生信息流广告广告位id
         type: 'native', // 原生信息流广告
         adCount: 1,
         ecpm: true,
         success: (data) => {
-          console.log(data, '返回原生广告成功');
-          this.adList = data.adList[0];
-          this.hasAdList = true;
+          console.log(data, '返回原生广告成功')
+          this.adList = data.adList[0]
+
+          this.hasAdList = true
           if (this.debug) {
             prompt.showToast({
-              message: `ad load success`
+              message: `ad load success`,
             })
           }
         },
         fail: (data, code) => {
           this.$emit('emitClone', {
-            data: 'error'
+            data: 'error',
           })
-          console.log(data, code, '返回原生广告失败');
+          this.sensorsTrack(
+            {
+              errData: data,
+            },
+            'error'
+          )
+          console.log(data, code, '返回原生广告失败')
           if (code === 205) {
-            this.hasAdList = true;
+            this.hasAdList = true
             this.adList = data.adList[0]
           } else {
             if (this.debug) {
               prompt.showToast({
-                message: `ad load fail!data= ${JSON.stringify(data)},code= ${code}`
+                message: `ad load fail!data= ${JSON.stringify(
+                  data
+                )},code= ${code}`,
               })
             }
           }
-        }
+        },
       })
     } catch (e) {
-      console.log(e, e.message);
+      console.log(e, e.message)
       this.$emit('emitClone', {
-        data: 'error'
+        data: 'error',
       })
+    }
+  },
+  adSuccShow() {
+    if (this.adBrand === 'oppo') {
+      let ecpm = this.adList.ecpm
+      this.ecpm = ecpm
+      $utils.conversionUpload(this, {
+        adType: 'NATIVE',
+        adPositionId: this.adUnitId,
+        isclick: false,
+        ecpm: ecpm,
+      })
+    }
+    this.sensorsTrack({}, 'show')
+  },
+  // 埋点上报
+  sensorsTrack(e = {}, type = 'show') {
+    try {
+      const { formId = '', subTitle = '', errData = {} } = e
+      let apid = formId || this.adUnitId
+      $adFun.newBurialSite(this, {
+        eventName: type, // 事件名
+        formId: apid, // 广告id
+        subTitle: '开红包原生广告',
+        errData: errData,
+        ...this.$app.$def.dataApp.actiParam,
+      })
+    } catch (error) {
+      console.log(error, '埋点报错')
     }
   },
   error(errCode, errMsg) {
-
-    console.log('没有报错回调吗', errCode, errMsg);
-
+    console.log('没有报错回调吗', errCode, errMsg)
+    this.sensorsTrack(
+      {
+        errData: {
+          errCode: errCode.errCode,
+          errMsg: errCode.errMsg,
+        },
+      },
+      'error'
+    )
     if (this.debug) {
       prompt.showToast({
-        message: `ad load error: errCode = ${errCode}, errMsg = ${errMsg}`
-      });
+        message: `ad load error: errCode = ${errCode}, errMsg = ${errMsg}`,
+      })
     }
     this.$emit('emitClone', {
-      data: 'error'
+      data: 'error',
     })
   },
   adClick() {
-    console.log('没有点击回调吗');
+    console.log('没有点击回调吗')
     // this.$emit('adclick');
     this.$emit('emitClone', {
-      data: 'clone'
+      data: 'clone',
     })
-    $utils.buriedPointReport(this, 'click', this.adUnitId)
-    
-    let ecpmParam = {  //竞价相关参数
-      ecpm: this.adList.ecpm,
+    $utils.buriedPointReport(this, {
+      event: 'click',
+      adId: this.adUnitId,
+    })
+    $utils.conversionUpload(this, {
       adType: 'NATIVE',
       adPositionId: this.adUnitId,
-      clickCount: '1'
-    }
-    console.log('竞价相关参数', ecpmParam);
-    $utils.conversionUpload(this, ecpmParam)
+      isclick: true,
+      ecpm: this.ecpm,
+    })
+    this.sensorsTrack({}, 'click')
   },
   close() {
-    console.log('没有关闭回调吗');
-    this.hasAdList = false;
-    this.$emit('close');
-  }
+    console.log('没有关闭回调吗')
+    this.hasAdList = false
+    this.$emit('close')
+  },
 }
 </script>
 
@@ -374,6 +455,7 @@ export default {
         width: 100%;
         margin-top: 10px * @ratio;
         align-items: center;
+        min-height: 100px;
         .tag {
           background-color: rgba(0, 0, 0, 0.06);
           color: #999999;

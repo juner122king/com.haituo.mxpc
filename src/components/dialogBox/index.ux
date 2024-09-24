@@ -34,7 +34,8 @@ export default {
     iconData: {
       success: '../../Common/images/success.png',
       hint: '../../Common/images/hint.png',
-      warn: "../../Common/images/warn.png"
+      warn: "../../Common/images/warn.png",
+      photos: "../../Common/images/photos.png"
     }
   },
   props: {

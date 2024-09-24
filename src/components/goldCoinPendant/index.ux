@@ -1,0 +1,68 @@
+<template>
+  <div class="goldCoinPendant">
+    <div class="contain" show="{{isShow}}" if="{{redPacketImg}}">
+      <image @click="clickRedPacket" src="{{redPacketImg}}" class="img"></image>
+      <div class="close-btn" @click="closeRedPacket">
+        <my-icon type="close-circle" size="30"></my-icon>
+      </div>
+    </div>
+  </div>
+</template>
+
+<import name="my-icon" src="../icon/index.ux"></import>
+<script>
+export default {
+  data: {
+    isShow: false,
+    redPacketImg: '',
+    redPacketUrl: '',
+  },
+  props: {},
+  onInit() {
+    this.getActivityConfig()
+  },
+  closeRedPacket() {
+    this.isShow = false
+  },
+  clickRedPacket() {
+    $router.push({
+      uri: this.redPacketUrl ? this.redPacketUrl : 'pages/benefit',
+    })
+  },
+  getActivityConfig() {
+    // 获取广告提供商
+    const branch = $ad.getProvider().toLowerCase()
+    $apis.activity
+      .getAdConversionImg({
+        path: 'threaten',
+        type: branch,
+      })
+      .then((res) => {
+        console.log(res, '首页icon')
+        const {
+          redPacketStatus = false,
+          redPacketImg = '',
+          redPacketUrl = '',
+        } = res.data
+        this.isShow = redPacketStatus
+        this.redPacketImg = redPacketImg
+        this.redPacketUrl = redPacketUrl
+      })
+  },
+}
+</script>
+
+<style>
+.goldCoinPendant {
+  position: absolute;
+  bottom: 250px;
+  right: 40px;
+  padding-right: 10px;
+}
+
+.close-btn {
+  position: absolute;
+  top: 0;
+  right: 0;
+}
+</style>

@@ -53,7 +53,7 @@ const postConvertUpload = (data) => {
 }
 
 // 转换上报-UC
-const postConvertUploadUC = (data) => {
+const postConvertUploadUc = (data) => {
   return request({
     method: 'POST',
     url: `/qa/mini/basic/ad/quickApp/open/convert/upload/uc`,
@@ -148,7 +148,7 @@ let task = {
   getConversionlicks,
   postTrackCapture,
   getClickReviewControl,
-  postConvertUploadUC
+  postConvertUploadUc
 }
 
 export default task

@@ -76,10 +76,10 @@ export default {
         //  path: "pages/advertisingCampaigns",
         //  path: "activity/mysteryPopups",
         //  path: "pages/luckyBagOpen",
-        // path: 'activity/randomGiftPack',
+        //  path: 'activity/randomGiftPack',
         //  path: 'activity/threaten',
-        // path: "activity/randomGiftPack?id=1824287143754829826&type=uc&channelValue=test33&sid=sid123&aid=aid321&uctrackid=uctrackid666",
-
+        //  path: "activity/randomGiftPack?id=1824287143754829826&type=uc&channelValue=test342&sid=sid123&aid=aid321&uctrackid=uctrackid666",
+        // path: 'activity/randomGiftPack?backurl=vivobrowser%3a%2f%2fbrowser.vivo.com%3fad_token%3d1816281355597746178&btn_name=%E8%BF%94%E5%9B%9E%E6%B5%8F%E8%A7%88%E5%99%A8&channelValue=TEXT1&type=oppo',
         iShow: true
       },
       {
@@ -117,7 +117,7 @@ export default {
     evenTypeData[e.type] && evenTypeData[e.type](e)
   },
   onInit() {
-    const branch = $ad.getProvider()
+    const branch = $ad.getProvider().toLowerCase()
     if (branch === 'vivo') {
       this.settingList[7].iShow = false;
       this.settingList[8].iShow = false;
@@ -128,6 +128,7 @@ export default {
     const shortcut = require("@system.shortcut")
     shortcut.hasInstalled({
       success: function (ret) {
+        console.log('hasInstalled success ret---' + ret);
         if (ret) {
           $prompt.showToast({
             message: '桌面图标已创建',

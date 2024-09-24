@@ -1,0 +1,2322 @@
+
+<import name="my-navbar" src="apex-ui/components/navbar/index"></import>
+<import name="back-to-ads" src="../advertisingCampaigns/components/back-to-ads.ux"></import>
+<import name="task-interstitial" src="../../components/takuInterstitial/index.ux"></import>
+<import name="bottom-native" src="../advertisingCampaigns/components/bottom-native.ux"></import>
+<import name="reminder-ads" src="../advertisingCampaigns/components/reminder-ads.ux"></import>
+
+
+
+<script>
+const { adCodeData } = require('../../config.js').default
+let $animation = null
+import router from '@system.router'
+import ad from '@service.ad'
+import prompt from '@system.prompt'
+import configuration from '@system.configuration'
+let previousMargin
+let nextMargin
+let leftValue
+let topValue
+let rightValue
+let bottomValue
+export default {
+  data() {
+    return {
+      showVackTisp: false,
+      showReminder: false,
+      displayAdType: 0,
+      componentName: '',
+      autoPlay: false,
+      indicator: true,
+      loopPlay: false,
+      ecpm: 0,
+      sliderValue: 1000,
+      durationValue: 1000,
+      isVertical: false,
+      controlViewMarginTop: '360px',
+      previousMargin: undefined,
+      nextMargin: undefined,
+      leftValue: undefined,
+      topValue: undefined,
+      rightValue: undefined,
+      bottomValue: undefined,
+      pages: [],
+      images: [],
+      pageNumber: 3,
+      previousMarginEnable: true,
+      nextMarginEnable: true,
+      indicatorLeftEnable: true,
+      indicatorTopEnable: true,
+      indicatorRightEnable: true,
+      indicatorBottomEnable: true,
+      index: 0,
+      curIndex: 0,
+      isall: false,
+      isshow: true,
+      readermode: '0:text',
+      width: 'width: 0%',
+      delayShow: false,
+      bgColor: 'red',
+
+      //for ad
+      pageName: '常规广告模板',
+      adList: {},
+      adId: '',
+      errMsg: '',
+      hasAdList: true,
+      adStyle: {},
+      tempStyle: {},
+      defaultAd: {
+        desc: '广告流量联盟，为用户提供最优质的商业化解决方案。',
+        title: '广告流量联盟',
+        icon: '广告',
+        clickBtnTxt: '点击安装',
+        img: "https://cdn.ihaituo.cn/pro/sy/admin/advertising/3639bdbde8e84397a297ad54f89ac4c3.jpg"
+      },
+      btnTxt: '',
+      newBtnTxt: '',
+      lastAdId: '',
+      //reader
+      charpterdatas: [
+        {
+          text: '北京，这座古老而又现代交融的城市，不仅是中国的首都，更是无数游客梦寐以求的旅游胜地。\",\"这里有着悠久的历史文化、壮丽的皇家建筑、丰富的美食小吃以及日新月异的现代都市风貌。\",\"以下是一份精心策划的北京旅游攻略，希望能为您的旅行增添一份精彩。\",\"',
+          index: 0
+        },
+        {
+          text: '一、必游景点\",\"1. 故宫（紫禁城）\",\"作为明清两代的皇家宫殿，故宫是世界上现存规模最大、保存最为完整的木质结构古建筑群。\",\"漫步在红墙黄瓦之间，仿佛穿越时空，感受帝王家的辉煌与沧桑。\",\"2. 天安门广场\",\"世界上最大的城市中心广场，不仅是中国的象征，也是游客到北京的必打卡之地。\",\"清晨观看升旗仪式，感受那份庄严与自豪。\",\"3. 长城（推荐八达岭或慕田峪段）\",\"“不到长城非好汉”，长城蜿蜒起伏，气势磅礴，是中华民族的骄傲。\",\"选择一段较为完整且游客体验较好的段落攀登，体验“一夫当关，万夫莫开”的豪情。\",\"4. 颐和园\",\"中国保存最完整的一座皇家园林，以昆明湖、万寿山为基址，汲取江南园林设计手法而建成，被誉为“皇家园林博物馆”。\",\"5. 北海公园\",\"位于故宫西北侧，是中国古代皇家园林之一。\",\"园内白塔高耸，湖面碧波荡漾，是体验皇家园林精致与宁静的好去处。\",\"',
+          index: 1
+        },
+        {
+          text: '二、美食探索\",\"北京烤鸭：不可错过的美食之首，以全聚德、便宜坊等老字号最为著名，皮脆肉嫩，味道鲜美。\",\"老北京炸酱面：一碗地道的炸酱面，面条筋道，酱香浓郁，是老北京人的日常美食。\",\"豆汁儿配焦圈：虽然味道独特，但对初次尝试的游客来说可能是个挑战，却也是体验老北京风味的必选项。\",\"王府井小吃街：汇集了各种北京及全国各地的小吃，是品尝地道美食的好去处。\",\"',
+          index: 2
+        },
+        {
+          text: '三、购物与休闲\",\" 三里屯太古里：时尚与潮流的聚集地，国际品牌与本土设计师品牌林立，是购物与休闲的好去处。\",\" 南锣鼓巷：保留了老北京胡同的风貌，同时融入了许多创意小店、咖啡馆和特色酒吧，是感受文艺气息的好地方。\",\"798艺术区：前身为废弃的工业厂房，如今变身成为现代艺术的聚集地，是摄影、看展、购物的绝佳场所。\",\"住宿推荐：根据个人预算和需求，可选择住在市中心如东单、王府井附近，便于游览；或选择靠近景点的特色民宿，体验不一样的住宿体验。\",\"',
+          index: 3
+        },
+        {
+          text: '四、小贴士\",\" 最佳旅行时间：春秋两季，气候宜人，适合户外活动。\",\" 交通方式：北京地铁网络发达，是游览城市的主要交通工具。\",\"同时，共享单车和出租车也很方便。\",\"北京，这座充满魅力的城市，等待着每一位旅者的探索与发现。\",\"希望这份攻略能让您的北京之旅更加难忘。\",\"',
+          index: 4
+        },
+      ],
+      realchaptercontent: '',
+      adinstance: '',
+      isFirstPage: true,
+      readerLeft: 0,
+      readerTop: 0,
+      readerRight: 0,
+      readerBottom: 0,
+      readerWidth: 0,
+      readerHeight: 0,
+      readerpaddingtop: 90,
+      showSetting: false,
+      fontsize: 48,
+      fontColor: '#000000',
+      backgroundcolor: '#F8F8FA',
+      nightmodeStr: '夜间',
+      settingmode: true,
+      showContent: false,
+      listData: ['第一章', '第二章', '第三章', '第四章', '第五章', '第六章', '第七章', '第八章', '第九章', '第十章', '第十一章', '第十二章', '第十三章', '第十四章', '第十五章'],
+      chapterTitle: '第一章',
+      movemode: 'horizontal',
+      clicktag: '',
+      linetype: 'low',
+      fontsizeclick: false,
+      showTransparency: false,
+      timer: null,
+      isfristReqCoun: true,
+      adUnitId: 'a6d7b1e5c1244277acc78dd86793a880',
+      customBtn: '',
+      branch: '',
+      isShowTableScreen: false
+
+    }
+  },
+  onHide() {
+
+    //App业务
+  },
+
+  /**
+   * 广告正常曝光
+   */
+  adSuccShow(e) {
+    this.sensorsTrack(e, 'show')
+    $utils.conversionUpload(this, {
+      adType: 'NATIVE',
+      adPositionId: this.adUnitId,
+      isclick: false,
+      ecpm: this.adList.ecpm,
+    })
+  },
+  routeDetail() {
+  },
+  onBackPress() {
+    this.openVackTisp()
+    console.log('触发了怎么无效了');
+    return true
+  },
+  onCallAnimationClick(isshow) {
+    this.showSetting = !this.showSetting
+    this.settingmode = true
+    const keyframes = [
+      {
+        transform: {
+          // translateX: 0,
+          // translateY: 0
+          translateY: '200px'
+        },
+        time: 0
+      },
+      {
+        transform: {
+          // translateX: '100px',
+          translateY: '0px'
+        },
+        time: 100
+      }
+    ]
+    const options = {
+      duration: 300,
+      easing: 'linear',
+      delay: 0,
+      fill: 'none',
+      iterations: 1
+    }
+    const cAnimationNode = this.$element('animation')
+    $animation = cAnimationNode.animate(keyframes, options)
+    // 将会延迟至 (delay + startTime) ms 后执行动画；
+    $animation.startTime = 0
+
+    $animation.play()
+    this.mTextState = $animation.playState
+
+    $animation.oncancel = () => {
+      this.mTextState = $animation.playState
+    }
+    $animation.onfinish = () => {
+      this.mTextState = $animation.playState
+    }
+  },
+  addClickNum() {
+    this.$app.$def.dataApp.transparentLayerHits = this.$app.$def.dataApp.transparentLayerHits + 1
+    this.getTransparentLayerL()
+  },
+  getTransparentLayerL: function () {
+    console.log('是否进来了透明层判断');
+    try {
+      const branch = $ad.getProvider().toLowerCase();
+      let payam = {
+        brand: branch.toUpperCase()
+      }
+      if (!this.isfristReqCoun) { //如果不是初次进来的说明可以添加选项
+        payam.count = this.$app.$def.dataApp.transparentLayerHits
+      }
+      $apis.task
+        .getTransparentLayer({ ...payam })
+        .then((res) => {
+          console.log(res, '查看返回的透明层参数');
+          // 是否初次请求
+          if (this.isfristReqCoun) {
+            this.isfristReqCoun = false;
+            if (res.data) {
+              this.getTransparentLayerL()
+            }
+            return
+          }
+          this.showTransparency = res.data;
+        })
+        .catch((err) => {
+          console.log(err, '查看返回报错')
+        })
+    } catch (e) {
+      console.log(e, '获取失效');
+    }
+  },
+  // 关闭
+  heideReminder(e) {
+    // this.showReminder = false;
+    console.log(e, '关闭了广告');
+    const { detail = '' } = e;
+    if (!detail) {
+    } else {
+      console.log('这是什么', detail.data);
+      if (detail.data === 'showVackTisp') {
+        this.showVackTisp = false;
+        if (detail.closeType === 'close') {
+          this.addClickNum()
+        }
+      } else if (detail.data === 'showReminder') {
+        this.showReminder = false
+        if (detail.closeType === 'close') {
+          this.addClickNum()
+        }
+      }
+    }
+  },
+  onshowmoreAnimationClick() {
+    this.settingmode = !this.settingmode
+    var moveStartY = '300px'
+    var moveEndY = '0px'
+    console.log('  this.settingmode : ' + this.settingmode)
+    //false是展示  true是隐藏
+    if (!this.settingmode) {
+      moveStartY = '300px'
+      moveEndY = '0px'
+    } else {
+      moveStartY = '0px'
+      moveEndY = '300px'
+    }
+
+
+    const keyframes = [
+      {
+        transform: {
+          // translateX: 0,
+          // translateY: 0
+          translateY: moveStartY
+        },
+        time: 0
+      },
+      {
+        transform: {
+          // translateX: '100px',
+          translateY: moveEndY
+        },
+        time: 100
+      }
+    ]
+    const options = {
+      duration: 300,
+      easing: 'linear',
+      delay: 0,
+      fill: 'none',
+      iterations: 1
+    }
+    const cAnimationNode = this.$element('moresettingpanel')
+    $animation = cAnimationNode.animate(keyframes, options)
+    // 将会延迟至 (delay + startTime) ms 后执行动画；
+    $animation.startTime = 0
+
+    $animation.play()
+    this.mTextState = $animation.playState
+
+    $animation.oncancel = () => {
+      this.mTextState = $animation.playState
+    }
+    $animation.onfinish = () => {
+      this.mTextState = $animation.playState
+    }
+  },
+  onInit() {
+    this.clicktag = 'yellow'
+    const branch = $ad.getProvider().toLowerCase()
+    this.branch = branch
+    this.adObj = adCodeData[branch]
+    this.adUnitId = adCodeData[branch].fiction4;
+
+    // this.$page.setTitleBar({ text: 'Swiper' })
+    setTimeout(() => {
+      console.log('helloworld 10 time ')
+      // this.width = 'width: 100%'
+      // this.readerpaddingtop = 10
+      this.delayShow = true
+    }, 1000 * 3)
+    // prompt.showToast({
+    //   message: `adUnitId:${this.adUnitId}`
+    // })
+
+    this.getTransparentLayerL() //获取透明层
+
+    if (this.branch === 'vivo') {
+      this.adinstance = require("@service.ad").createFeedAd({
+        adUnitId: this.adUnitId
+      })
+    }
+
+
+    this.latencyShowReminder() //定时器展开广告
+    this.preloadAd()
+
+
+
+    this.backgroundcolor = '#F8F8FA';
+
+  },
+
+  onConfigurationChanged(datas) {
+    try {
+
+      if (this.branch === 'vivo') {
+        //此处用于完成折叠屏大屏样式非小说组件部分控件的适配
+        console.log('_foldableState datas : ' + JSON.stringify(datas))
+        const foldableState = configuration.getFoldableState();
+        console.log('_foldableState ', foldableState);
+        if (foldableState == 1) {
+          // console.log('_foldableState 1 ： ', foldableState);
+
+          this.readerpaddingtop = 10
+          this.bgColor = 'red'
+          // console.log('_foldableState ', foldableState
+          //   + ' this.readerpaddingtop : ' + this.readerpaddingtop);
+
+        } else {
+          // console.log('_foldableState 2 ： ', foldableState);
+
+          this.readerpaddingtop = 90
+          this.bgColor = 'red'
+          // console.log('_foldableState ', foldableState
+          //   + ' this.readerpaddingtop : ' + this.readerpaddingtop);
+        }
+      } else {
+
+        this.readerpaddingtop = 90
+        this.bgColor = 'red'
+      }
+
+    } catch (error) {
+      console.log(error, '怎么还是会出错');
+      this.readerpaddingtop = 90
+      this.bgColor = 'red'
+    }
+
+  },
+  onMinfontclick(evt) {
+    this.fontsizeclick = true
+    this.fontsize--
+    console.log(' onMinfontclick this.fontsize : ' + this.fontsize)
+  },
+  onMaxfontclick(evt) {
+    this.fontsizeclick = true
+    this.fontsize++
+    console.log(' onMaxfontclick this.fontsize : ' + this.fontsize)
+  },
+
+  // 上一章
+  onPreChapterclick(evt) {
+    this.fontsizeclick = true
+    console.log(' onPreChapterclick ', this.realchaptercontent.index)
+    this.realchaptercontent = this.realchaptercontent.index <= 0 ? this.charpterdatas[3] : this.charpterdatas[this.realchaptercontent.index - 1]
+
+    this.$element('readerdiv').setContent({
+      title: '旅游攻略',
+      content: this.realchaptercontent.text,
+      success(data) {
+        console.log('_setContent  success data ： ' + JSON.stringify(data))
+      },
+      fail(data, code) {
+        console.log('_setContent  failed：data : ' + JSON.stringify(data))
+      },
+      complete() {
+        console.log('_setContent  complete')
+      }
+    })
+  },
+  // 下一章
+  onNextChapterclick(evt) {
+    this.fontsizeclick = true
+    this.realchaptercontent = this.realchaptercontent.index >= 4 ? this.charpterdatas[0] : this.charpterdatas[this.realchaptercontent.index + 1]
+    this.$element('readerdiv').setContent({
+      title: '旅游攻略',
+      content: this.realchaptercontent.text,
+      success(data) {
+        console.log('_setContent  success data ： ' + JSON.stringify(data))
+      },
+      fail(data, code) {
+        console.log('_setContent  failed：data : ' + JSON.stringify(data))
+      },
+      complete() {
+        console.log('_setContent  complete')
+      }
+    })
+  },
+  onbgclick(evt) {
+    // this.fontsizeclick = true
+    // #f3cb9d   #eeeeee   #dfedd6   #f8ceda
+    this.backgroundcolor = evt
+    if (evt == '#f3cb9d') {
+      this.clicktag = 'yellow'
+    } else if (evt == '#eeeeee') {
+      this.clicktag = 'white'
+    } else if (evt == '#dfedd6') {
+      this.clicktag = 'green'
+    } else if (evt == '#f8ceda') {
+      this.clicktag = 'red'
+    }
+    console.log(' onbgclick evt :  ' + JSON.stringify(evt))
+  },
+  onChapterclick(evt) {
+    this.showContent = true
+    // this.showSetting = false
+    console.log(' onChapterclick  ')
+  },
+  onVerticalclick(evt) {
+    this.fontsizeclick = true
+    this.movemode = 'vertical'
+    console.log(' onVerticalclick  ')
+  },
+  onHorizonclick(evt) {
+    this.fontsizeclick = true
+    this.movemode = 'horizontal'
+    console.log(' onHorizonclick  ')
+  },
+  onlinespaceclick(evt) {
+    this.fontsizeclick = true
+    this.linetype = 'normal'
+    this.$element('readerdiv').setLineSpace({
+      type: 'normal',
+      success(data) {
+        console.log('onlinespaceclick  success data ： ' + JSON.stringify(data))
+      },
+      fail(data, code) {
+        console.log('onlinespaceclick  failed：data : ' + JSON.stringify(data))
+      },
+      complete() {
+        console.log('onlinespaceclick  complete')
+      }
+    })
+  },
+  onhighlinespaceclick(evt) {
+    this.fontsizeclick = true
+    this.linetype = 'high'
+    this.$element('readerdiv').setLineSpace({
+      type: 'high',
+      success(data) {
+        console.log('onhighlinespaceclick  success data ： ' + JSON.stringify(data))
+      },
+      fail(data, code) {
+        console.log('onhighlinespaceclick  failed：data : ' + JSON.stringify(data))
+      },
+      complete() {
+        console.log('onhighlinespaceclick  complete')
+      }
+    })
+  },
+  onlowlinespaceclick(evt) {
+    this.fontsizeclick = true
+    this.linetype = 'low'
+    this.$element('readerdiv').setLineSpace({
+      type: 'low',
+      success(data) {
+        console.log('onlowlinespaceclick  success data ： ' + JSON.stringify(data))
+      },
+      fail(data, code) {
+        console.log('onlowlinespaceclick  failed：data : ' + JSON.stringify(data))
+      },
+      complete() {
+        console.log('onlowlinespaceclick  complete')
+      }
+    })
+  },
+  onNightModeclick(evt) {
+    this.fontsizeclick = true
+    if (this.nightmodeStr == '日间') {
+      this.nightmodeStr = '夜间'
+      this.fontColor = '#000000'
+      this.backgroundcolor = 'rgba(243,203,157,1)'
+    } else {
+      this.nightmodeStr = '日间'
+      this.fontColor = '#FFFFFF'
+      this.backgroundcolor = 'rgba(29,29,31,1)'
+    }
+    // fontColor: '#000000',
+    // backgroundcolor: 'rgba(243,203,157,1)'
+    console.log(' onNightModeclick  ')
+  },
+  onSettingclick(evt) {
+
+    setTimeout(() => {
+      this.onshowmoreAnimationClick()
+
+    }, 10)
+    console.log(' onSettingclick  ')
+  },
+  routerChapter(name, id) {
+
+    // console.log(' routerChapter name :  ' + JSON.stringify(name)
+    //   + ' id : ' + JSON.stringify(id))
+    try {
+
+      this.showContent = false
+      this.chapterTitle = name
+      if (this.realchaptercontent == this.chapterContent) {
+        this.realchaptercontent = this.chapterContent1
+      } else {
+        this.realchaptercontent = this.chapterContent
+      }
+
+      this.$element('readerdiv').setContent({
+        title: this.chapterTitle,
+        content: this.realchaptercontent,
+        success(data) {
+          console.log('_setContent  success data ： ' + JSON.stringify(data))
+        },
+        fail(data, code) {
+          console.log('_setContent  failed：data : ' + JSON.stringify(data))
+        },
+        complete() {
+          console.log('_setContent  complete')
+        }
+      })
+    } catch (error) {
+      console.log(error, '是这里爆的错');
+    }
+  },
+  onContentDisclick(evt) {
+    console.log(' onContentDisclick  ')
+    this.showContent = false
+  },
+  onReady() {
+    this.initcontent()
+  },
+  initcontent() {
+    this.realchaptercontent = this.charpterdatas[0]
+    // console.log(' initcontent   : '
+    //   + " realchaptercontent : " + this.realchaptercontent)
+    this.$element('readerdiv').setContent({
+      title: '旅游攻略',
+      content: this.realchaptercontent.text,
+      success(data) {
+        console.log('_setContent  success data ： ' + JSON.stringify(data))
+      },
+      fail(data, code) {
+        console.log('_setContent  failed：data : ' + JSON.stringify(data))
+      },
+      complete() {
+        console.log('_setContent  complete')
+      }
+    })
+
+    this.$element('readerdiv').preLoadContent({
+      forward: true,
+      title: '旅游攻略',
+      content: this.charpterdatas[1].text,
+      success(data) {
+        console.log('_preLoadContent  success data ： ' + JSON.stringify(data))
+      },
+      fail(data, code) {
+        console.log('_preLoadContent  failed：data : ' + JSON.stringify(data))
+      },
+      complete() {
+        console.log('_preLoadContent  complete')
+      }
+    })
+
+    this.$element('readerdiv').setPageColor({
+      success(data) {
+        console.log('_setPageColor  success data ： ' + JSON.stringify(data))
+      },
+      fail(data, code) {
+        console.log('_setPageColor  failed：data : ' + JSON.stringify(data))
+      },
+      complete() {
+        console.log('_setPageColor  complete')
+      }
+    })
+
+    this.$element('readerdiv').getPageContent({
+      pageIndex: 0,
+      startline: 1,
+      endline: 3,
+      success(data) {
+        console.log('_getPageContent  success data ： ' + JSON.stringify(data))
+      },
+      fail(data, code) {
+        console.log('_getPageContent  failed：data : ' + JSON.stringify(data))
+      },
+      complete() {
+        console.log('_getPageContent  complete')
+      }
+    })
+
+  },
+
+  /**
+   * 左滑设置下一章数据
+   */
+  chapterend(datas) {
+    console.log('左滑', this.realchaptercontent.index);
+    const that = this;
+    this.realchaptercontent = this.realchaptercontent.index >= 4 ? this.charpterdatas[0] : this.charpterdatas[this.realchaptercontent.index + 1]
+    let txt = this.realchaptercontent.text
+    this.$element('readerdiv').setContent({
+      title: '旅游攻略',
+      content: txt,
+      success(data) {
+        console.log(' chapterend setContent  success data ： ' + JSON.stringify(data))
+        if (!data.lines) {
+          that.chapterend()
+        }
+      },
+      fail(data, code) {
+        // console.log(' chapterend setContent  failed：data : ' + JSON.stringify(data))
+      },
+      complete() {
+        // console.log(' chapterend  setContent  complete')
+      }
+    })
+  },
+  /**
+   * 右滑
+   */
+  chapterstart(datas) {
+    console.log('右滑');
+    const that = this;
+    this.realchaptercontent = this.realchaptercontent.index <= 0 ? this.charpterdatas[4] : this.charpterdatas[this.realchaptercontent.index - 1]
+    this.$element('readerdiv').setContent({
+      title: '旅游攻略',
+      forward: false,
+      content: this.realchaptercontent.text,
+      success(data) {
+        console.log('  chapterstartsetContent  success data ： ' + JSON.stringify(data))
+        if (!data.lines) {
+          that.chapterstart()
+        }
+      },
+      fail(data, code) {
+        console.log(' chapterstart setContent  failed：data : ' + JSON.stringify(data))
+      },
+      complete() {
+        console.log(' chapterstart setContent  complete')
+      }
+    })
+  },
+  //改变页数
+  pagechange(datas) {
+    if (this.isFirstPage) {
+      this.isFirstPage = false
+    }
+    if (!this.fontsizeclick && this.showSetting) {
+      this.showSetting = false
+    }
+    this.fontsizeclick = false
+    this.latencyShowReminder() //定时器
+    // console.log(Math.floor(Math.random() * 11), '查看变化');
+    this.displayAdType = Math.floor(Math.random() * 11)
+    console.log(' pagechange  readerIndex :' + datas.readerIndex
+      + " preIndex : " + datas.preIndex
+      + " curIndex : " + datas.curIndex
+      + " readermode : " + this.readermode
+      + " totalPages : " + datas.totalPages
+      + " recycleIndex : " + datas.recycleIndex
+      + " forward : " + + datas.forward)
+    //左点击预加载左广告页，自定义
+    if (datas.forward == 1) {
+      if (datas.curIndex % 3 == 0) {
+        if (this.branch === 'vivo') {
+          var adId1 = this.lastAdId
+          // console.log(' pagechange change   adId1 : ' + JSON.stringify(adId1))
+          //顺序是先销毁    再创建  
+          // //手动销毁上个广告
+          if (adId1) {
+            this.adinstance.destroy({ adId: adId1 })
+          }
+        } else {
+          this.hasAdList = false;
+          this.hasAdList = true;
+        }
+
+        console.log(' helloworld pagechange lastAdId : ' + this.lastAdId)
+        console.log(' helloworld pagechange 1 lastAdId : ' + JSON.stringify(this.lastAdId))
+        // no ad test
+        this.preloadAd()
+        this.$element('readerdiv').preLoadPage({
+          success(data) {
+            console.log('_preLoadPage  success data ： ' + JSON.stringify(data))
+          },
+          fail(data, code) {
+            console.log('_preLoadPage  failed：data : ' + JSON.stringify(data))
+          },
+          complete() {
+            console.log('_preLoadPage  complete')
+          }
+        })
+      } else {
+      }
+    } else {
+      if (datas.isPreAd) {
+        if (this.branch === 'vivo') {
+          var adId1 = this.lastAdId
+          // 顺序是  先销毁    再创建
+          // console.log(' pagechange change   adId1 : ' + JSON.stringify(adId1))
+          // 手动销毁上个广告
+          if (adId1) {
+            this.adinstance.destroy({ adId: adId1 })
+          }
+        }
+
+        //no ad test 
+        this.preloadAd()
+        this.$element('readerdiv').preLoadPage({
+          'forward': false,
+          success(data) {
+            console.log('_preLoadPage isPreAd success data ： ' + JSON.stringify(data))
+          },
+          fail(data, code) {
+            console.log('_preLoadPage isPreAd  failed：data : ' + JSON.stringify(data))
+          },
+          complete() {
+            console.log('_preLoadPage isPreAd  complete')
+          }
+        })
+      } else {
+
+      }
+    }
+
+    console.log(' pagechange change after readerIndex :' + datas.readerIndex
+      + " readermode : " + this.readermode
+    )
+
+  },
+  getBtnTxt(e) {
+    this.newBtnTxt = e.value
+  },
+  setBtnTxt() {
+    this.btnTxt = this.newBtnTxt
+  },
+  convertAppSize(appSizeBytes) {
+    // 首先将字节转换为KB  
+    let kb = appSizeBytes / 1024;
+
+    // 检查是否超过1MB（即1024KB）  
+    if (kb >= 1024) {
+      // 转换为MB并保留两位小数  
+      let mb = kb / 1024;
+      return mb.toFixed(2) + 'MB';
+    } else {
+      // 保留两位小数并返回KB  
+      return kb.toFixed(2) + 'KB';
+    }
+  },
+  preloadAd() {
+    const branch = $ad.getProvider().toLowerCase()
+    this.adObj = adCodeData[branch]
+    this.adUnitId = adCodeData[branch].fiction4;
+    console.log(this.adUnitId, '查看广告编码------------');
+    const that = this
+    ad.preloadAd({
+      adUnitId: this.adUnitId, // 原生信息流广告广告位id 
+      type: 'native', // 原生信息流广告 
+      adCount: 1,
+      ecpm: true,
+      success: (data) => {
+        this.adList = data.adList[0]
+        this.lastAdId = this.adList.adId
+        console.log(this.adList, '成功加载广告小说页');
+        //for adid remove
+        if (this.adList.appInfo) {
+          this.adList.appInfo.appSize = this.convertAppSize(this.adList.appInfo.appSize)
+        }
+
+        // console.log(' adList : ' + JSON.stringify(this.adList))
+        // console.log(' cmc_tag preloadAd lastAdId : ' + this.lastAdId)
+        this.hasAdList = true
+        // prompt.showToast({
+        //   message: `success`
+        // })
+      }, fail: (data, code) => {
+        this.sensorsTrack({ errData: data }, 'error')
+
+        console.log(data, code)
+        if (code === 205) {
+          this.adList = data.adList[0]
+        } else {
+          // prompt.showToast({
+          //   message: `fail!data= ${JSON.stringify(data)},code= ${code}`
+          // })
+        }
+      }
+    })
+  },
+  error(errCode, errMsg) {
+    console.log('失败加载广告', errCode, errMsg);
+    // prompt.showToast({
+    //   message: `error : errCode = ${errCode}, errMsg = ${errMsg}`
+    // })
+    console.log(`error : errCode = ${errCode}, errMsg = ${errMsg}`)
+  },
+  adClick(e) {
+    console.log('被点击了')
+    this.showTransparency = false;
+    $utils.conversionUpload(this, {
+      adType: 'NATIVE',
+      adPositionId: this.adUnitId,
+      isclick: true,
+      ecpm: this.adList.ecpm,
+    })
+    $utils.buriedPointReport(this, { event: 'click', adId: this.adUnitId })
+    this.sensorsTrack(e, 'click')
+  },
+  close(type = '') {
+    if (type) {
+      let str = `x${type}`
+      this.sensorsTrack({ subTitle: `${str}` }, 'click')
+    }
+    this.addClickNum()
+    this.hasAdList = false
+    // prompt.showToast({
+    //   message: "关闭"
+    // })
+  },
+  //使用 clienx  clienY 相对于 根容器，不计算整页滚动  pagex  pagey 包含滚动相对于根容器   offsetx  offsetY 相对于被点击对象
+  oncontainerclick(evt) {
+    console.log('点击了');
+    if (this.readerWidth == 0 || this.readerHeight == 0) {
+      this.precheckBounding()
+      return
+    }
+
+    // console.log("_touch oncontainerclick evt touches:" + JSON.stringify(evt.touches))
+    // console.log("_touch oncontainerclick evt changedTouches:" + JSON.stringify(evt.changedTouches))
+    let clentX = evt.clientX
+    let clentY = evt.clientY
+    // console.log("_touch oncontainerclick  clentX:" + clentX
+    //   + "  clentY : " + clentY
+    //   + " this.readerLeft : " + this.readerLeft)
+    if (clentX > this.readerLeft && clentX < (this.readerLeft + this.readerWidth / 3)) {
+      this.$element('readerdiv').goPrePage({
+        success(data) {
+          console.log('_touch goPrePage success data ： ' + + JSON.stringify(data))
+        },
+        fail(data, code) {
+          console.log('_touch goPrePage failed：code' + code.code)
+        },
+        complete() {
+          console.log('_touch goPrePage complete')
+        }
+      })
+      this.showSetting = false
+    } else if (clentX > (this.readerLeft + (this.readerWidth * 2 / 3))
+      && clentX < this.readerLeft + this.readerWidth) {
+      this.$element('readerdiv').goNextPage({
+        success(data) {
+          console.log('_touch goNextPage success data ： ' + + JSON.stringify(data))
+        },
+        fail(data, code) {
+          console.log('_touch goNextPage failed：code' + code.code)
+        },
+        complete() {
+          console.log('_touch goNextPage complete')
+        }
+      })
+      this.showSetting = false
+    } else {
+
+      setTimeout(() => {
+        this.onCallAnimationClick(true)
+
+      }, 10)
+
+      // console.log('_touch oncontainerclick else')
+    }
+
+  },
+  touchstart(evt) {
+    console.log("_touch touchstart evt touches:" + JSON.stringify(evt.touches))
+    console.log("_touch touchstart evt changedTouches:" + JSON.stringify(evt.changedTouches))
+  },
+  touchmove(evt) {
+    console.log("_touch touchmove evt touches:" + JSON.stringify(evt.touches))
+    console.log("_touch touchmove evt changedTouches:" + JSON.stringify(evt.changedTouches))
+  },
+  touchend(evt) {
+    console.log("_touch touchend evt touches:" + JSON.stringify(evt.touches))
+    console.log("_touch touchend evt changedTouches:" + JSON.stringify(evt.changedTouches))
+  },
+  touchcancel(evt) {
+    console.log("_touch touchcancel evt touches:" + JSON.stringify(evt.touches))
+    console.log("_touch touchcancel evt changedTouches:" + JSON.stringify(evt.changedTouches))
+  },
+  longpress(evt) {
+    console.log("_touch longpress evt touches:" + JSON.stringify(evt.touches))
+    console.log("_touch longpress evt changedTouches:" + JSON.stringify(evt.changedTouches))
+  },
+  onShow() {
+    console.log(this.$page.query, '这是什么9999999999999999');
+
+    try {
+      console.log(this.branch, '这个是什么版本？？？？');
+      if (this.branch === 'vivo') {
+        const foldableState = configuration.getFoldableState();
+        console.log('_foldableState onShow ： ', foldableState
+          + ' this.readerpaddingtop : ' + this.readerpaddingtop);
+        if (foldableState == 1) {
+          console.log('_foldableState onShow 1 ： ', foldableState);
+          this.readerpaddingtop = 10
+        } else {
+
+          console.log('_foldableState onShow 2 ： ', foldableState);
+          this.readerpaddingtop = 90
+        }
+        console.log("_foldableState onShow   this.readerpaddingtop ： " + this.readerpaddingtop)
+
+        console.log("_getPageContent onShow   this.readerpaddingtop ： " + this.readerpaddingtop)
+      } else {
+        this.readerpaddingtop = 90
+      }
+      let actiParam = this.$app.$def.dataApp.actiParam;
+      this.$app.$sensors.pageShow({ channel: actiParam.channelValue, formId: this.adId, ...actiParam });
+
+    } catch (error) {
+      console.log(error, '出错了');
+    }
+    this.precheckBounding()
+    // setTimeout(() => {
+    //   this.$element('readerdiv').getPageContent({
+    //     pageIndex: 0,
+    //     startline: 1,
+    //     endline: 3,
+    //     success(data) {
+    //       console.log('_getPageContent 1  success data ： ' + JSON.stringify(data))
+    //     },
+    //     fail(data, code) {
+    //       console.log('_getPageContent 1 failed：data : ' + JSON.stringify(data))
+    //     },
+    //     complete() {
+    //       console.log('_getPageContent 1  complete')
+    //     }
+    //   })
+
+
+    // }, 1000 * 3)
+  },
+  precheckBounding() {
+    let that = this
+    this.$element('readerdiv').getBoundingClientRect({
+      success: function (data) {
+        const { top, bottom, left, right, width, height } = data;
+        that.readerLeft = left
+        that.readerTop = top
+        that.readerRight = right
+        that.readerBottom = bottom
+        that.readerWidth = width
+        that.readerHeight = height
+        console.log("_touch  that.readerLeft :" + that.readerLeft
+          + "  that.readerTop : " + that.readerTop
+          + "  that.readerRight : " + that.readerRight
+          + "  that.readerBottom : " + that.readerBottom
+          + "  that.readerWidth : " + that.readerWidth
+          + "  that.readerHeight : " + that.readerHeight
+        )
+      },
+      fail: (errorData, errorCode) => {
+        // prompt.showToast({
+        //   message: `错误原因：${JSON.stringify(errorData)}, 错误：${errorCode}`
+        // })
+      },
+    })
+  },
+  // 埋点上报
+  sensorsTrack(e = {}, type = 'show') {
+    try {
+      const { formId = '', subTitle = '', errData = {} } = e
+      let apid = formId || this.adUnitId
+      $adFun.newBurialSite(this, {
+        eventName: type, // 事件名
+        formId: apid, // 广告id
+        subTitle: subTitle, //页面名
+        errData: errData,
+        ...this.$app.$def.dataApp.actiParam,
+      })
+    } catch (error) {
+      console.log(error, '埋点报错');
+    }
+
+  },
+  hideTransparency() {
+    console.log('点击了关闭广告');
+    this.showTransparency = false;
+    this.addClickNum()
+  },
+  complete: function () {
+    console.info('complete')
+  },
+  latencyShowReminder: function () {
+    try {
+      this.timer = null;
+      if (this.isShowTableScreen) {
+        return
+      }
+      this.timer = setTimeout(() => {
+        this.showReminder = true;
+        this.isShowTableScreen = true
+      }, 3000)
+    } catch (error) {
+      console.log(error, '这里出的什么错');
+    }
+
+  },
+  adError(errCode, errMsg) {
+    this.sensorsTrack({  errData: {
+          errCode: errCode.errCode,
+          errMsg: errCode.errMsg,
+        } }, 'error')
+  },
+
+}
+</script>
+
+
+
+
+<template>
+  <div class="doc-page"     style="background-color: {{backgroundcolor}}">
+       <my-navbar></my-navbar>
+      <div class="page-wrapper-child"  >
+        <reader-div  id="readerdiv"
+        sectionbreak='","'
+        style="font-size: {{fontsize}}px;color: {{fontColor}};background-color: {{backgroundcolor}}" movemode="{{movemode}}" 
+        onpagechange="pagechange" onchapterend="chapterend" onchapterstart="chapterstart" class="swiper-container"
+        onclick="oncontainerclick" 
+        >
+          <div  class="ad-container" style="background-color: {{backgroundcolor}}"  >
+            <ad
+            if="{{hasAdList}}"
+            class="ad-native new-native"
+            show="{!!adList.adId}}"
+            adId="{{adList.adId}}"
+            type="native"
+            closeBtnPosition="right-top"
+            onerror="adError"
+            onadclick="adClick"
+            onadclose="close"
+            onadSuccShow="adSuccShow"
+            >
+
+        <div class="container" if="{{ false}}">
+          <!-- 头部图片 -->
+          <div class="vertical-content top-big-img">
+            <ad-clickable-area type="click" class="ad-image">
+              <image
+                src="{{adList.imgUrlList? adList.imgUrlList[0]: defaultAd.img }}"
+              ></image>
+            </ad-clickable-area>
+            <ad-clickable-area
+              class="close-item"
+              type="click"
+              if="{{showTransparency}}"
+            >
+              <icon
+                type="close"
+                size="40"
+                color="#000000"
+                onclick="close"
+              ></icon>
+            </ad-clickable-area>
+            <div class="close-item" else>
+              <icon
+                type="close"
+                size="40"
+                color="#000000"
+                onclick="close(1)"
+              ></icon>
+            </div>
+          </div>
+          <!-- 底下内容 -->
+          <div class="vertical-content horizontal-content">
+            <div class="ad-title">
+              <div>
+                <ad-clickable-area type="click">
+                  <text class="ad-title-txt">{{
+                    adList.title || defaultAd.title
+                  }}</text>
+                </ad-clickable-area>
+              </div>
+              <ad-clickable-area type="logo" class=""> </ad-clickable-area>
+            </div>
+
+            <!-- 标题 -->
+            <div class="ad-s-title">
+              <ad-clickable-area type="click" class="ad-s-title-ad" >
+                <text class="ad-s-title-txt">
+                  {{ adList.desc || defaultAd.desc }}</text
+                >
+              </ad-clickable-area>
+            </div>
+
+            <!-- 星星 -->
+            <div class="vertical-content star-list">
+              <icon type="star" size="58" color="#FFCE2D" for="{{5}}"></icon>
+            </div>
+
+            <div class=" vertical-content foot-btn">
+              <ad-clickable-area
+                type="button"
+                class="click-item"
+                value="{{
+                  btnTxt || adList.clickBtnTxt || defaultAd.clickBtnTxt
+                }}"
+              >
+              </ad-clickable-area>
+            </div>
+          </div>
+        </div>
+
+        <div class="container-sline" else>
+            <div class="agreement">
+            <ad-clickable-area
+             if="{{adList.hasAppMiitInfo}}"
+              class="agreement-item agreement-item-info"
+              type="click"
+            >
+            <text>{{adList.appInfo.appName}}</text>
+            <text>{{adList.appInfo.appSize}}</text>
+            <text>{{ adList.appInfo.appVersion}}</text>
+            <text>{{ adList.appInfo.developer}}</text>
+            </ad-clickable-area>
+
+            <ad-clickable-area
+              type="click"
+              class="hide-close"
+              if="{{showTransparency}}"
+            >
+              <icon
+                type="close"
+                size="50"
+                color="#FFFFFF"
+                @click="close"
+              ></icon>
+            </ad-clickable-area>
+            <div class="hide-close" else>
+              <icon
+                type="close"
+                size="50"
+                color="#FFFFFF"
+                @click="close(2)"
+              ></icon>
+            </div>
+          </div>
+
+            <div class="height:80px">  <ad-clickable-area class="agreement-item" type="privacy">
+            </ad-clickable-area></div>
+          <ad-clickable-area type="click" class="ad-title">
+            <text class="ad-title-txt">{{
+              adList.desc || defaultAd.desc
+            }}</text>
+          </ad-clickable-area>
+          <!-- 图片 -->
+          <div class="vertical-content big-img">
+            <ad-clickable-area type="click" class="ad-image">
+              <image
+                src="{{adList.imgUrlList? adList.imgUrlList[0]: defaultAd.img }}"
+              ></image>
+            </ad-clickable-area>
+            <div class="vertical-content logo">
+              <ad-clickable-area
+                type="click"
+                class="close-item"
+                if="{{showTransparency}}"
+              >
+                <icon
+                  type="close"
+                  size="45"
+                  color="#FFFFFF"
+                  @click="close"
+                ></icon>
+              </ad-clickable-area>
+              <div class="close-item" else>
+                <icon
+                  type="close"
+                  size="45"
+                  color="#FFFFFF"
+                  @click="close(3)"
+                ></icon>
+              </div>
+              <ad-clickable-area type="logo"> </ad-clickable-area>
+            </div>
+          </div>
+
+          <div class="icon" if="{{adList.icon}}">
+            <ad-clickable-area type="clikc" class="icon-image">
+              <image src="{{adList.icon}}"></image>
+            </ad-clickable-area>
+            <text class="icon-txt">{{ adList.title }}</text>
+          </div>
+
+          <div class="footer">
+            <ad-clickable-area
+              class="click-item"
+              type="button"
+              value=" {{
+                  btnTxt || adList.clickBtnTxt || defaultAd.clickBtnTxt
+                }}"
+            >
+            </ad-clickable-area>
+          </div>
+
+          <ad-clickable-area
+            class="swipe-left-btn"
+            @touchmove="appearSwipe"
+            type="click"
+            if="{{showTransparency}}"
+          >
+            <text>左滑继续阅读</text>
+          </ad-clickable-area>
+
+          <div
+            class="swipe-left-btn"
+            @touchmove="appearSwipe"
+            if="{{!showTransparency}}"
+          >
+            <text>左滑继续阅读</text>
+          </div>
+        </div>
+            </ad>
+          </div>
+        </reader-div>
+
+        <div class="btm-footer"  style="background-color: {{backgroundcolor}}" show="{{showSetting}}" >
+          <div id="moresettingpanel" class="btm-footer-top"   style="background-color: {{backgroundcolor}}" show="{{!settingmode}}">
+         <div  class="btm-footer-fontcontainer" >
+           <!--  -->
+            <div class="btm-footer-fontset-child" style="margin-left:20px;" >
+              <text class="btm-footer-fontstyle" style="color:{{fontColor}}">字号</text>
+            </div>
+            <div class="btm-fontset-child" onclick="onMinfontclick"  >
+               <image class="btm-fontchange-img"  src="/Common/img/fontdec.png"></image> 
+            </div>
+            <div class="btm-footer-font-child-color"   >
+              <text class="btm-footer-fontstylesize" style="color:{{fontColor}}" >{{fontsize}}</text>
+            </div>
+            <div class="btm-fontset-child"  onclick="onMaxfontclick" style="margin-right:20px;">
+               <image class="btm-fontchange-img"  src="/Common/img/fontinc.png"></image> 
+            </div>
+          </div>
+          
+            <div class="btm-footer-font"  >
+              <!-- class="btm-footer-font-child"  -->
+              <div  >
+                <text class="btm-footer-fontstyle" style="margin-left:20px;color:{{fontColor}};margin-right:60px;">背景</text>
+              </div>
+              <!-- // #f3cb9d   #eeeeee   #dfedd6   #f8ceda -->
+              <div class="btm-footer-font-child-bg {{clicktag == 'yellow' ? 'selected' : 'bgunselected'}}"  style="background-color: #f3cb9d"  onclick="onbgclick('#f3cb9d')" >
+               
+              </div>
+              <div class="btm-footer-font-child-bg {{clicktag == 'white' ? 'selected' : 'bgunselected'}}" style="background-color: #eeeeee"  onclick="onbgclick('#eeeeee')" >
+               
+              </div>
+              <div class="btm-footer-font-child-bg {{clicktag == 'green' ? 'selected' : 'bgunselected'}}"  style="background-color: #dfedd6"  onclick="onbgclick('#dfedd6')" >
+               
+              </div>
+              <div class="btm-footer-font-child-bg {{clicktag == 'red' ? 'selected' : 'bgunselected'}}"  style="background-color: #f8ceda"  onclick="onbgclick('#f8ceda')" >
+               
+              </div>
+            </div>
+            <div class="btm-footer-chapter"  >
+              <div class="btm-footer-fontset-child" style="margin-left:20px;" >
+                <text class="btm-footer-fontstyle"  style="color:{{fontColor}}">方向</text>
+              </div>
+              <div class="btm-footer-font-child" onclick="onVerticalclick"  >
+                <!-- <image class="btm-footer-chapterimg" src="/Common/img/next_chapter.png"></image> -->
+                <text   class=" {{movemode == 'vertical' ? 'circleselected' : 'circleunselected'}}" style="color:{{fontColor}}" >上下</text>
+              </div>
+              <div class="btm-footer-font-child"  onclick="onHorizonclick"  >
+                <!-- <image class="btm-footer-chapterimg" src="/Common/img/next_chapter.png"></image> -->
+                <text  class=" {{movemode == 'horizontal' ? 'circleselected' : 'circleunselected'}}"  style="color:{{fontColor}}">左右</text>
+              </div>
+            </div>
+
+            <div class="btm-footer-chapter"  >
+              <div class="btm-footer-fontset-child" style="margin-left:20px;padding-right: 20px;" >
+                <text class="btm-footer-fontstyle"  style="color:{{fontColor}};">行间距</text>
+              </div>
+              <div class="btm-footer-font-child    "  onclick="onlowlinespaceclick"  >
+                <!-- <image class="btm-footer-chapterimg" src="/Common/img/next_chapter.png"></image> -->
+                <text class=" {{linetype == 'low' ? 'circleselected' : 'circleunselected'}}"  style="color:{{fontColor}}" >最小</text>
+              </div>
+              <div class="btm-footer-font-child    " onclick="onlinespaceclick"  >
+                <!-- <image class="btm-footer-chapterimg" src="/Common/img/next_chapter.png"></image> -->
+                <text class=" {{linetype == 'normal' ? 'circleselected' : 'circleunselected'}}" style="color:{{fontColor}}"  >适中</text>
+              </div>
+              <div class="btm-footer-font-child   " onclick="onhighlinespaceclick"  >
+                <!-- <image class="btm-footer-chapterimg" src="/Common/img/next_chapter.png"></image> -->
+                <text class=" {{linetype == 'high' ? 'circleselected' : 'circleunselected'}}"  style="color:{{fontColor}}" >最大</text>
+              </div>
+            </div>
+
+         </div>
+          
+
+        <div id="animation" class="btm-minfooter-setting"   style="background-color: {{backgroundcolor}}" >
+          
+          
+          <div class="btm-footer-chapter-child" if="{{settingmode}}" >
+              <div class="btm-footer-chapter-child"  onclick="onPreChapterclick"  >
+               <image class="btm-footer-img" src="/Common/img/prechapter.png"></image> 
+                <text class="btm-footer-fontstyle" style="color:{{fontColor}}">上一章</text>
+              </div>
+              <div class="btm-footer-chapter-child" onclick="onNextChapterclick"  >
+                <text class="btm-footer-fontstyle" style="color:{{fontColor}}" >下一章</text>
+                 <image class="btm-footer-img" src="/Common/img/nextchapter.png"></image> 
+              </div>
+          </div>
+  
+           <!-- <div class="btm-footer-chapter-child"  >
+           </div> -->
+
+
+          <div class="btm-footer-setting"  >
+             <div class="btm-footer-font-child" style="justify-content:center;" onclick="onChapterclick" >
+            <div class="btm-footer-column-child" >
+            <image class="btm-footer-img" src="/Common/img/cataloguereader.png"></image> 
+            <text class="btm-footer-fontstyle" style="font-size:30px;color:{{fontColor}}">目录</text>
+             </div>
+          </div>
+          <div class="btm-footer-font-child" style="justify-content:center;" onclick="onNightModeclick" >
+            <div class="btm-footer-column-child" >
+            <image class="btm-footer-img"  src="/Common/img/moonwhite.png"></image> 
+            <text class="btm-footer-fontstyle" style="font-size:30px;color:{{fontColor}}" >{{nightmodeStr}}</text>
+             </div>
+          </div>
+          
+          <div class="btm-footer-font-child" style="justify-content:center;"  onclick="onSettingclick"  >
+            <div class="btm-footer-column-child" >
+            <image class="btm-footer-img"  src="/Common/img/setting.png"></image> 
+            <text class="btm-footer-fontstyle" style="font-size:30px;color:{{fontColor}}">设置</text>
+            </div>
+          </div> 
+           </div>
+            
+        </div>
+
+        <div class="left-reader-container" show="{{showContent}}" >
+          <div class="left-reader-left"  >
+            <list class="list-content">
+              <list-item type="listItem" class="item item-color"
+              for="{{listData}}">
+              <div class="txt"  onclick="routerChapter($item,$idx)">
+                  <text  >{{$item}}</text>
+                 </div>
+              </list-item>
+            </list>
+          </div>
+          <div class="left-reader-right"  onclick="onContentDisclick" >
+          
+          </div>
+        </div>
+
+      </div>
+<!-- bottom ad -->
+  <div  class="banner-wrap">
+      <bottom-native
+      ad-unitId="{{lastAdId}}"
+      ad-list="{{adList}}"
+      show-transparency="{{ showTransparency}}"
+      onemit-hide-transparency="hideTransparency"
+      sport-title="小说文章页"
+    ></bottom-native>
+        </div>
+
+<!--延迟提示 -->
+      <reminder-ads
+      if="{{showReminder && branch !== 'vivo'}}"
+      show-transparency="{{showTransparency}}"
+      onemit-hide-transparency="hideTransparency"
+      onemit-close="heideReminder"
+      sport-title="小说文章页"
+    ></reminder-ads>
+
+<!-- 延迟提示 taku插屏广告 -->
+    <task-interstitial
+      if="{{showReminder && branch === 'vivo'}}"
+      onemit-close="heideReminder"
+      sport-title="小说文章页"
+    ></task-interstitial>
+
+       <!-- 返回时弹出框 -->
+    <back-to-ads
+      if="{{showVackTisp}}"
+      show-transparency="{{ showTransparency}}"
+      onemit-hide-transparency="hideTransparency"
+      onemit-close="heideReminder"
+      sport-title="小说文章页"
+    ></back-to-ads>
+  </div>
+</template>
+
+
+<style lang="less">
+.container-sline {
+  width: 100%;
+  height: 100%;
+  flex-direction: column;
+  padding: 20px 0;
+  height: 100%;
+  background-color: #f7f7f9;
+  .agreement {
+    width: 100%;
+    align-items: center;
+    justify-content: space-between;
+    .agreement-item {
+      width: 70%;
+      align-items: center;
+      height: 80px;
+      text {
+        lines: 1;
+        font-size: 28px;
+        text-overflow: ellipsis;
+      }
+    }
+
+    .hide-close {
+      background-color: #c7c6c9;
+      border-radius: 5px;
+    }
+  }
+
+  .ad-title {
+    margin-top: 10px;
+    .ad-title-txt {
+      font-weight: 500;
+      font-size: 32px;
+      color: #000000;
+    }
+  }
+
+  .vertical-content {
+    width: 100%;
+    .ad-close {
+      width: 50px;
+      height: 50px;
+    }
+  }
+  .big-img {
+    flex-direction: column;
+    align-items: center;
+    margin-top: 30px;
+    .ad-image {
+      height: 500px;
+      width: 100%;
+      flex-shrink: 0;
+      image {
+        width: 100%;
+        height: 100%;
+        border-radius: 15px;
+        object-fit: contain;
+      }
+    }
+    .logo {
+      width: 100%;
+      padding: 0 20px;
+      justify-content: space-between;
+      position: absolute;
+      top: 70px;
+      left: 0;
+      .close-item {
+        background-color: rgba(205, 205, 207, 0.5);
+      }
+    }
+  }
+
+  .icon {
+    width: 100%;
+    align-items: center;
+    height: 80px;
+    .icon-image {
+      width: 80px;
+      height: 80px;
+      image {
+        width: 80px;
+        height: 80px;
+        object-fit: contain;
+      }
+    }
+
+    .icon-txt {
+      font-weight: 500;
+      margin-left: 12px;
+      font-size: 32px;
+    }
+  }
+
+  .footer {
+    height: 90px;
+    width: 100%;
+    margin-top: 50px;
+    align-items: center;
+    justify-content: center;
+    .click-item {
+      flex-shrink: 0;
+      min-width: 450px;
+      align-items: center;
+      justify-content: center;
+      background-color: #ff0f39;
+      padding: 0 80px;
+      border-radius: 50px;
+      // align-self: flex-end;
+      text-align: center;
+      color: aliceblue;
+      height: 90px;
+
+      .title {
+        color: #999999;
+      }
+      .click-txt {
+        font-size: 34px;
+        padding: 10px 20px;
+        text-align: center;
+        color: aliceblue;
+      }
+      .ad-close {
+        align-self: center;
+        margin-left: 10px;
+        width: 50px;
+        height: 50px;
+      }
+    }
+  }
+  .swipe-left-btn {
+    width: 100%;
+    height: 75px;
+    width: 300px;
+    border-radius: 45px;
+    justify-content: center;
+    align-items: center;
+    /* background-color: #fcf; */
+    margin: 0 auto;
+    margin-top: 52px;
+    text {
+      color: #959497;
+      text-align: center;
+    }
+  }
+}
+
+.new-native {
+  width: 100%;
+  height: 100%;
+  background-color: #f7f7f9;
+  flex-direction: column;
+  margin-top: 0;
+}
+
+.ad-native {
+  /* width: 100%;
+  height: 800px;
+  margin-top: 80px;
+  background-color: #ffffff;
+  width: 690px;
+  border-radius: 35px;
+  flex-direction: column; */
+
+  .container {
+    width: 100%;
+    height: 750px;
+    flex-direction: column;
+    align-items: center;
+    .top-big-img {
+      flex-direction: column;
+      height: 400px;
+      align-items: center;
+      width: 100%;
+      margin-bottom: 50px;
+      .ad-image {
+        height: 400px;
+        width: 100%;
+        image {
+          width: 100%;
+          height: 100%;
+          border-radius: 15px;
+          object-fit: fill;
+        }
+      }
+
+      .close-item {
+        background-color: #f5f5f5;
+        width: 50px;
+        height: 50px;
+        position: absolute;
+        justify-content: center;
+        align-items: center;
+        top: 30px;
+        right: 30px;
+        border-radius: 50%;
+      }
+    }
+
+    /* 内容区域 */
+    .horizontal-content {
+      flex-direction: column;
+      align-items: center;
+      .ad-title {
+        width: 100%;
+        justify-content: center;
+        align-items: center;
+        margin-bottom: 30px;
+        height: 100px;
+        .ad-title-txt {
+          font-size: 32px;
+          font-weight: 500;
+          color: #000000;
+        }
+      }
+
+      .ad-s-title {
+        width: 80%;
+        height: 100px;
+        justify-content: center;
+        align-content: center;
+        margin-bottom: 30px;
+        .ad-s-title-ad {
+          .ad-s-title-txt {
+            text-align: center;
+            lines: 1;
+            text-overflow: ellipsis;
+          }
+        }
+      }
+
+      .star-list {
+        height: 80px;
+        justify-content: center;
+        margin-bottom: 30px;
+      }
+
+      .foot-btn {
+        width: 500px;
+        align-items: center;
+        justify-content: center;
+        height: 150px;
+        /* background-color: #fcf; */
+        border-radius: 260px;
+        .click-item {
+          width: 500px;
+          height: 100%;
+          font-size: 34px;
+          color: #fff;
+          text-align: center;
+          border-radius: 260px;
+          background-color: #ff1039;
+        }
+      }
+    }
+  }
+
+  .vertical-content {
+    width: 100%;
+
+    .ad-close {
+      width: 50px;
+      height: 50px;
+    }
+  }
+}
+
+.btm-footer-column-child {
+  flex-direction: column;
+  height: 100%;
+  color: white;
+  font-size: 25px;
+  text-align: center;
+  justify-content: center;
+  align-items: center;
+}
+
+.btm-footer-img {
+  width: 60px;
+  height: 60px;
+}
+.btm-fontchange-img {
+  width: 40px;
+  height: 40px;
+}
+
+.fixed-size-wh1 {
+  width: 500px;
+  height: 500px;
+}
+.doc-page {
+  flex-direction: column;
+  /* padding-top: 90px; */
+  background-color: rgba(243, 203, 157, 1);
+}
+/*ad start*/
+.banner-wrap {
+  flex-shrink: 0;
+  height: 146px;
+  width: 100%;
+  padding-left: 20px;
+  padding-bottom: 10px;
+  padding-right: 20px;
+  padding-top: 10px;
+  align-items: center;
+}
+.banner-img-wrap {
+  height: 126px;
+  width: 224px;
+  margin-right: 16px;
+  flex-shrink: 0;
+}
+
+.banner-desc-wrap {
+  justify-content: center;
+  align-items: flex-start;
+  flex-direction: column;
+  flex-shrink: 1;
+  flex-grow: 1;
+  width: 280px;
+  margin-right: 22px;
+}
+
+.banner-title {
+  font-weight: bold;
+  line-height: 42px;
+  color: #333333;
+  font-size: 30px;
+  width: 100%;
+  height: 42px;
+  text-overflow: ellipsis;
+  lines: 1;
+}
+
+.banner-desc {
+  margin-top: 12px;
+  line-height: 33px;
+  color: #333333;
+  font-size: 24px;
+  width: 100%;
+  height: 33px;
+  text-overflow: ellipsis;
+  lines: 1;
+}
+
+.banner-btn {
+  text-align: center;
+  color: #ffffff;
+  font-size: 30px;
+  border-radius: 32px;
+  background-color: #f97053;
+  height: 64px;
+  width: 168px;
+  justify-content: center;
+  align-items: center;
+  flex-shrink: 0;
+}
+/*ad end*/
+
+.selected {
+  align-items: flex-end;
+  justify-content: flex-end;
+  border-left-color: #313131;
+  border-bottom-color: #313131;
+  border-right-color: #313131;
+  border-top-color: #313131;
+  border-style: solid;
+  border-left-width: 4px;
+  border-bottom-width: 4px;
+  border-right-width: 4px;
+  border-top-width: 4px;
+  font-size: 40px;
+  color: white;
+}
+
+.bgunselected {
+  align-items: flex-end;
+  justify-content: flex-end;
+  border-left-color: #808080;
+  border-bottom-color: #808080;
+  border-right-color: #808080;
+  border-top-color: #808080;
+  border-style: solid;
+  border-left-width: 4px;
+  border-bottom-width: 4px;
+  border-right-width: 4px;
+  border-top-width: 4px;
+  font-size: 40px;
+  color: white;
+}
+.circleunselected {
+  width: 150px;
+  height: 60px;
+  padding-left: 35px;
+  align-items: center;
+  justify-content: center;
+  border-left-color: #808080;
+  border-bottom-color: #808080;
+  border-right-color: #808080;
+  border-top-color: #808080;
+  border-style: 1px solid;
+  /* border: 1px solid #c5c4c4; */
+  border-left-width: 4px;
+  border-bottom-width: 4px;
+  border-right-width: 4px;
+  border-top-width: 4px;
+  border-radius: 60px;
+  font-size: 40px;
+  color: white;
+}
+.circleselected {
+  width: 150px;
+  height: 60px;
+  padding-left: 35px;
+  align-items: center;
+  justify-content: center;
+  border-left-color: #313131;
+  border-bottom-color: #313131;
+  border-right-color: #313131;
+  border-top-color: #313131;
+  border-style: solid;
+  border-left-width: 4px;
+  border-bottom-width: 4px;
+  border-right-width: 4px;
+  border-top-width: 4px;
+  border-radius: 60px;
+  font-size: 40px;
+  color: white;
+}
+
+.page-title-wrap {
+  flex-direction: row;
+  height: 100px;
+  margin-bottom: 100px;
+  align-content: center;
+}
+
+.page-title {
+  font-size: 30px;
+  color: black;
+}
+
+.item-container {
+  padding-top: 200px;
+  margin-top: 200px;
+  margin-bottom: 20px;
+  margin-right: 30px;
+  margin-left: 30px;
+  flex-direction: column;
+}
+
+.swiper-container {
+  width: 100%;
+  height: 100%;
+  flex-direction: row;
+  justify-content: center;
+  align-content: center;
+  align-items: center;
+  background-color: rgba(243, 203, 157, 1);
+}
+
+.swiper {
+  flex-direction: column;
+  width: 100%;
+  height: 350px;
+  padding-left: 30px;
+  padding-right: 30px;
+}
+
+.item-content {
+  align-items: center;
+}
+
+.item-content-title {
+  flex: 1;
+  padding-top: 20px;
+  padding-bottom: 20px;
+}
+
+.switch {
+  height: 50px;
+  width: 320px;
+}
+
+.slider {
+  flex: 1;
+  margin-left: 10px;
+  margin-right: 10px;
+}
+
+.item {
+  height: 250px;
+  text-align: center;
+  color: #ffffff;
+}
+
+.checkbox {
+  width: 60px;
+  height: 60px;
+}
+
+/*  padding-top: 90px; */
+.page-wrapper-child {
+  background-color: rgba(0, 0, 0, 0);
+
+  padding-bottom: 0px;
+  /* padding-left: 30px; */
+  /* padding-right: 30px; */
+  /* padding-top: 70px; */
+  height: 100%;
+  width: 100%;
+  flex-direction: column;
+  /* padding-bottom: 200px; */
+  /* padding-left:40px;
+    padding-right:40px; */
+}
+
+.page-text-title {
+  position: fixed;
+  top: 0;
+  width: 100%;
+  font-size: 48px;
+  height: 86px;
+  line-height: 86px;
+  color: #333;
+  font-weight: bold;
+  text-overflow: ellipsis;
+  lines: 1;
+  color: #333333;
+}
+
+/* 底部版权信息 */
+.btm-footer {
+  display: flex;
+  flex-direction: column;
+  width: 750px;
+  /* height: 400px; */
+  position: fixed;
+  bottom: 0px;
+  font-size: 25px;
+  color: #8d8d8d;
+  /* background-color: #000000; */
+  text-align: center;
+  justify-content: center;
+  align-items: center;
+  index: 20;
+  /* background-image: url('/Common/img/readersetting1.png'); */
+}
+.btm-footer-ad {
+  flex-direction: column;
+  width: 750px;
+  height: 200px;
+  font-size: 25px;
+  color: #8d8d8d;
+  background-color: #ffffff;
+  text-align: center;
+  justify-content: center;
+  align-items: center;
+}
+/*  */
+.left-reader-container {
+  flex-direction: row;
+  width: 750px;
+  height: 100%;
+  position: fixed;
+  font-size: 25px;
+  color: #8d8d8d;
+  text-align: center;
+
+  justify-content: center;
+  align-items: center;
+}
+.left-reader-left {
+  flex-direction: row;
+  width: 600px;
+  height: 100%;
+  font-size: 25px;
+  color: #8d8d8d;
+  background-color: white;
+  text-align: center;
+  justify-content: center;
+  align-items: center;
+}
+.left-reader-right {
+  flex-direction: row;
+  width: 150px;
+  height: 100%;
+  font-size: 25px;
+  color: #676767;
+  background-color: #000000;
+  opacity: 0.5;
+  text-align: center;
+  justify-content: center;
+  align-items: center;
+}
+.list-content {
+  flex: 1;
+  padding-left: 60px;
+  padding-right: 60px;
+}
+.item {
+  height: 100px;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 15px;
+  border-bottom: 1px solid black;
+}
+
+.txt {
+  height: 100%;
+  flex: 1;
+  justify-content: center;
+  align-self: center;
+  margin: auto;
+  /* background-color: #09ba07; */
+}
+.btm-footer-top {
+  width: 750px;
+  flex-direction: column;
+  /* height: 240px; */
+  text-align: center;
+  justify-content: center;
+  align-items: center;
+}
+
+.btm-footer-font {
+  flex-direction: row;
+  width: 750px;
+  height: 60px;
+  font-size: 25px;
+  text-align: center;
+  justify-content: flex-start;
+  align-items: center;
+  margin-top: 15px;
+  margin-bottom: 15px;
+}
+.btm-footer-fontcontainer {
+  flex-direction: row;
+  width: 750px;
+  height: 60px;
+  font-size: 25px;
+  text-align: center;
+  justify-content: flex-start;
+  align-items: center;
+  margin-top: 15px;
+  margin-bottom: 15px;
+  margin-left: 20px;
+  margin-right: 20px;
+}
+.btm-footer-chapter {
+  flex-direction: row;
+  width: 750px;
+  height: 60px;
+  font-size: 25px;
+  color: #8d8d8d;
+  text-align: center;
+  justify-content: flex-start;
+  align-items: center;
+  margin-bottom: 15px;
+  margin-top: 15px;
+}
+.btm-footer-font-child {
+  flex-direction: row;
+  flex-grow: 1;
+  height: 100%;
+  color: white;
+  font-size: 25px;
+  text-align: center;
+  justify-content: flex-start;
+  align-items: center;
+}
+.btm-footer-chapter-child {
+  padding-top: 20px;
+  padding-bottom: 20px;
+  flex-direction: row;
+  flex-grow: 1;
+  height: 80px;
+  color: white;
+  font-size: 25px;
+  text-align: center;
+  justify-content: center;
+  align-items: center;
+}
+.btm-footer-fontset-child {
+  flex-direction: row;
+  height: 100%;
+  color: white;
+  font-size: 25px;
+  text-align: center;
+  justify-content: flex-start;
+  align-items: center;
+  padding-right: 60px;
+}
+.btm-fontset-child {
+  flex-direction: row;
+  flex-grow: 1;
+  /* height: 100%; */
+  /* color: white; */
+  width: 40px;
+  height: 100%;
+  font-size: 25px;
+  text-align: center;
+  justify-content: center;
+  align-items: center;
+  border-radius: 40px;
+  color: #808080;
+  background-color: #808080;
+}
+.btm-footer-font-child-bg {
+  padding-left: 20px;
+  flex-direction: row;
+  border-style: solid;
+  border-left-width: 4px;
+  border-bottom-width: 4px;
+  border-right-width: 4px;
+  border-top-width: 4px;
+  border-radius: 8px;
+  height: 60px;
+  width: 140px;
+  color: white;
+  font-size: 25px;
+  text-align: center;
+  justify-content: flex-start;
+  align-items: center;
+  margin-left: 5px;
+}
+.btm-footer-font-child-color {
+  flex-direction: row;
+  flex-grow: 1;
+  height: 100%;
+  color: white;
+  font-size: 25px;
+  text-align: center;
+  justify-content: center;
+  align-items: center;
+}
+.btm-footer-chapterimg {
+  flex-direction: row;
+  width: 120px;
+  height: 60px;
+}
+.btm-footer-fontstyle {
+  flex-direction: row;
+  font-size: 40px;
+  height: 60px;
+  color: white;
+  /* border: 1px solid #ffffff; */
+  border-radius: 5px;
+  text-align: center;
+  justify-content: center;
+  align-items: center;
+}
+.btm-footer-fontstylesize {
+  flex-direction: row;
+  font-size: 40px;
+  color: white;
+  text-align: center;
+  justify-content: center;
+  align-items: center;
+}
+
+.btm-footer-setting {
+  flex-direction: row;
+  width: 750px;
+  height: 160px;
+  font-size: 25px;
+  color: #8d8d8d;
+  text-align: center;
+  justify-content: center;
+  align-items: center;
+}
+.btm-minfooter-setting {
+  flex-direction: column;
+  width: 750px;
+  height: 200px;
+  font-size: 25px;
+  color: #8d8d8d;
+  text-align: center;
+  justify-content: center;
+  align-items: center;
+  /* transition: 200 2s ease-in 0.5s; */
+  /* transform: translateY(100px); */
+}
+/* drawer style */
+.page {
+  justify-content: center;
+  align-items: center;
+  flex: 1;
+  background-color: #ffffff;
+  .wrap {
+    flex: 1;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+  .input {
+    height: 80px;
+    border: 1px solid #000;
+    padding: 0 20px;
+    margin-bottom: 20px;
+    width: 70%;
+  }
+  .content {
+    background-color: #ffffff;
+    width: 100%;
+    flex-direction: column;
+    .nav {
+      height: 180px;
+      align-items: center;
+      width: 100%;
+      padding: 10px;
+      border-bottom: 1px solid #f0f0f0;
+      image {
+        width: 100px;
+        height: 100px;
+      }
+      text {
+        flex: 1;
+        text-align: center;
+      }
+    }
+    .book {
+      flex: 1;
+      width: 100%;
+      list-item {
+        height: 90px;
+        width: 100%;
+        padding: 0px 20px;
+        border-bottom: 1px solid #f0f0f0;
+        align-items: center;
+        justify-content: space-between;
+      }
+    }
+    .img {
+      width: 100%;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      flex: 1;
+      .logo {
+        width: 300px;
+        height: 300px;
+      }
+    }
+    tab-bar {
+      height: 100px;
+      text {
+        width: 50%;
+        text-align: center;
+        height: 100%;
+      }
+    }
+    swiper {
+      width: 100%;
+      height: 300px;
+    }
+    .right-demo {
+      width: 100%;
+      flex: 1;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .shop {
+      width: 100%;
+      height: 200px;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .nav-item {
+      height: 200px;
+      width: 100%;
+    }
+    .color-item {
+      width: 120px;
+      height: 120px;
+      border-radius: 20px;
+    }
+  }
+}
+</style>
+
+ 

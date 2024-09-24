@@ -1,0 +1,213 @@
+<!-- <import name="ad-logs" src="../../Common/components/adLogs.ux"></import> -->
+<import name="topon-ad" src="@topon/quick-app-sdk/placement.ux"></import>
+
+<template>
+  <div>
+    <!-- <text class="title"> - 插屏广告 - </text> -->
+
+    <!-- <ad-logs></ad-logs> -->
+    <!-- 
+    <input
+      class="btn"
+      type="button"
+      value="加载/刷新广告"
+      onclick="handleLoadAd"
+    />
+    <input
+      if="{{loaded}}"
+      class="btn"
+      type="button"
+      value="Get AD"
+      onclick="handleGetAd"
+    />
+    <input
+      if="{{isGetAd}}"
+      class="btn"
+      type="button"
+      value="展示广告"
+      onclick="handleDisplayAd"
+    /> -->
+    <!-- 使用Placement组件 -->
+    <div if="{{isShowAd}}">
+      <topon-ad
+        id="topon-ad-{{placementId}}"
+        placement-id="{{placementId}}"
+        config="{{config}}"
+        @ad-load="handleAdLoad"
+        @ad-show="handleAdShow"
+        @ad-close="handleAdClose"
+        @ad-click="handleAdClick"
+        @ad-reward="handleAdReward"
+        @ad-error="handleAdError"
+        @ad-unit-bidding-filled="handUnitBidding"
+      >
+      </topon-ad>
+    </div>
+  </div>
+</template>
+
+<script>
+import router from '@system.router'
+// const = require('../../config.js').default
+const { adCodeData } = require('../../config.js').default
+export default {
+  data() {
+    return {
+      loaded: false,
+      isGetAd: false,
+      config: {
+        entry: '/pages/Home', // 开屏广告结束后打开的第一个页面
+        timeout: 30000, // 默认0（走默认，开屏5秒，其他300秒），单位毫秒
+      },
+      placementId: 'b66aaf2616af0d', // 请替换为您在topon 开发者后台上的placementId,
+      isShowAd: false,
+      ecpm: 0,
+    }
+  },
+  props: {
+    sportTitle: {
+      default: 'taku-插屏',
+    },
+  },
+  onInit() {
+    let adBrand = $ad.getProvider().toLowerCase()
+    this.placementId = adCodeData[adBrand].taku.tableScreenAd
+    this.isShowAd = true
+  },
+  onReady() {
+    // 组件未挂载完成
+  },
+  // 广告源Load成功回调
+  handleAdLoad(e) {
+    this.$broadcast('logsUnshift', 'demo接收load回调：' + JSON.stringify(e))
+    console.log('demo接收load回调', e)
+    this.loaded = true
+    this.oppoAd()
+  },
+  // 埋点上报
+  sensorsTrack(e = {}, type = 'show') {
+    try {
+      const { formId = '', subTitle = '', errData = '' } = e
+      let apid = formId || this.placementId
+      $adFun.newBurialSite(this, {
+        eventName: type, // 事件名
+        formId: apid, // 广告id
+        subTitle: subTitle || `停留自弹窗`, //页面名
+        errData: errData,
+        ...this.$app.$def.dataApp.actiParam,
+      })
+    } catch (error) {
+      console.log(error, '埋点报错')
+    }
+  },
+  // 广告源Show成功回调
+  handleAdShow(e) {
+    this.sensorsTrack(e, 'show')
+    this.$broadcast('logsUnshift', 'demo接收show回调：' + JSON.stringify(e))
+    console.log('demo接收show回调', e)
+  },
+  // 广告源Close成功回调
+  handleAdClose(e) {
+    this.$broadcast('logsUnshift', 'demo接收close回调：' + JSON.stringify(e))
+    console.log('demo接收close回调', e)
+    this.isShowAd = false
+    this.$emit('emitClose', {
+      data: 'showReminder',
+    })
+  },
+  handleAdClick(e) {
+    console.log('demo接收click回调', e)
+    this.isShowAd = false
+    $utils.buriedPointReport(this, {
+      event: 'click',
+      adId: this.placementId,
+    })
+    $utils.conversionUpload(this, {
+      adType: 'INSERT_SCREEN',
+      adPositionId: this.placementId,
+      isclick: true,
+      ecpm: this.ecpm,
+    })
+    this.sensorsTrack(e, 'click')
+    this.$emit('emitClose', {
+      data: 'showReminder',
+    })
+  },
+  handleAdReward(e) {
+    console.log('demo接收reward回调', e)
+  },
+  handleAdError(e) {
+    console.log('demo接收error回调', e)
+    this.sensorsTrack({ errData: e.detail }, 'error')
+    this.$emit('emitClose', {
+      data: 'showReminder',
+    })
+  },
+  handleDisplayAd() {
+    const placement = this.getSdkElement()
+    if (placement.show) {
+      placement.show()
+    }
+  },
+  handleLoadAd() {
+    const placement = this.getSdkElement()
+    if (placement.load) {
+      placement.load()
+    }
+  },
+  handleGetAd() {
+    try {
+      const placement = this.getSdkElement()
+      if (placement.getAd) {
+        const currentAd = placement.getAd()
+        console.log('currentAd', currentAd)
+        if (!currentAd) {
+          return
+        }
+        this.isSelfRendering = currentAd?.isSelfRendering
+        this.isGetAd = true
+      }
+    } catch (error) {}
+  },
+  oppoAd() {
+    this.handleGetAd()
+    this.handleDisplayAd()
+  },
+  getSdkElement() {
+    return this.$child(`topon-ad-${this.placementId}`)
+  },
+  handUnitBidding(e) {
+    console.log(e, '查看返回的塔库参数')
+    const ecpm = e.detail.cyEcpm * 100
+    console.log(ecpm, '塔库插屏ecpm')
+    this.ecpm = ecpm
+    $utils.conversionUpload(this, {
+      adType: 'INSERT_SCREEN',
+      adPositionId: this.placementId,
+      isclick: false,
+      ecpm: ecpm,
+    })
+  },
+}
+</script>
+
+<style lang="less">
+.page-container {
+  flex-direction: column;
+  justify-content: center;
+
+  .title {
+    color: #ffa500;
+    margin: 30px;
+    text-align: center;
+  }
+
+  input {
+    margin: 30px 80px;
+    padding: 20px 0;
+    border-radius: 100px;
+    background-color: #2d8cf0;
+    color: #fff;
+  }
+}
+</style>

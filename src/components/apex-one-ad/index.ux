@@ -49,164 +49,157 @@
   </div>
 </template>
 <script>
-import device from "@system.device";
+import device from '@system.device'
 
 export default {
   props: {
     type: {
-      default: "top-pic-bottom-text" // 'top-text-bottom-pic' 'top-pic-bottom-text' 'left-pic-right-text' 'left-text-right-pic' 'pure-pic'
+      default: 'top-pic-bottom-text', // 'top-text-bottom-pic' 'top-pic-bottom-text' 'left-pic-right-text' 'left-text-right-pic' 'pure-pic'
     },
     adUnitId: {
-      default: ""
+      default: '',
     },
     showHideinfo: {
       type: Boolean,
-      default: false
+      default: false,
     },
     hideApex: {
       type: Boolean,
-      default: false
-    }
-
+      default: false,
+    },
   },
   data() {
     return {
       visible: false,
       ad: null,
-      adList: [{ adId: 0, title: "", desc: "", imgUrlList: [] }],
-      adEvent: {}
-    };
+      adList: [{ adId: 0, title: '', desc: '', imgUrlList: [] }],
+      adEvent: {},
+      ecpm: 0,
+    }
   },
   onInit() {
-    this.initAd();
+    this.initAd()
   },
   async initAd() {
-    console.log('是否进来原生广告');
+    console.log('是否进来原生广告')
     if (this.ad) {
-      return;
+      return
     }
-    console.log('进来原生广告');
+    console.log('进来原生广告')
     try {
-      const res = await device.getInfo();
-      this.brand = res.data.brand;
+      const res = await device.getInfo()
+      this.brand = res.data.brand
 
-      console.log(this.adUnitId, '查看这个id是什么');
-      this.ad = await require("@service.ad").createNativeAd({
-        adUnitId: this.adUnitId
-      });
-      console.log(this.ad, 'this.ad');
-      if (!this.ad || typeof this.ad !== "object") {
-        return;
+      console.log(this.adUnitId, '查看这个id是什么')
+      this.ad = await require('@service.ad').createNativeAd({
+        adUnitId: this.adUnitId,
+      })
+      console.log(this.ad, 'this.ad')
+      if (!this.ad || typeof this.ad !== 'object') {
+        return
       }
-
 
       try {
-        this.onEvent("Error");
-        this.onEvent("Load");
-        this.loadAd();
+        this.onEvent('Error')
+        this.onEvent('Load')
+        this.loadAd()
       } catch (error) {
-        console.log('load报错');
+        console.log('load报错')
       }
-
-
     } catch (e) {
-      console.log("ad-log", `捕获异常 ${e}`);
+      console.log('ad-log', `捕获异常 ${e}`)
     }
   },
   destroyAd() {
     if (!this.ad) {
-      return;
+      return
     }
-    this.ad.destroy();
-    this.ad = null;
-    this.adEvent = {};
+    this.ad.destroy()
+    this.ad = null
+    this.adEvent = {}
   },
   loadAd() {
     if (!this.ad) {
-      return;
+      return
     }
     try {
       this.ad.load((e) => {
-        console.log('加载成功', e);
+        console.log('加载成功', e)
       })
     } catch (error) {
-      console.log('load报错2');
+      console.log('load报错2')
     }
   },
   reportAdClick(adId) {
     this.ad.reportAdClick({ adId })
-
-    let ecpmParam = {  //竞价相关参数
-      ecpm: this.adList.ecpm ? this.adList.ecpm : '0',
+    $utils.conversionUpload(this, {
       adType: 'NATIVE',
       adPositionId: this.adUnitId,
-      clickCount: '1'
-    }
-    console.log('竞价相关参数', ecpmParam);
-    $utils.conversionUpload(this, ecpmParam)
+      isclick: true,
+      ecpm: this.adList.ecpm,
+    })
 
-    $utils.buriedPointReport(this, 'click', this.adUnitId)
+    $utils.buriedPointReport(this, { event: 'click', adId: this.adUnitId })
     try {
-      this.$emit("close", {
-        data: 'click'
-      });
+      this.$emit('close', {
+        data: 'click',
+      })
     } catch (error) {
-      console.log(error, '捕获的是这里');
+      console.log(error, '捕获的是这里')
     }
   },
   reportAdShow(adId) {
-    if (this.adList.length === 0) return;
-    this.ad.reportAdShow({ adId });
+    if (this.adList.length === 0) return
+    this.ad.reportAdShow({ adId })
   },
   onEvent(event) {
     if (!this.ad) {
-      return;
+      return
     }
 
     if (!this.adEvent[event]) {
-      this.adEvent[event] = [];
+      this.adEvent[event] = []
     }
 
-    let fn = null;
+    let fn = null
     try {
-      if (event === "Load") {
-        fn = res => {
-          console.log(res, 'res-----------');
-          this.adList = res.adList;
-          this.visible = true;
-          this.$emit("load", res);
-        };
+      if (event === 'Load') {
+        fn = (res) => {
+          console.log(res, 'res-----------')
+          this.adList = res.adList
+          this.visible = true
+          this.$emit('load', res)
+        }
       } else {
-        fn = res => {
-          this.$emit("error", {
-            data: 'error'
+        fn = (res) => {
+          this.$emit('error', {
+            data: 'error',
           })
-        };
+        }
       }
     } catch (error) {
-      console.log(error, '不活的 error错误');
-
+      console.log(error, '不活的 error错误')
     }
 
-    this.ad[`on${event}`](fn);
-    this.adEvent[event].push(fn);
+    this.ad[`on${event}`](fn)
+    this.adEvent[event].push(fn)
   },
   close(e) {
     if (e.stopPropagation) {
-      e.stopPropagation();
+      e.stopPropagation()
     }
-    this.visible = false;
-    this.destroyAd();
+    this.visible = false
+    this.destroyAd()
 
     try {
-      this.$emit("close", {
-        data: 'clone'
-      });
+      this.$emit('close', {
+        data: 'clone',
+      })
     } catch (error) {
-      console.log('捕获的是这里的错误');
+      console.log('捕获的是这里的错误')
     }
-  }
-};
+  },
+}
 </script>
 <style lang="less">
 @import './styles/base.less';

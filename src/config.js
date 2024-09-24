@@ -3,7 +3,7 @@ const adCodeData = {
     appid: 111256983,
 
     lotteryPageNativeAd: '3bd89b5814dc4a2fbe372aa7955c5dc9',//场景-转盘弹出层
-    nativeAd: '9856466221f1477aaf352f3b829f0b43',//原生//记账小管家-原生-在用-开红包
+    nativeAd: '9856466221f1477aaf352f3b829f0b43',//原生//喵星测评-原生-在用-开红包
     stimulateAd: '92067659aed0471ebd21f89a14f81d4f',//幸运大转盘-激励视频
     tableScreen: '1100b60d285547c6a2bf5f01935c428b',//插屏广告
     openScreen:'1c6dab3a4008453fb698e6ed7bd0e806',//开屏广告
@@ -13,10 +13,14 @@ const adCodeData = {
     fiction4: 'a623e39a11bf48b6b31e36ee9a7691b5', //原生小说广告页id
     banner: '',
     nativeAd_cfd: '56c08fb035f84e91a5d33a3c1de6b584',
+    taku: {
+      stimulateAd: 'b66c6ababb33f4',
+      tableScreenAd: 'b66c6ababb33f4'
+    },
   },
   xiaomi: {
     lotteryPageNativeAd: 'f21479386ec620f11418234af8a7f539',//场景-转盘弹出层
-    nativeAd: '141dae70cd63d1430d62227243e397c8', //原生//记账小管家-原生-在用-开红包
+    nativeAd: '141dae70cd63d1430d62227243e397c8', //原生//喵星测评-原生-在用-开红包
     stimulateAd: 'a0b4806cff44b342c866df6f03a74d4e',//幸运大转盘-激励视频
     tableScreen: '66eff150b0f043fe66411e8d98e8d932',//插屏广告
     openScreen:'f0f52c3ddb13d9f7ae556483e6c2ec59',//开屏广告
@@ -25,12 +29,16 @@ const adCodeData = {
     fiction3: '7e6d771707d7592587371dd9d97baa57', //原生小说广告页id
     fiction4: 'e1308f38c2aa2d482aa4ef5c0af1736f', //原生小说广告页id
     fiction5: 'f4e6d3769ebc31771e0dedb5b548560a', //原生512 2.0自渲染512x512
-    banner: '1686581',//1080*171
-    nativeAd_cfd: '1686583',//拆福袋原生//2.0自渲染1280x720
+    banner: '',//1080*171
+    nativeAd_cfd: '45d0c47dda19c879e5eff462694ffa6c',//拆福袋原生//2.0自渲染1280x720
+    taku: {
+      stimulateAd: 'b66c5a41d24c70',
+      tableScreenAd: 'b66c5a41d24c70'
+    },
   },
   OPPO: {
     lotteryPageNativeAd: '1686568',//场景-转盘弹出层
-    nativeAd: '1686569', //原生//记账小管家-原生-在用-开红包
+    nativeAd: '1686569', //原生//喵星测评-原生-在用-开红包
     stimulateAd: '1686570',//幸运大转盘-激励视频
     tableScreen: '1686571',//插屏广告
     openScreen:'1686572',//开屏广告
@@ -41,11 +49,15 @@ const adCodeData = {
     fiction5: '1686579', //原生512 2.0自渲染512x512
     banner: '1686581',//1080*171
     nativeAd_cfd: '1686583',//拆福袋原生//2.0自渲染1280x720
+    taku: {
+      stimulateAd: 'b66bea80642a85',
+      tableScreenAd: 'b66bea80642a85'
+    },
 
   },
   oppo: {
     lotteryPageNativeAd: '1686568',//场景-转盘弹出层
-    nativeAd: '1686569', //原生//记账小管家-原生-在用-开红包
+    nativeAd: '1686569', //原生//喵星测评-原生-在用-开红包
     stimulateAd: '1686570',//幸运大转盘-激励视频
     tableScreen: '1686571',//插屏广告
     openScreen:'1686572',//开屏广告
@@ -56,6 +68,10 @@ const adCodeData = {
     fiction5: '1686579', //原生512 2.0自渲染512x512
     banner: '1686581',//1080*171
     nativeAd_cfd: '1686583',//拆福袋原生//2.0自渲染1280x720
+    taku: {
+      stimulateAd: 'b66bea80642a85',
+      tableScreenAd: 'b66bea80642a85'
+    },
 
   },
   HUAWEI: {

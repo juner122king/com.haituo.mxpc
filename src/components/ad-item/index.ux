@@ -125,31 +125,31 @@
 }
 </style>
 <script>
-let nativeAd;
+let nativeAd
 const config = require('../../config.js').default
 const device = require('@system.device')
 export default {
   data: {
-    componentName: "ad",
-    provider: "",
+    componentName: 'ad',
+    provider: '',
     native: {
-      adUnitId: "y82ss9y9f7",
+      adUnitId: 'y82ss9y9f7',
       isShow: false,
       adData: {},
       isShowImg: true,
       isShowVideo: true,
       isShowData: true,
-      errStr: "",
-      btnTxt: "",
-      adImgSrc: "",
-      adVideoSrc: ""
+      errStr: '',
+      btnTxt: '',
+      adImgSrc: '',
+      adVideoSrc: '',
     },
-    brand: ""
+    brand: '',
   },
   props: {
     showDialog: {
       type: Boolean,
-      default: true
+      default: true,
     },
   },
   onInit() {
@@ -166,96 +166,99 @@ export default {
     // })
   },
   onHide() {
+    //App业务
   },
   onReady(options) {
-    console.info("native ad onReady");
-    this.showNativeAd();
+    console.info('native ad onReady')
+    this.showNativeAd()
   },
   onShow(options) {
     if (this.native.isShow) {
-      this.reportNativeShow();
+      this.reportNativeShow()
     }
   },
   getAdProvider: function () {
-    this.provider = $ad.getProvider();
+    this.provider = $ad.getProvider().toLowerCase().toLowerCase()
   },
   isDownloadAd(creativeType) {
-    let downloadTypes = [103, 106, 107, 108, 101, 102, 110];
-    return downloadTypes.includes(creativeType);
+    let downloadTypes = [103, 106, 107, 108, 101, 102, 110]
+    return downloadTypes.includes(creativeType)
   },
   closePop: function () {
     this.$emit('emitClone', {
-      data: 'clone'
+      data: 'clone',
     })
   },
   showNativeAd() {
-    var that = this;
-    this.getAdProvider();
-    if (this.provider !== "huawei") {
-      console.info("the device  does not support ad.");
-      return;
+    var that = this
+    this.getAdProvider()
+    if (this.provider !== 'huawei') {
+      console.info('the device  does not support ad.')
+      return
     }
-    nativeAd = $ad.createNativeAd({ adUnitId: this.native.adUnitId });
-    nativeAd.onLoad(data => {
+    nativeAd = $ad.createNativeAd({ adUnitId: this.native.adUnitId })
+    nativeAd.onLoad((data) => {
       // console.info("ad data loaded: " + JSON.stringify(data));
-      this.native.adData = data.adList[0];
+      this.native.adData = data.adList[0]
       $utils.showToast('加载成功')
       if (this.native.adData) {
         if (this.native.adData.imgUrlList) {
-          this.native.adImgSrc = this.native.adData.imgUrlList[0];
-          console.info(" this.native.adImgSrc =" + this.native.adImgSrc);
-          this.native.isShowImg = true;
+          this.native.adImgSrc = this.native.adData.imgUrlList[0]
+          console.info(' this.native.adImgSrc =' + this.native.adImgSrc)
+          this.native.isShowImg = true
         } else {
-          this.native.isShowImg = false;
-          this.native.adImgSrc = "";
+          this.native.isShowImg = false
+          this.native.adImgSrc = ''
         }
         if (this.native.adData.clickBtnTxt) {
-          this.native.btnTxt = this.native.adData.clickBtnTxt;
+          this.native.btnTxt = this.native.adData.clickBtnTxt
         } else {
-          this.native.btnTxt = "";
+          this.native.btnTxt = ''
         }
-        if (this.native.adData.videoUrlList && this.native.adData.videoUrlList[0]) {
-          this.native.adVideoSrc = this.native.adData.videoUrlList[0];
-          this.native.isShowVideo = true;
+        if (
+          this.native.adData.videoUrlList &&
+          this.native.adData.videoUrlList[0]
+        ) {
+          this.native.adVideoSrc = this.native.adData.videoUrlList[0]
+          this.native.isShowVideo = true
         } else {
-          this.native.isShowVideo = false;
-          this.native.adVideoSrc = "";
+          this.native.isShowVideo = false
+          this.native.adVideoSrc = ''
         }
-        this.native.isShow = true;
-        this.native.errStr = "";
-        this.reportNativeShow();
+        this.native.isShow = true
+        this.native.errStr = ''
+        this.reportNativeShow()
       }
-    });
-    nativeAd.onError(e => {
+    })
+    nativeAd.onError((e) => {
       $utils.showToast('出错了')
-      console.error("load ad error:" + JSON.stringify(e));
-      this.native.isShowImg = false;
-      this.native.isShowVideo = false;
-      this.native.isShow = false;
-      this.native.errStr = JSON.stringify(e);
+      console.error('load ad error:' + JSON.stringify(e))
+      this.native.isShowImg = false
+      this.native.isShowVideo = false
+      this.native.isShow = false
+      this.native.errStr = JSON.stringify(e)
       this.$emit('emitClone', {
-        data: 'error'
+        data: 'error',
       })
-
-    });
-    nativeAd.load();
+    })
+    nativeAd.load()
   },
   reportNativeShow() {
     if (nativeAd) {
-      nativeAd.reportAdShow({ adId: this.native.adData.adId });
+      nativeAd.reportAdShow({ adId: this.native.adData.adId })
     }
   },
   reportNativeClick() {
     nativeAd.reportAdClick({
-      adId: this.native.adData.adId
-    });
+      adId: this.native.adData.adId,
+    })
     this.$emit('emitClone', {
-      data: 'clone'
+      data: 'clone',
     })
   },
   listenNativeAdDownloadStatus(downloadstatus) {
-    if (downloadstatus === "INSTALLED") {
-      this.native.btnTxt = "OPEN";
+    if (downloadstatus === 'INSTALLED') {
+      this.native.btnTxt = 'OPEN'
     }
   },
   startButton(event) {
@@ -263,34 +266,32 @@ export default {
   },
   removeAdListen: function () {
     if (nativeAd) {
-      nativeAd.offDownloadProgress();
+      nativeAd.offDownloadProgress()
       nativeAd.offError(() => {
-        console.log("nativeAd offError");
-      });
+        console.log('nativeAd offError')
+      })
       nativeAd.offLoad(() => {
-        console.log("nativeAd offLoad");
-      });
-      nativeAd.offStatusChanged();
+        console.log('nativeAd offLoad')
+      })
+      nativeAd.offStatusChanged()
     }
   },
   //销毁原生的广告
   onDestroy() {
-    console.log('触发了广告方法');
+    console.log('触发了广告方法')
     if (nativeAd) {
-      nativeAd.destroy();
+      nativeAd.destroy()
       this.$emit('emitClone', {
-        data: false
+        data: false,
       })
     }
-
   },
   closeAd: function () {
-    this.native.isShow = false;
+    this.native.isShow = false
   },
 
   closeview: function () {
-    console.log('AD点击关闭');
-
-  }
-};
+    console.log('AD点击关闭')
+  },
+}
 </script>

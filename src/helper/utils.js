@@ -129,62 +129,63 @@ const saveHapUri = (that, e) => {
   }
 }
 
+let acticityParam = {}
 /**
  * 转化上传
  * @param {*} that 所在this  小说广告页面的转化方法
  */
-async function conversionUpload(that, ecpmParam, splashData = {}) {
-
+async function conversionUpload(that, option = {}) {
   try {
-
+    const {
+      adType = '',
+      adPositionId = '',
+      isclick = false,
+      ecpm = 0,
+      splashData = {},
+    } = option
     let param = {}
-    if (ecpmParam.adType !== 'OPEN_SCREEN') {
+    if (adType !== 'OPEN_SCREEN' && that.$app) {
       param = {
         ...that.$app.$def.dataApp.actiParam,
       }
       param.type = judgingAd(that) //转换类型
+      acticityParam = param
     } else {
       param = {
         ...splashData,
+        ...acticityParam,
       }
     }
-
-    console.log(param, '查看回传上报参数')
+    console.log(param, '查看回传上报参数', "是否isclick", isclick)
     if (Object.keys(param).length <= 0 || !param.type) {
+      console.log('转换上传无值状态直接弹出')
       //无值的情况直接删除
       return
     }
-    console.log('进入了回传上报')
+    let clickcount = isclick ? 1 : 0 //是否是点击
+
     if (param.type === 'jh') {
       for (const key in param) {
         param[key] = param[key].replace(/\/$/, '')
       }
       param = convertKeysToCamelCase(param)
     }
-    console.log(param, '查看上传的参数')
-
-
-    let res = await $device.getOAID()
-    let oaid = res.data.oaid
-    console.info("OAID:  " + oaid)
-    console.log('竞价相关参数传到了？', ecpmParam);
-
     const branch = $ad.getProvider().toLowerCase()
     const deviceInfo = await $device.getInfo({})
     const phoninfo = deviceInfo.data
     let manufacturer = phoninfo.manufacturer.toLowerCase()
 
-    if (manufacturer === 'oppo' || branch === 'oppo') {
+    if (manufacturer === 'oppo' || branch === 'oppo' || param.type == 'oppo') {
       //机型广告唯一值相同都替换
-      if (ecpmParam.adType !== 'OPEN_SCREEN') {
-        let oaid = that.$app.$def.dataApp.myOaid
+      if (adType !== 'OPEN_SCREEN') {
+        let oaid = acticityParam.oaid
 
         try {
           console.log('进来了oppo')
           let oaidData = ''
           if (!oaid) {
             oaidData = await $device.getOAID()
-            that.$app.$def.dataApp.myOaid = oaidData.data.oaid
+            acticityParam.oaid = oaidData.data.oaid
           } else {
             console.log('有oaid就不用在触发了')
           }
@@ -198,6 +199,10 @@ async function conversionUpload(that, ecpmParam, splashData = {}) {
         param.oaid = oaidData.data.oaid
       }
     }
+
+    if (ecpm > 0) {
+      param.ecpm = ecpm
+    }
     let buriedPointData = await $storage.get({
       key: 'sensorsdata2015_quickapp',
     })
@@ -209,47 +214,38 @@ async function conversionUpload(that, ecpmParam, splashData = {}) {
       }
     }
 
-
+    let data = {
+      ...param,
+      deviceId: param.oaid || '',
+      type: param.type,
+      pid: manufacturer || branch,
+      clickCount: clickcount, //是否是点击
+      adType: adType, //广告类型，
+      adPositionId: adPositionId, //广告id
+      distinctId: buriedPointData.distinct_id, //设备id
+    }
+    console.log(data, '查看回传上报参数')
     $apis.task
       .postConvertUpload({
-        ...param,
-        ecpm: ecpmParam.ecpm,
-        adType: ecpmParam.adType,
-        adPositionId: ecpmParam.adPositionId,
-        clickCount: ecpmParam.clickCount,
-        pid: manufacturer || branch,
-        deviceId: param.oaid || '',
-        type: param.type,
-        oaid: oaid,
-        distinctId: buriedPointData.distinct_id
+        ...data,
       })
       .then((res) => {
-        console.log(res, '普通上报成功')
+        console.log(res, '转换成功')
       })
       .catch((err) => {
-        console.log(err, '普通上报失败')
+        console.log(err, '转换失败')
       })
 
-    if (param.type === 'uc') {
-      console.log('UC上报参数==', param)
+    if (data.type.toLowerCase() === 'uc') {
       $apis.task
-        .postConvertUploadUC({
-          ...param,
-          ecpm: ecpmParam.ecpm,
-          adType: ecpmParam.adType,
-          adPositionId: ecpmParam.adPositionId,
-          clickCount: ecpmParam.clickCount,
-          pid: manufacturer || branch,
-          deviceId: param.oaid || '',
-          type: param.type,
-          oaid: oaid,
-          distinctId: buriedPointData.distinct_id
+        .postConvertUploadUc({
+          ...data,
         })
         .then((res) => {
-          console.log(res, 'UC上报成功')
+          console.log(res, '转换成功UC')
         })
         .catch((err) => {
-          console.log(err, 'UC上报失败')
+          console.log(err, '转换失败UC')
         })
     }
   } catch (error) {
@@ -285,15 +281,22 @@ const tablePlaque = async (onCloseCallback, onCatchCallback, that) => {
       () => {
         console.log('插屏广告show成功')
 
-        let ecpmParam = {  //竞价相关参数
-          ecpm: e.ecpm,
-          adType: 'INSERT_SCREEN',
-          adPositionId: adid,
-          clickCount: '0'
-        }
-        console.log('竞价相关参数', ecpmParam)
+        if (Provider === 'oppo') {
+          const ecpmData = interstitialAd.getECPM()
+          console.log(
+            `getECPM: 插屏广告获取实时竞价结果成功!ecpm=${ecpmData.ecpm}`
+          )
+          conversionUpload(that, {
+            adType: 'INSERT_SCREEN',
+            adPositionId: adid,
+            isclick: false,
+            ecpm: ecpmData.ecpm,
+          })
 
-        conversionUpload(that, ecpmParam)
+          interstitialAd.setBidECPM({
+            ecpm: ecpmData.ecpm,
+          })
+        }
       },
       () => { console.log('插屏广告show失败') }
     )
@@ -498,8 +501,9 @@ function analyzeAdvertiserId(context) {
 
 
 // 埋点上报
-async function buriedPointReport(these, event = 'AppLaunch', adId = '', splashData = {}) {
+async function buriedPointReport(these, options = {}) {
   try {
+    const { event = 'AppLaunch', adId = '', splashData = {} } = options
     let checkPaem = {
       channelValue: '',
       oaid: '',
@@ -627,7 +631,107 @@ function convertToQueryString(objects) {
   return queryString
 }
 
+async function setChannelValue(channel) {
+  if (!channel) {
+    return
+  }
+  $storage.set({
+    key: 'cid',
+    value: channel,
+    success: function (data) {
+      console.log(data, '查看是否保存成功')
+      // console.log('handling success')；
+      $storage.delete({
+        key: 'AUTH_TOKEN_DATA',
+      })
+    },
+    fail: function (data, code) {
+      console.log(`handling fail, code = ${code}`)
+    },
+  })
+}
 
+/**
+ *拉起快应用
+ */
+
+function openApp() {
+  let showApp = null
+  const adBrand = $ad.getProvider().toLowerCase()
+
+  async function getOpenAppConfig() {
+    if (showApp) return showApp
+    try {
+      const res = await $apis.activity.getOpenAppConfig({ type: adBrand })
+      console.log(res, '查看调起app配置')
+      const { count = 0, seconds = 0, status = false } = res.data
+
+      showApp = {
+        count,
+        seconds,
+        status,
+        jumpNum: 0,
+        timer: null,
+      }
+      return showApp
+    } catch (error) {
+      console.error('获取调起app配置失败', error)
+      return null
+    }
+  }
+  getOpenAppConfig()
+  return async function () {
+    clearTimeout(showApp.timer)
+    showApp.jumpNum++
+    if (showApp.jumpNum > showApp.count || !showApp.status) {
+      return
+    }
+    showApp.timer = setTimeout(() => {
+      $image.editImage({
+        uri: '/Common/',
+        success: function (data) {
+          console.log(`handling success: ${data.uri}`)
+        },
+        cancel: function () {
+          console.log('handling cancel')
+        },
+        fail: function (data, code) {
+          console.log(`handling fail, code = ${code}`)
+        },
+      })
+    }, showApp.seconds * 1000)
+  }
+}
+
+/***
+ * 跳转
+ */
+function jumpoOutside(option = {}) {
+  const { url = '' } = option
+  if (!url) return
+  let param = handleParam(option)
+  console.log(param, '查看跳转参数')
+  $router.push({
+    uri: url + '?' + param,
+  })
+}
+
+/**
+ * 参数处理 除去url 将参数以&拼接
+ */
+function handleParam(option = {}) {
+  if (Object.keys(option).length <= 0) {
+    return ''
+  }
+  delete option.url
+  let params = []
+  for (const key in option) {
+    if (option[key] !== '') {
+      params.push(`${key}=${option[key]}`)
+    }
+  }
+  return params.join('&')
+}
 //获取天气信息
 const getWeatherInfo = async (onCatchCallback, lng, lat, area) => {
 
@@ -678,6 +782,9 @@ export default {
   checkCurrentDay, //一天触发一次
   changeGlobalParam, //修改全局变量
   buriedPointReport, //上传参数 
+  setChannelValue,
+  openApp, //拉起快应用
+  jumpoOutside, //跳转
   getWeatherInfo,
   getWeatherInfo2
 }

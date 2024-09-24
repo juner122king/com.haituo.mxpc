@@ -1,0 +1,315 @@
+<template>
+  <div>
+    <div if="{{showIcon}}" class="coinWinMotivator" @click="oppoVideo"></div>
+
+    <!-- 挽留弹窗 -->
+    <retention-pop
+      show-pop="{{showretentionPop}}"
+      retention-data="{{retentionData}}"
+      onemit-clone="cloneRetention"
+      onemit-confirm="confirmRetention"
+    ></retention-pop>
+  </div>
+</template>
+
+<import name="retention-pop" src="../retention-pop/index.ux"></import>
+<script>
+const config = require('../../config.js').default
+const device = require('@system.device')
+export default {
+  data: {
+    brand: '',
+    adUnitId: '',
+    rewardedVideoAd: null,
+    stimulateAdTimes: 0, //激励完成次数
+    maxStimulateAdTimes: 2, //激励最大完成次数
+    showIcon: false,
+    showretentionPop: false,
+    retentionData: {
+      title: '',
+      subtitle: '',
+      warningButtonTxt: '',
+      popType: '', //award 奖励   detainment 挽回  tisp 提示
+    },
+    param: {},
+  },
+  props: {},
+  async onInit() {
+    // console.log(config, '查看config-----------');
+    let brand = $ad.getProvider().toLowerCase()
+    const adData = config.adCodeData[brand]
+    this.brand = brand
+    this.adUnitId = adData.stimulateAd
+    try {
+      let phoninfo = await device.getInfo({})
+      this.param = {
+        ua: `${phoninfo.data.manufacturer} ${phoninfo.data.model} ${phoninfo.data.product} ${phoninfo.data.osType}`,
+      }
+    } catch (error) {}
+    if (this.adUnitId) {
+      this.getUserwealEntry()
+      this.getStimulateAdTimes()
+      this.createRewardedVideoAd()
+    }
+  },
+  oppoVideo() {
+    console.log('点击了广告')
+    this.stateChange('show')
+    if (this.stimulateAdTimes >= this.maxStimulateAdTimes) {
+      // 完成次数
+      this.openRetentionPop('complete')
+      return
+    } else {
+      if (this.rewardedVideoAd) {
+        this.rewardedVideoAd.show()
+      } else {
+        $utils.showToast('暂无活动')
+      }
+    }
+  },
+  getStimulateAdTimes: function () {
+    $apis.task
+      .getCompleteCount({
+        adId: 'WATCH_VIDEO',
+      })
+      .then((res) => {
+        // console.log(res, '查看激励广告次数');
+        this.stimulateAdTimes = res.data
+      })
+      .catch((err) => {
+        console.log(err, '获取完成任务次数失败')
+      })
+  },
+  finishStimulateAd: function () {
+    // 完成视频广告
+    let data = {
+      adType: 'REWARDED_VIDEO',
+      adId: this.adUnitId,
+      channel: 'mxpc',
+      countMax: 2,
+      brand: this.brand,
+      completeType: 'WATCH_VIDEO',
+    }
+    let headers = {
+      ...this.param,
+    }
+    $apis.task
+      .postFinishCompleteAd(
+        {
+          ...data,
+        },
+        headers
+      )
+      .then((res) => {
+        console.log(res, '查看完成激励广告状态')
+        this.getStimulateAdTimes()
+        this.stimulateAdTimes = res.data.count
+        this.openRetentionPop('award', {
+          awardAmount: res.data.awardAmount,
+        })
+      })
+      .catch((err) => {
+        console.log(err, '激励广告未完成')
+      })
+  },
+  createRewardedVideoAd: function () {
+    try {
+      const that = this
+      if (this.rewardedVideoAd) {
+        this.rewardedVideoAd = null
+      }
+      let rewardedVideoAd = $ad.createRewardedVideoAd({
+        adUnitId: this.adUnitId,
+      })
+      console.log(rewardedVideoAd, 'rewardedVideoAd')
+      this.rewardedVideoAd = rewardedVideoAd
+      if (!rewardedVideoAd) {
+        $utils.showToast('暂不支持，稍后再试')
+        // 不支持广告
+        return
+      }
+      rewardedVideoAd.onLoad((e) => {
+        console.log('激励视频广告加载成功', e)
+        if (that.brand === 'oppo') {
+          const data = rewardedVideoAd.getECPM()
+          console.log(`getECPM: 激励视频获取实时竞价结果成功!ecpm=${data.ecpm}`)
+          that.emcp = data.ecpm
+          $utils.conversionUpload(that, {
+            adType: 'REWARDED_VIDEO',
+            adPositionId: that.adUnitId,
+            isclick: false,
+            ecpm: data.ecpm,
+          })
+        }
+      })
+      rewardedVideoAd.onClose((e) => {
+        console.log(e, '监听用户点击关闭广告 按钮的事件')
+        that.rewardedVideoAd.load()
+        if (e.isEnded) {
+          that.finishStimulateAd()
+          $utils.conversionUpload(that, {
+            adType: 'REWARDED_VIDEO',
+            adPositionId: that.adUnitId,
+            isclick: true,
+            ecpm: that.ecpm,
+          })
+          $utils.buriedPointReport(that, {
+            event: 'click',
+            adId: that.adUnitId.stimulateAd,
+          })
+        } else {
+          that.openRetentionPop('detainment')
+        }
+      })
+      rewardedVideoAd.onError((e) => {
+        console.log(e, '激励广告错误')
+        that.rewardedVideoAd = ''
+        // that.createRewardedVideoAd()
+      })
+
+      if (this.brand !== 'vivo') {
+        that.rewardedVideoAd.load()
+      }
+    } catch (error) {
+      console.log(error)
+    }
+  },
+  // 获取开关
+  getUserwealEntry() {
+    $apis.task.getUserwealEntry().then((res) => {
+      console.log(res, '查看活动开关')
+      let checkObj = res.data // 注意变量名由 checkOBj 改为 checkObj，以符合常见的命名规范
+      this.movableSwitchObj = checkObj
+      // 定义一个映射对象，用于根据索引设置对应的属性
+      const taskMap = {
+        0: 'isDailyOpenRedPacketEntry',
+        1: 'isWatchVideoEarnGoldEntry',
+        2: 'isWheelOfFortuneEntry',
+        3: 'isOpenTheLuckyBagEntry',
+        4: 'isOpenNovelRedPacket',
+      }
+      this.showIcon = checkObj.isOpenNovelRedPacket
+    })
+  },
+  /**
+   * 关闭挽留弹窗
+   */
+  cloneRetention: function () {
+    if (
+      this.retentionData.popType === 'complete' ||
+      this.retentionData.popType === 'tisp'
+    ) {
+      this.stateChange('hide')
+    }
+    console.log('关闭挽留弹窗')
+    this.showretentionPop = false
+    this.retentionData = {
+      title: '',
+      subtitle: '',
+      warningButtonTxt: '',
+      popType: '',
+    }
+  },
+  /**-
+   * 点击挽留弹窗确定按钮
+   */
+  confirmRetention: function (e, data) {
+    let type = this.retentionData.popType
+    console.log(type, '点击挽留弹窗确定键')
+    if (type === 'detainment') {
+      this.rewardedVideoAd.show()
+      // this.opPoMotivation()
+    }
+    if (type === 'award') {
+      if (this.stimulateAdTimes < this.maxStimulateAdTimes) {
+        this.rewardedVideoAd.show()
+        // this.opPoMotivation()
+      } else {
+        this.stateChange('hide')
+        $router.push({
+          uri: 'pages/welfareCenter',
+        })
+      }
+    }
+    if (type === 'complete') {
+      $router.push({
+        uri: 'pages/welfareCenter',
+      })
+    }
+
+    if (type === 'tisp') {
+      $router.push({
+        uri: 'pages/welfareCenter',
+      })
+    }
+    this.cloneRetention()
+  },
+  // 开启挽留弹窗
+  openRetentionPop: function (type, data) {
+    this.showretentionPop = true //
+    this.retentionDataType = type
+    console.log(type)
+    if (type === 'detainment') {
+      this.retentionData = {
+        title: '看完可获得奖励',
+        subtitle: '',
+        warningButtonTxt: '再看可以获得奖励',
+        popType: 'detainment',
+      }
+    }
+
+    if (type === 'award') {
+      this.retentionData = {
+        title: `+${data.awardAmount}`,
+        subtitle: '',
+        warningButtonTxt:
+          this.stimulateAdTimes < this.maxStimulateAdTimes
+            ? '再看一次'
+            : '去开红包',
+        popType: 'award',
+        unit: '金币',
+      }
+    }
+
+    if (
+      type === 'complete' &&
+      (this.movableSwitchObj.isDailyOpenRedPacketEntry ||
+        this.movableSwitchObj.isWheelOfFortuneEntry)
+    ) {
+      let type =
+        this.adTaskCompletions > 0 &&
+        this.movableSwitchObj.isDailyOpenRedPacketEntry
+          ? '每日开红包'
+          : this.movableSwitchObj.isWheelOfFortuneEntry
+          ? '去幸运大转盘'
+          : '去每日开红包'
+      this.retentionData = {
+        title: '今日抽奖次数已用完明天再来吧',
+        subtitle: `还可以前往${type}有更多好礼哦`,
+        warningButtonTxt: `${type}`,
+        popType: 'tisp',
+        unit: '',
+      }
+    }
+  },
+  stateChange(type) {
+    this.$emit('emitChange', {
+      data: type,
+    })
+  },
+}
+</script>
+
+<style lang="less">
+.coinWinMotivator {
+  background-image: url('http://cdn.ihaituo.cn/qa/pro/mxpc/0ccd93449877a65385dc7727e2e4c22f.png');
+  background-repeat: no-repeat;
+  background-size: 120px 120px;
+  width: 120px;
+  height: 120px;
+  /* background-color: #fcf; */
+  position: fixed;
+  bottom: 180px;
+  right: 30px;
+}
+</style>

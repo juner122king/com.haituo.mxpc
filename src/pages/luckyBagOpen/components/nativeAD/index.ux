@@ -5,7 +5,7 @@
       src="/Common/img/ad/icon_gx.png"
     ></image>
     <image
-      style="width: 340px; height: 94px ;  margin-bottom: 30px;"
+      style="width: 340px; height: 94px; margin-bottom: 30px"
       src="/Common/img/ad/bt_cpd.png"
       onclick="completeAdRSA"
     ></image>
@@ -13,11 +13,10 @@
       <block for="{{adList}}">
         <ad
           adId="{{$item.adId}}"
-          adunitid="{{ adunitid }}"
           class="ad-native"
           onload="adLoad(evt)"
-          onerror="adError(err,evt)"
-          onadclick="reportNativeClick()"
+          onerror="adError"
+          onadclick="reportNativeClick"
           onadshow="adShow"
           type="native"
         >
@@ -51,18 +50,18 @@
       </block>
     </div>
 
-    <div
+    <!-- <div
       if="{{showTclayer}}"
       class="tc-layer"
       onclick="reportNativeClick()"
-    ></div>
+    ></div> -->
   </div>
 </template>
 
 <script>
-const { adCodeData } = require('../../../config.js').default
+const { adCodeData } = require('../../../../config.js').default
+let nativeAd
 module.exports = {
-
   props: {
     showTclayer: {
       type: Boolean,
@@ -73,48 +72,81 @@ module.exports = {
   data: {
     hasAdList: false,
     adList: [],
-    adData: { // 此处广告的初始值需严格按照文档来
+    adData: {
+      // 此处广告的初始值需严格按照文档来
       imgUrlList: [],
       title: '',
       desc: '',
-      clickBtnTxt: ''
+      clickBtnTxt: '',
     },
     adunitid: '',
-    isShow: true
-
+    isShow: true,
+    param: {},
   },
   onInit() {
-    let branch = $ad.getProvider();
-    let adid = adCodeData[branch ? branch : 'HUAWEI'].nativeAd_cfd
+    let branch = $ad.getProvider().toLowerCase()
+    let adid = adCodeData[branch].nativeAd_cfd
     console.info('原生广告id ', adid)
     this.adUnitId = adid
-
     this.adPreloaded()
+    const that = this
+    $device.getInfo({
+      success: function (res) {
+        const phoninfo = res
+        that.param = {
+          ua: `${phoninfo.manufacturer} ${phoninfo.model} ${phoninfo.product} ${phoninfo.osType}`,
+        }
+      },
+    })
   },
   adPreloaded() {
     $ad.preloadAd({
-      adUnitId: this.adUnitId,//原生信息流2.0广告位标识
-      adCount: 1,//预期返回的数据条数：取值范围1-3，其他数据则报错,此为必填字段
-      type: 'native',//所属广告位类型
+      adUnitId: this.adUnitId, //原生信息流2.0广告位标识
+      adCount: 1, //预期返回的数据条数：取值范围1-3，其他数据则报错,此为必填字段
+      type: 'native', //所属广告位类型
       ecpm: true,
       success: (data) => {
-        console.log(data, '预加载成功')//1112以下版本或adCount不传参，会返回‘success’,1112+版本会返回广告数据
+        console.log(data, '预加载成功') //1112以下版本或adCount不传参，会返回‘success’,1112+版本会返回广告数据
         //存储预加载数据
-        this.adList = data.adList//一次成功返回有1-3个数据，参照对应的adCount数（小概率情况下小于 adCount 数）
-        this.isShow = true;
-
+        this.adList = data.adList //一次成功返回有1-3个数据，参照对应的adCount数（小概率情况下小于 adCount 数）
+        this.isShow = true
       },
       fail: (err, code) => {
+        this.sensorsTrack({ errData: { errCode: err, errMsg: code } }, 'error')
         console.log(err, code, '预加载失败')
-      }
+      },
     })
+  },
+  //通知竞价失败接口
+  notifyRankLoss(adid, winPrice, code, channel) {
+    console.log(`开始通知竞价失败接口:${(adid, winPrice, code, channel)}`)
+    const data = $ad.notifyRankLoss({
+      winPrice: winPrice,
+      code: code, //可传 1,2,3,4
+      channel: channel, //可传mob,other,其他自定义值
+    })
+    console.log(`通知竞价失败接口正常返回:${JSON.stringify(data)}`)
+  },
+  //通知竞价成功接口和设置实际结算价接口
+  notifyRankWin(adid, ecpm) {
+    console.log(`开始通知竞价成功接口与开始实际结算价接口:${(adid, ecpm)}`)
+    const data1 = $ad.notifyRankWin({
+      adid: adid,
+      lossPrice: ecpm, //
+    })
+    const data2 = $ad.setBidECPM({
+      adid: adid,
+      ecpm: ecpm,
+    })
+    console.log(`通知竞价成功接口正常返回:${JSON.stringify(data1)}`)
+    console.log(`设置实际结算价接口正常返回:${JSON.stringify(data2)}`)
   },
 
   adLoad(evt) {
     if (evt && evt.adData) {
       const adData = JSON.parse(evt.adData)
       this.adData = adData
-      console.log('adLoad', adData, '信息流广告加载成功');
+      console.log('adLoad', adData, '信息流广告加载成功')
       this.isShow = true
     } else {
       this.isShow = false
@@ -122,111 +154,132 @@ module.exports = {
   },
   adShow(evt) {
     console.log('adShow: ', evt)
-
-    this.conversionUp(0)
+    this.sensorsTrack(evt, 'show')
+    this.conversionUp(false)
   },
   reportNativeClick(evt) {
-
     console.log('adClick: ', evt)
-
-    this.conversionUp(1)
+    this.conversionUp(true)
     $utils.buriedPointReport(this, { event: 'click', adId: this.adUnitId })
     //广告或透明层被点击后隐藏透明层
     this.showTclayer = false
-
+    this.sensorsTrack(evt, 'click')
   },
-
-  conversionUp(clickCount) {
-    let ecpmParam = {  //竞价相关参数
+  conversionUp(isClick) {
+    let ecpmParam = {
+      //竞价相关参数
       ecpm: this.adData.ecpm,
       adType: 'NATIVE',
       adPositionId: this.adUnitId,
-      clickCount: clickCount,
-      isclick: clickCount == 1 ? true : false
+      isclick: isClick,
     }
-    console.log('竞价相关参数', ecpmParam);
+    console.log('竞价相关参数222', ecpmParam)
+
     $utils.conversionUpload(this, ecpmParam)
   },
-  adError(err, evt) {
-    if (err) {
-      console.log('adError 信息流广告加载出错：', err)
-    } else if (evt) {
-      console.log('adError 信息流广告展示失败：', evt.errCode, evt.errMsg)
+  // 埋点上报
+  sensorsTrack(e = {}, type = 'show') {
+    try {
+      const { formId = '', subTitle = '', errData = {} } = e
+      let apid = formId || this.adUnitId
+      $adFun.newBurialSite(this, {
+        eventName: type, // 事件名
+        formId: apid, // 广告id
+        subTitle: subTitle,
+        errData: errData,
+        ...this.$app.$def.dataApp.actiParam,
+      })
+    } catch (error) {
+      console.log(error, '埋点报错')
     }
   },
+  adError(errCode, errMsg) {
+    this.sensorsTrack({  errData: {
+          errCode: errCode.errCode,
+          errMsg: errCode.errMsg,
+        } }, 'error')
+  },
   closeAd: function () {
-    this.isShow = false;
+    this.isShow = false
   },
 
   completeAdRSA() {
-    console.log('点击拆福袋');
+    console.log('点击拆福袋')
     //先判断广告没有没加载出来，没有就直接返回不执行接口
 
     if (!this.isShow) {
-      console.log('广告展示不成功,拆红包不成功');
+      console.log('广告展示不成功,拆红包不成功')
       $prompt.showToast({
         message: '拆红包失败！请重试',
-        gravity: 'center'
-      });
+        gravity: 'center',
+      })
 
       this.$emit('emitClose')
       return
     }
 
-
     var adType = 'NATIVE'
     var adId = this.adUnitId
-    var channel = this.$app.$def.dataApp.channel
-    var countMax = this.$app.$def.dataApp.countMax
-    var brand = this.$app.$def.dataApp.brand
+    var channel = 'mxpc'
+    var countMax = 8
+    var brand = $ad.getProvider().toLowerCase()
     // 构建参数对象
     const params = {
       adType,
       adId,
       channel,
       countMax,
-      brand
-    };
+      brand,
+    }
+    let headers = {
+      ...this.param,
+    }
+    $apis.task
+      .postFinishCompleteAd(
+        {
+          ...params,
+        },
+        headers
+      )
+      .then((res) => {
+        console.log(
+          `完成广告----------> jumpLink:${res.data.jumpLink}, 完成次数：${res.data.count} 当次奖励：${res.data.awardAmount}`
+        )
 
-    $apis.example.completeAdRSA(params).then((res) => {
-
-      console.log(`完成广告----------> jumpLink:${res.data.jumpLink}, 完成次数：${res.data.count} 当次奖励：${res.data.awardAmount}`);
-
-      //先判断有没有返回跳转链接，有就跳
-      if (res.data.jumpLink) {
-        $router.push({
-          uri: res.data.jumpLink
-        });
-
-      } else {
-        var mes = ''
-        if (res.data.awardAmount) {
-          mes = '恭喜获得0.01元红包'
+        //先判断有没有返回跳转链接，有就跳
+        if (res.data.jumpLink) {
+          $router.push({
+            uri: res.data.jumpLink,
+          })
         } else {
-          if (res.data.count > 8) {
-            mes = '今天活动次数已用完'
+          var mes = ''
+          if (res.data.awardAmount) {
+            mes = '恭喜获得0.01元红包'
           } else {
-            mes = '再来一次'
+            if (res.data.count > 8) {
+              mes = '今天活动次数已用完'
+            } else {
+              mes = '再来一次'
+            }
           }
+          $prompt.showToast({
+            message: mes,
+            gravity: 'center',
+          })
         }
-        $prompt.showToast({
-          message: mes,
-          gravity: 'center'
+
+        this.$emit('emitEvt', {
+          count: res.data.count,
         })
-      }
-
-      this.$emit('emitEvt', {
-        count: res.data.count
       })
-    }).catch(err => {
-      console.log(err, '点击拆福袋错误');
-      $prompt.showToast({
-        message: JSON.parse(err).message,
-        gravity: 'center'
-      });
-    });
-  }
-
+      .catch((err) => {
+        console.log(err, '点击拆福袋错误')
+        $prompt.showToast({
+          message: JSON.parse(err).message,
+          gravity: 'center',
+        })
+      })
+  },
 }
 </script>
 <style lang="less">
@@ -235,6 +288,7 @@ module.exports = {
   height: 850px;
   position: absolute;
   bottom: 100px;
+  /* background-color: #fcf; */
 }
 
 .item-container {

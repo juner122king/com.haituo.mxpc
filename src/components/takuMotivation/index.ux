@@ -1,0 +1,209 @@
+<import name="topon-ad" src="@topon/quick-app-sdk/placement.ux"></import>
+<template>
+  <div>
+    <div class="takuMotivation">
+      <!-- 使用Placement组件 -->
+      <topon-ad
+        id="topon-ad-{{placementId}}"
+        placement-id="{{placementId}}"
+        config="{{config}}"
+        @ad-load="handleAdLoad"
+        @ad-show="handleAdShow"
+        @ad-close="handleAdClose"
+        @ad-click="handleAdClick"
+        @ad-reward="handleAdReward"
+        @ad-error="handleAdError"
+        if="{{placementId}}"
+        @ad-unit-bidding-filled="handUnitBidding"
+      ></topon-ad>
+    </div>
+  </div>
+</template>
+
+<script>
+const device = require('@system.device')
+const { adCodeData } = require('../../config.js').default
+export default {
+  data: {
+    loaded: false,
+    isGetAd: false,
+    config: {
+      entry: '/pages/Home', // 开屏广告结束后打开的第一个页面
+      timeout: 30000, // 默认0（走默认，开屏5秒，其他300秒），单位毫秒
+    },
+    placementId: '', // 请替换为您在topon 开发者后台上的placementId
+    param: {},
+    brand: '',
+    ecpm: 0,
+  },
+  props: {},
+  onInit: function () {
+    let adBrand = $ad.getProvider().toLowerCase()
+    this.placementId = adCodeData[adBrand].taku.stimulateAd
+    console.log(this.placementId, 'this.placementId')
+    const that = this
+    device.getInfo({
+      success: function (res) {
+        that.brand = res.brand
+        const phoninfo = res
+        that.bannerTop = res.screenLogicHeight - 160 || 1400
+        // console.log(res, '查看设备信息');
+        that.param = {
+          ua: `${phoninfo.manufacturer} ${phoninfo.model} ${phoninfo.product} ${phoninfo.osType}`,
+        }
+      },
+    })
+  },
+  // 广告源Load成功回调
+  handleAdLoad(e) {
+    this.$broadcast('logsUnshift', 'demo接收load回调：' + JSON.stringify(e))
+    console.log('demo接收load回调', e)
+    this.loaded = true
+    // 需要等待load完成后获取
+  },
+
+  // 广告源Show成功回调
+  handleAdShow(e) {
+    this.$broadcast('logsUnshift', 'demo接收show回调：' + JSON.stringify(e))
+    console.log('demo接收show回调', e)
+  },
+
+  // 广告源Close成功回调
+  handleAdClose(e) {
+    this.$broadcast('logsUnshift', 'demo接收close回调：' + JSON.stringify(e))
+    console.log('demo接收close回调', e)
+
+    // this.$parent().changeReward()
+
+    this.$emit('emitClone', {
+      status: 'close',
+      data: {
+        isReward: e.detail.reward,
+      },
+    })
+  },
+  finishStimulateAd: $utils.throttle(function (params) {
+    console.log('进来了完成奖励视频')
+    // 完成视频广告
+  }),
+  // 埋点上报
+  sensorsTrack(e = {}, type = 'show') {
+    try {
+      const { formId = '', subTitle = '', errData = '' } = e
+      let apid = formId || this.placementId
+      $adFun.newBurialSite(this, {
+        eventName: type, // 事件名
+        formId: apid, // 广告id
+        subTitle: subTitle || `塔库激励`, //页面名
+        errData: errData,
+        ...this.$app.$def.dataApp.actiParam,
+      })
+    } catch (error) {
+      console.log(error, '埋点报错')
+    }
+  },
+  handleAdClick(e) {
+    this.$broadcast('logsUnshift', 'demo接收click回调：' + JSON.stringify(e))
+    console.log('demo接收click回调', e)
+  },
+
+  handleAdReward(e) {
+    // this.$broadcast('logsUnshift', 'demo接收reward回调：' + JSON.stringify(e))
+    console.log('demo接收reward回调完成回调', e)
+    this.sensorsTrack(e, 'click')
+    try {
+      $utils.conversionUpload(this, {
+        adType: 'REWARDED_VIDEO',
+        adPositionId: this.placementId,
+        isclick: true,
+        ecpm: this.ecpm,
+      })
+    } catch (error) {
+      console.log(error, 'taku的问题')
+    }
+  },
+
+  handleAdError(e) {
+    this.$broadcast('logsUnshift', 'demo接收error回调：' + JSON.stringify(e))
+    console.log('demo接收error回调', e)
+    this.sensorsTrack({ errData: e.detail }, 'error')
+    this.$emit('emitClone', {
+      status: 'error',
+      data: {},
+    })
+  },
+  handleDisplayAd() {
+    console.log('进来了展示广告')
+    this.$broadcast('logsUnshift', '执行Show')
+    const placement = this.getSdkElement()
+    if (placement.show) {
+      placement.show()
+    }
+  },
+
+  handleLoadAd() {
+    this.$broadcast('logsUnshift', '执行Load')
+    this.isGetAd = false
+    console.log('执行onload')
+    const placement = this.getSdkElement()
+    if (placement.load) {
+      placement.load()
+    }
+  },
+
+  handleIsReady() {
+    const placement = this.getSdkElement()
+    console.log(this.placementId, 'this.placementId查看这个是什么')
+    let placementId = this.$child(`topon-ad-${this.placementId}`)
+    if (placement.isReady) {
+      const isReady = placement.isReady()
+      this.$broadcast('logsUnshift', 'isReady: ' + isReady)
+      console.log(isReady, '激励广告是否准备完成')
+      if (!isReady) {
+        $utils.showToast('请稍后重试')
+      }
+      return isReady
+    }
+  },
+
+  handleGetAd() {
+    if (!this.loaded) {
+      this.$broadcast('logsUnshift', '请等待加载完成后再获取数据')
+      console.log('请等待加载完成后再获取数据')
+      return false
+    }
+    const placement = this.getSdkElement()
+    if (placement) {
+      const currentAd = placement.getAd()
+      console.log('currentAd', currentAd)
+      if (!currentAd) {
+        return false
+      }
+      this.isSelfRendering = currentAd?.isSelfRendering
+      this.isGetAd = true
+      this.$broadcast('logsUnshift', currentAd)
+    }
+
+    return true
+  },
+  handUnitBidding(e) {
+    try {
+      console.log(e, '查看返回的塔库参数')
+      const ecpm = e.detail.cyEcpm * 100
+      this.ecpm = ecpm
+      console.log(ecpm, '塔库激励ecpm')
+      $utils.conversionUpload(this, {
+        adType: 'REWARDED_VIDEO',
+        adPositionId: this.placementId,
+        isclick: false,
+        ecpm: ecpm,
+      })
+    } catch (error) {
+      console.log(error, '查看taku的问题')
+    }
+  },
+  getSdkElement() {
+    return this.$child(`topon-ad-${this.placementId}`)
+  },
+}
+</script>

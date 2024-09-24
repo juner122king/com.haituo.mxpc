@@ -1,0 +1,87 @@
+<template>
+  <div>
+    <div class="addDesktopReminder" if="{{isShow}}">
+      <div class="left">
+        <image class="icon" src="/Common/logo.png"></image>
+        <text class="txt"> 加桌面立享极速轻体验 </text>
+      </div>
+
+      <input type="button" value="立即添加" class="btn" @click="submit" />
+    </div>
+  </div>
+</template>
+
+
+<script>
+const shortcut = require('@system.shortcut')
+export default {
+  data: {
+    isShow: false
+  },
+  onInit() {
+    this.getShortcut()
+  },
+  getShortcut() {
+    const that = this;
+    shortcut.hasInstalled({
+      success: function (e) {
+        console.log(e, '查看是否已创建图标');
+        that.isShow = !e;
+      }
+    })
+  },
+  submit() {
+    const that = this;
+    shortcut.install({
+      success: function () {
+        console.log('handling success')
+        that.isShow = false;
+        $utils.showToast('添加成功')
+      },
+      fail: function (data, code) {
+        $utils.showToast('添加失败')
+        console.log(`handling fail, code = ${code}, errorMsg=${data}`)
+      }
+    })
+  }
+}
+</script>
+
+<style lang="less">
+.addDesktopReminder {
+  width: 100%;
+  height: 88px;
+  background-color: rgba(0, 0, 0, 0.5);
+  position: fixed;
+  bottom: 104.2px;
+  left: 0;
+  justify-content: space-between;
+  padding: 0 32px;
+  align-items: center;
+  .left {
+    align-items: center;
+    .icon {
+      width: 56px;
+      height: 56px;
+      border-radius: 8px;
+    }
+    .txt {
+      font-size: 28px;
+      font-weight: 500;
+      color: #ffffff;
+      margin-left: 20px;
+    }
+  }
+
+  .btn {
+    width: 168px;
+    height: 56px;
+    background-color: #ff0204;
+    border-radius: 110px;
+    font-size: 24px;
+    font-family: PingFang SC, PingFang SC-Medium;
+    font-weight: 500;
+    color: #ffffff;
+  }
+}
+</style>

@@ -1,5 +1,8 @@
-<import name="transparency-mask" src="../../../components/transparency-mask/index.ux"></import>
 <import name="icon" src="apex-ui/components/icon/index"></import>
+<import
+  name="transparency-mask"
+  src="../../../components/transparency-mask/index.ux"
+></import>
 <!-- 停留3秒显示弹窗 -->
 <template>
   <div>
@@ -10,15 +13,19 @@
         adId="{{adList.adId}}"
         type="native"
         closeBtnPosition="right-top"
-        onerror="error"
+        onerror="adError"
         onadclick="adClick"
         onadclose="close"
-        onadshow="adShow"
+        onadshow="adSuccShow"
       >
         <div class="container">
           <div class="tisp-title">
             <text class="tisp-title-txt">退出前看个广告？</text>
-            <ad-clickable-area class="close-item" if="{{showTransparency}}">
+            <ad-clickable-area
+              class="close-item"
+              if="{{showTransparency}}"
+              type="click"
+            >
               <icon
                 type="close"
                 size="40"
@@ -31,28 +38,23 @@
                 type="close"
                 size="40"
                 color="#000000"
-                onclick="close"
+                onclick="close(1)"
               ></icon>
             </div>
           </div>
           <!-- 头部图片 -->
-          <div class="vertical-content top-big-img">
-            <ad-clickable-area type="click" class="ad-image">
+          <ad-clickable-area type="click" class="vertical-content top-big-img">
+            <div class="ad-image">
               <image
                 src="{{ adList.imgUrlList? adList.imgUrlList[0]: defaultAd.img }}"
               ></image>
-            </ad-clickable-area>
-            <div class="float">
-              <ad-clickable-area
-                type="privacy"
-                class="ad-image"
-              ></ad-clickable-area>
-              <ad-clickable-area
-                type="logo"
-                class="ad-image"
-              ></ad-clickable-area>
             </div>
-          </div>
+
+            <div class="float">
+              <ad-clickable-area type="privacy" class=""></ad-clickable-area>
+              <ad-clickable-area type="logo" class=""></ad-clickable-area>
+            </div>
+          </ad-clickable-area>
 
           <!-- 底下内容 -->
           <div class="vertical-content horizontal-content">
@@ -66,6 +68,7 @@
             </div>
             <div class="foot-btn vertical-content">
               <ad-clickable-area
+                if="{{branch !== 'xiaomi'}}"
                 type="button"
                 class="click-item"
                 value="{{
@@ -73,6 +76,14 @@
                 }}"
               >
               </ad-clickable-area>
+              <ad-clickable-area type="click" class="click-item" else>
+                <text class="ad-s-title-txt">
+                  {{
+                    btnTxt || adList.clickBtnTxt || defaultAd.clickBtnTxt
+                  }}</text
+                >
+              </ad-clickable-area>
+
               <text style="margin-top: 10px; font-size: 22px" @click="backHome"
                 >立即退出</text
               >
@@ -83,7 +94,7 @@
       <transparency-mask
         sportTitle="退出前看个广告弹窗"
         onemit-hide-transparency="hideTransparency"
-        if="{{showTransparency}}"
+        if="{{showTransparency && branch !== 'xiaomi'}}"
       ></transparency-mask>
     </div>
   </div>
@@ -99,111 +110,157 @@ export default {
       adList: {},
       hasAdList: false,
       defaultAd: {
-        desc: '提供最优质的商业化解决方案。流量联盟广告联盟。',
-        title: '流量联盟',
+        desc: '广告流量联盟，为用户提供最优质的商业化解决方案。',
+        title: '广告流量联盟',
         icon: '广告',
         clickBtnTxt: '点击安装',
-        img: "http://cdn.bank-zone.cn/pro/sy/admin/advertising/3639bdbde8e84397a297ad54f89ac4c3.jpg"
+        img: 'https://cdn.ihaituo.cn/pro/sy/admin/advertising/3639bdbde8e84397a297ad54f89ac4c3.jpg',
       },
       btnTxt: '',
-      adId: "",
-      adObj: "",
+      adId: '',
+      adObj: '',
       showClik: false,
+      ecpm: 0,
+      branch: '',
     }
   },
   props: {
     showTransparency: {
-      default: false
-    }
+      default: false,
+    },
+    sportTitle: {
+      default: '挽留弹窗-原生',
+    },
   },
   onInit() {
-    const branch = $ad.getProvider()
+    const branch = $ad.getProvider().toLowerCase()
+    this.branch = branch
     this.adObj = adCodeData[branch]
-    this.adId = adCodeData[branch].fiction3;
+    this.adId = adCodeData[branch].fiction3
     this.preloadAd()
   },
   preloadAd() {
     try {
+      const that = this
       require('@service.ad').preloadAd({
         adUnitId: this.adId, // 原生信息流广告广告位id
         type: 'native', // 原生信息流广告
         adCount: 1,
         ecpm: true,
         success: (data) => {
-          console.log(data, '返回广告成功4');
-          this.adList = data.adList[0];
-          this.hasAdList = true;
+          console.log(data, '返回广告退出弹窗')
+          this.adList = data.adList[0]
+          this.hasAdList = true
           if (this.debug) {
             prompt.showToast({
-              message: `ad load success`
+              message: `ad load success`,
             })
           }
         },
         fail: (data, code) => {
           this.$emit('emitClose', {
-            data: 'showVackTisp'
+            data: 'showVackTisp',
           })
+
+          this.sensorsTrack({ errData: data }, 'error')
           if (code === 205) {
-            this.hasAdList = true;
+            this.hasAdList = true
             this.adList = data.adList[0]
           } else {
             if (this.debug) {
               prompt.showToast({
-                message: `ad load fail!data= ${JSON.stringify(data)},code= ${code}`
+                message: `ad load fail!data= ${JSON.stringify(
+                  data
+                )},code= ${code}`,
               })
             }
           }
-        }
+        },
       })
     } catch (e) {
-      console.log(e, e.message);
+      console.log(e, e.message)
     }
   },
-  error(errCode, errMsg) {
-    this.$emit('emitClose', {
-      data: 'showVackTisp'
-    })
-    if (this.debug) {
-      prompt.showToast({
-        message: `ad load error: errCode = ${errCode}, errMsg = ${errMsg}`
-      });
-    }
-  },
-  adClick() {
-    console.log('没有点击回调吗');
-
-    this.conversionUp('1')
-    this.$emit('emitHideTransparency')
-    $utils.buriedPointReport(this, 'click', this.adId)
-    //后台单个埋点 - 事件：广告点击
-  },
-
-  adShow(evt) {
-    console.log('小说广告show: ', evt)
-
-    this.conversionUp('0')
-  },
-  conversionUp(clickCount) {
-    let ecpmParam = {  //竞价相关参数
-      ecpm: this.adList.ecpm,
-      adType: 'NATIVE',
-      adPositionId: this.adId,
-      clickCount: clickCount
-    }
-    console.log('竞价相关参数', ecpmParam);
-    $utils.conversionUpload(this, ecpmParam)
-  },
-  close() {
-    console.log('没有关闭回调吗');
-    this.hasAdList = false;
+  adError(errCode, errMsg) {
     this.$emit('emitClose', {
       data: 'showVackTisp',
-      closeType: "close"
+    })
+    this.sensorsTrack({  errData: {
+          errCode: errCode.errCode,
+          errMsg: errCode.errMsg,
+        } }, 'error')
+  },
+  // 埋点上报
+  sensorsTrack(e = {}, type = 'show') {
+    try {
+      const { formId = '', subTitle = '', errData = {} } = e
+      let apid = formId || this.adId
+      $adFun.newBurialSite(this, {
+        eventName: type, // 事件名
+        formId: apid, // 广告id
+        subTitle: subTitle || `退出前看个广告弹窗`, //页面名
+        errData: errData,
+        ...this.$app.$def.dataApp.actiParam,
+      })
+    } catch (error) {
+      console.log(error, '埋点报错')
+    }
+  },
+  adSuccShow(e) {
+    $utils.conversionUpload(this, {
+      adType: 'NATIVE',
+      adPositionId: this.adId,
+      isclick: false,
+      ecpm: this.adList.ecpm,
+    })
+    this.sensorsTrack(e, 'show')
+  },
+  adClick(e) {
+    console.log('没有点击回调吗')
+    $utils.conversionUpload(this, {
+      adType: 'NATIVE',
+      adPositionId: this.adId,
+      isclick: true,
+      ecpm: this.adList.ecpm,
+    })
+    $utils.buriedPointReport(this, { event: 'click', adId: this.adId })
+    this.sensorsTrack(e, 'click')
+    this.$emit('emitHideTransparency')
+    this.hasAdList = false
+    this.preloadAd()
+  },
+  close(type = '') {
+    if (type) {
+      let str = `x${type}`
+      this.sensorsTrack(
+        {
+          subTitle: `退出前看个广告弹窗-${str}`,
+        },
+        'click'
+      )
+    }
+    console.log('没有关闭回调吗')
+    this.hasAdList = false
+    this.$emit('emitClose', {
+      data: 'showVackTisp',
+      closeType: 'close',
     })
   },
+  adError(errCode, errMsg) {
+    this.sensorsTrack({  errData: {
+          errCode: errCode.errCode,
+          errMsg: errCode.errMsg,
+        } }, 'error')
+  },
   backHome() {
+    this.sensorsTrack(
+      {
+        subTitle: `退出前看个广告弹窗-立即退出`,
+      },
+      'click'
+    )
     $router.replace({
-      uri: "pages/displayDesktop"
+      uri: 'pages/displayDesktop',
     })
   },
   hideTransparency() {
@@ -284,7 +341,7 @@ export default {
 
         .float {
           position: absolute;
-          top: 0;
+          bottom: 0;
           width: 100%;
           justify-content: space-between;
         }
@@ -350,6 +407,11 @@ export default {
             animation-duration: 1200ms;
             animation-timing-function: ease-out;
             animation-iteration-count: infinite;
+            justify-content: center;
+            align-items: center;
+            text {
+              color: #ffffff;
+            }
           }
           @keyframes scaleDraw {
             0% {

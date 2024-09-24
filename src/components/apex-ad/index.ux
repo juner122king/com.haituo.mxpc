@@ -11,6 +11,7 @@
         onadclick="adClick"
         onadclose="close"
         type="native"
+        onadshow="sensorsTrack"
       >
         <div class="container">
           <block if="{{ adList.creativeType===2}}">
@@ -117,21 +118,22 @@ export default {
       adList: {},
       hasAdList: false,
       defaultAd: {
-        desc: '提供最优质的商业化解决方案。流量联盟广告联盟。',
-        title: '流量联盟',
+        desc: '广告流量联盟，为用户提供最优质的商业化解决方案。',
+        title: '广告流量联盟',
         icon: '广告',
-        clickBtnTxt: '点击安装'
+        clickBtnTxt: '点击安装',
       },
       btnTxt: '',
+      ecpm: '',
     }
   },
   props: {
     adUnitId: {
-      default: ''
+      default: '',
     },
     debug: {
-      default: false
-    }
+      default: false,
+    },
   },
   onInit() {
     this.preloadAd()
@@ -144,64 +146,97 @@ export default {
         adCount: 1,
         ecpm: true,
         success: (data) => {
-          console.log(data, '返回广告成功');
-          this.adList = data.adList[0];
-          this.hasAdList = true;
+          console.log(data, '返回广告成功')
+          this.adList = data.adList[0]
+          this.hasAdList = true
           if (this.debug) {
             prompt.showToast({
-              message: `ad load success`
+              message: `ad load success`,
             })
           }
         },
         fail: (data, code) => {
-          this.$emit('error');
-          console.log(data, code);
+          this.sensorsTrack({ errData: data }, 'error')
+          this.$emit('error')
+          console.log(data, code)
           if (code === 205) {
-            this.hasAdList = true;
+            this.hasAdList = true
             this.adList = data.adList[0]
           } else {
             if (this.debug) {
               prompt.showToast({
-                message: `ad load fail!data= ${JSON.stringify(data)},code= ${code}`
+                message: `ad load fail!data= ${JSON.stringify(
+                  data
+                )},code= ${code}`,
               })
             }
           }
-        }
+        },
       })
     } catch (e) {
-      console.log(e, e.message);
-      this.$emit('error', e);
+      console.log(e, e.message)
+      this.$emit('error', e)
+    }
+  },
+  adSuccShow() {
+    $utils.conversionUpload(this, {
+      adType: 'NATIVE',
+      adPositionId: this.adUnitId,
+      isclick: false,
+      ecpm: this.adList.ecpm,
+    })
+    this.sensorsTrack({}, 'show')
+  },
+  // 埋点上报
+  sensorsTrack(e = {}, type = 'show') {
+    try {
+      const { formId = '', errData = {}, subTitle = '' } = e
+      let apid = formId || this.adUnitId
+      $adFun.newBurialSite(this, {
+        eventName: type, // 事件名
+        formId: apid, // 广告id
+        subTitle: subTitle || '轮盘抽奖原生广告',
+        errData: errData,
+        ...this.$app.$def.dataApp.actiParam,
+      })
+    } catch (error) {
+      console.log(error, '埋点报错')
     }
   },
   error(errCode, errMsg) {
-    console.log('没有报错回调吗');
+    console.log('没有报错回调吗')
     if (this.debug) {
       prompt.showToast({
-        message: `ad load error: errCode = ${errCode}, errMsg = ${errMsg}`
-      });
+        message: `ad load error: errCode = ${errCode}, errMsg = ${errMsg}`,
+      })
     }
-    this.$emit('error', { errCode, errMsg });
+    this.sensorsTrack(
+      {
+        errData: {
+          errCode: errCode.errCode,
+          errMsg: errCode.errMsg,
+        }
+      },
+      'error')
+    this.$emit('error', { errCode, errMsg })
   },
   adClick() {
-    console.log('没有点击回调吗');
-    this.$emit('adclick');
-
-    let ecpmParam = {  //竞价相关参数
-      ecpm: this.adList.ecpm,
+    console.log('没有点击回调吗')
+    this.$emit('adclick')
+    $utils.conversionUpload(this, {
       adType: 'NATIVE',
       adPositionId: this.adUnitId,
-      clickCount: '1'
-    }
-    console.log('竞价相关参数', ecpmParam);
-    $utils.conversionUpload(this, ecpmParam)
-
-    $utils.buriedPointReport(this, 'click', this.adUnitId)
+      isclick: true,
+      ecpm: this.adList.ecpm,
+    })
+    $utils.buriedPointReport(this, { event: 'click', adId: this.adUnitId })
+    this.sensorsTrack({}, 'click')
   },
   close() {
-    console.log('没有关闭回调吗');
-    this.hasAdList = false;
-    this.$emit('close');
-  }
+    console.log('没有关闭回调吗')
+    this.hasAdList = false
+    this.$emit('close')
+  },
 }
 </script>
 

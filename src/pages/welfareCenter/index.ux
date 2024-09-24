@@ -313,13 +313,7 @@ export default {
     console.log(versionCode, 'versionCode');
   },
   onReady() {
-    // setTimeout(() => {
-    //   $utils.buriedPointReport(this, 'click', '999999')
-    // }, 5000)
 
-    // setTimeout(() => {
-    //   this.rewardedVideoAd.show()
-    // })
   },
   onShow() {
     this.getUserInfo()
@@ -360,7 +354,6 @@ export default {
     } else if (type === 'redbao') {
       $router.push({
         uri: 'pages/luckyBagOpen'
-        // uri:'hap://app/com.haituo.mxpc/pages/advertisingCampaigns?channelValue=ucdtsgk1&type=oppo&adId=$ad$&imei=__IMEI__&oaid=__OAID__&ts=__TS__&ownerId=$ownerid$&requestId=$req$'
       })
     }
   },

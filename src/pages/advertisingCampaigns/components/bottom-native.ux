@@ -1,27 +1,25 @@
-
 <import name="icon" src="apex-ui/components/icon/index"></import>
-
 <template>
   <div>
-    <div class="bottom-native" if="{{hasAdList}}">
+    <div
+      class="bottom-native"
+      if="{{hasAdList}}"
+      style="{{`bottom:${bottomSize}px`}}"
+    >
       <ad
         adId="{{adList.adId}}"
         class="ad-native"
         show="{{!!adList.adId}}"
-        onerror="error"
+        onerror="adError"
         onadclick="adClick"
         onadclose="close"
         type="native"
-        onadshow="adShow"
+        onadshow="adSuccShow"
       >
         <div class="container">
           <div class="left-img">
             <!-- 图片 -->
-            <ad-clickable-area
-              type="click"
-              class="ad-img"
-              if="{{adList.imgUrlList}}"
-            >
+            <ad-clickable-area type="click" class="ad-img">
               <image
                 src="{{adList.imgUrlList? adList.imgUrlList[0]: defaultAd.img }}"
               ></image>
@@ -44,7 +42,7 @@
                 type="close"
                 size="40"
                 color="#FFFFFF"
-                onclick="close"
+                onclick="close(1)"
               ></icon>
             </div>
           </div>
@@ -66,12 +64,28 @@
 
           <div class="click-item">
             <ad-clickable-area
+              if="{{branch !== 'xiaomi'}}"
               type="button"
               class="click-txt"
               vaule="{{
                   btnTxt || adList.clickBtnTxt || defaultAd.clickBtnTxt
                 }}"
             >
+              <text>{{
+                btnTxt || adList.clickBtnTxt || defaultAd.clickBtnTxt
+              }}</text>
+            </ad-clickable-area>
+            <ad-clickable-area
+              else
+              type="click"
+              class="click-txt"
+              vaule="{{
+                  btnTxt || adList.clickBtnTxt || defaultAd.clickBtnTxt
+                }}"
+            >
+              <text>{{
+                btnTxt || adList.clickBtnTxt || defaultAd.clickBtnTxt
+              }}</text>
             </ad-clickable-area>
           </div>
           <div class="float">
@@ -80,9 +94,9 @@
             </div>
             <text class="float-txt" if="{{adList.hasAppMiitInfo}}">{{
               adList.appInfo.appName +
-                adList.appInfo.appSize +
-                adList.appInfo.appVersion +
-                adList.appInfo.developer
+              adList.appInfo.appSize +
+              adList.appInfo.appVersion +
+              adList.appInfo.developer
             }}</text>
           </div>
 
@@ -95,7 +109,12 @@
           </ad-clickable-area>
 
           <div class="top-close" else>
-            <icon type="close" size="50" color="#000000" onclick="close"></icon>
+            <icon
+              type="close"
+              size="50"
+              color="#000000"
+              onclick="close(2)"
+            ></icon>
           </div>
         </div>
       </ad>
@@ -109,115 +128,164 @@ export default {
   data: {
     hasAdList: true,
     defaultAd: {
-      desc: '提供最优质的商业化解决方案。流量联盟广告联盟。',
-      title: '流量联盟',
+      desc: '广告流量联盟，为用户提供最优质的商业化解决方案。',
+      title: '广告流量联盟',
       icon: '广告',
       clickBtnTxt: '点击安装',
-      img: "http://cdn.bank-zone.cn/pro/sy/admin/advertising/3639bdbde8e84397a297ad54f89ac4c3.jpg"
+      img: 'https://cdn.ihaituo.cn/pro/sy/admin/advertising/3639bdbde8e84397a297ad54f89ac4c3.jpg',
     },
     btnTxt: '',
-    adUnitId: "",
-    adList: ""
+    adUnitId: '',
+    adList: '',
+    ecpm: 0,
+    branch: '',
   },
   props: {
     showTransparency: {
-      default: false
-    }
+      default: false,
+    },
+    sportTitle: {
+      default: '底部banner-原生',
+    },
+    bottomSize: {
+      default: 0,
+    },
   },
   onInit() {
-    const branch = $ad.getProvider()
+    const branch = $ad.getProvider().toLowerCase()
     this.adObj = adCodeData[branch]
-    this.adUnitId = adCodeData[branch].fiction1;
+    this.branch = branch
+    this.adUnitId = adCodeData[branch].fiction5
+    // if (branch === 'oppo') {
+    //   this.adUnitId = adCodeData[branch].fiction5;
+    // }
+
     this.preloadAd()
   },
-  onReady() {
-
-  },
+  onReady() {},
   preloadAd() {
     try {
-      console.log(this.adUnitId, '查看广告id编码');
+      const that = this
+      console.log(this.adUnitId, '查看广告id编码')
       require('@service.ad').preloadAd({
         adUnitId: this.adUnitId, // 原生信息流广告广告位id
         type: 'native', // 原生信息流广告
         adCount: 1,
         ecpm: true,
         success: (data) => {
-          console.log(data, '返回广告成功');
+          console.log(data, '返回广告成功-底部仿banner')
           this.adList = data.adList[0]
-          this.hasAdList = true;
+          this.hasAdList = true
+
+          // that.$app.$sensors.track('$AppClick', {
+          //   analysis: {
+          //     title: `${that.sportTitle}-底部banner-展示`,
+          //     appId: that.adUnitId
+          //   }
+          // })
+
           if (this.adList.appInfo) {
-            this.adList.appInfo.appSize = this.convertAppSize(this.adList.appInfo.appSize)
+            this.adList.appInfo.appSize = this.convertAppSize(
+              this.adList.appInfo.appSize
+            )
           }
           if (this.debug) {
             prompt.showToast({
-              message: `ad load success`
+              message: `ad load success`,
             })
           }
         },
         fail: (data, code) => {
-          console.log(data, code, '返回广告失败2');
+          this.sensorsTrack({ errData: data }, 'error')
+          console.log(data, code, '返回广告失败2')
           if (code === 205) {
-            this.hasAdList = true;
+            this.hasAdList = true
             this.adList = data.adList[0]
           } else {
             if (this.debug) {
               prompt.showToast({
-                message: `ad load fail!data= ${JSON.stringify(data)},code= ${code}`
+                message: `ad load fail!data= ${JSON.stringify(
+                  data
+                )},code= ${code}`,
               })
             }
           }
-        }
+        },
       })
     } catch (e) {
-      console.log(e, e.message);
+      console.log(e, e.message)
     }
   },
-  error(errCode, errMsg) {
-    console.log('没有报错回调吗');
-    this.$emit('error', { errCode, errMsg });
+  adError(errCode, errMsg) {
+    console.log('没有报错回调吗', errCode, errMsg)
+    this.$emit('error', { errCode, errMsg })
+    this.sensorsTrack({  errData: {
+          errCode: errCode.errCode,
+          errMsg: errCode.errMsg,
+        } }, 'error')
   },
-  adShow(evt) {
-    console.log('小说广告show: ', evt)
-
- this.conversionUp('0')
+  // 埋点上报
+  sensorsTrack(e = {}, type = 'show') {
+    try {
+      const { formId = '', subTitle = '', errData = {} } = e
+      let apid = formId || this.adUnitId
+      $adFun.newBurialSite(this, {
+        eventName: type, // 事件名
+        formId: apid, // 广告id
+        subTitle: subTitle || `底部仿banner`, //页面名
+        ...this.$app.$def.dataApp.actiParam,
+      })
+    } catch (error) {
+      console.log(error, '埋点报错')
+    }
   },
   adClick() {
-    console.log('没有点击回调吗');
-    console.log('怎么触发的是这里的');
-
-    this.conversionUp('1')
-
-    this.$emit('emitHideTransparency')
-    //后台单个埋点 - 事件：广告点击
-    $utils.buriedPointReport(this, 'click', this.adUnitId)
-  },
-  conversionUp(clickCount) {
-    let ecpmParam = {  //竞价相关参数
-      ecpm: this.adList.ecpm,
+    console.log('怎么触发的是这里的')
+    $utils.conversionUpload(this, {
       adType: 'NATIVE',
       adPositionId: this.adUnitId,
-      clickCount: clickCount
-    }
-    console.log('竞价相关参数', ecpmParam);
-    $utils.conversionUpload(this, ecpmParam)
+      isclick: true,
+      ecpm: this.adList.ecpm,
+    })
+    $utils.buriedPointReport(this, { event: 'click', adId: this.adUnitId })
+    this.hasAdList = false
+    this.preloadAd()
+    this.$emit('emitHideTransparency')
+    this.sensorsTrack({}, 'click')
   },
-  close() {
-    this.hasAdList = false;
+  close(type = '') {
+    // if (type) {
+    //   this.$app.$sensors.track('$AppClick', {
+    //     analysis: {
+    //       title: `${this.sportTitle}-${type}-底部banner-关闭`
+    //     }
+    //   })
+    // }
+    this.hasAdList = false
   },
   convertAppSize(appSizeBytes) {
-    // 首先将字节转换为KB  
-    let kb = appSizeBytes / 1024;
+    // 首先将字节转换为KB
+    let kb = appSizeBytes / 1024
 
-    // 检查是否超过1MB（即1024KB）  
+    // 检查是否超过1MB（即1024KB）
     if (kb >= 1024) {
-      // 转换为MB并保留两位小数  
-      let mb = kb / 1024;
-      return mb.toFixed(2) + 'MB';
+      // 转换为MB并保留两位小数
+      let mb = kb / 1024
+      return mb.toFixed(2) + 'MB'
     } else {
-      // 保留两位小数并返回KB  
-      return kb.toFixed(2) + 'KB';
+      // 保留两位小数并返回KB
+      return kb.toFixed(2) + 'KB'
     }
-  }
+  },
+  adSuccShow() {
+    $utils.conversionUpload(this, {
+      adType: 'NATIVE',
+      adPositionId: this.adUnitId,
+      isclick: false,
+      ecpm: this.adList.ecpm,
+    })
+    this.sensorsTrack({}, 'show')
+  },
 }
 </script>
 
@@ -331,6 +399,9 @@ export default {
       color: #fff;
       text-align: right;
       background-color: #ff0f39;
+      text {
+        color: #fff;
+      }
     }
     .ad-close {
       align-self: center;

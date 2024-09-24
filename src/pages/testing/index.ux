@@ -1,3 +1,7 @@
+<import
+  name="gold-coin-pendant"
+  src="../../components/goldCoinPendant/index.ux"
+></import>
 <template>
   <div class="page">
     <div class="top_view"> 
@@ -55,6 +59,7 @@
         </div>
       </div>
     </div>
+    <gold-coin-pendant if="{{!ishowTisp}}"></gold-coin-pendant>
   </div>
 </template>
 

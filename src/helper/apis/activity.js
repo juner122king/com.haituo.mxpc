@@ -53,6 +53,14 @@ const getAdConversionImg = (data) => {
     data,
   })
 }
+//  调起app配置
+const getOpenAppConfig = (data) => {
+  return request({
+    method: 'GET',
+    url: `/qa/mini/basic/xmLink/config`,
+    data,
+  })
+}
 
 export default {
   getWheelOfFortuneInfo,
@@ -61,4 +69,5 @@ export default {
   postTrackCapture,
   getAdConfigView,
   getAdConversionImg,
+  getOpenAppConfig,
 }

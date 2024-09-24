@@ -27,7 +27,7 @@ export default {
         btn: "去完成",
         disable: true
       }, {
-        icon: "http://cdn.bank-zone.cn/pro/sy/admin/advertising/8700b026183b4a65b04b937995236f49.png",
+        icon: "https://cdn.ihaituo.cn/pro/sy/admin/advertising/8700b026183b4a65b04b937995236f49.png",
         title: "每日计步",
         subTitle: "点击右侧按钮体验",
         btn: "去体验",
