@@ -82,6 +82,8 @@
 
 <script>
 // const urlEncode = require('url-encode');
+
+const weatherFun = require('../../helper/weatherFun').default
 export default {
 
   data: {
@@ -167,9 +169,8 @@ export default {
       }
     }
 
-    $utils.getWeatherInfo(onCatchCallback, lng, lat)
+    weatherFun.getWeatherInfo(onCatchCallback, lng, lat)
 
-    // $utils.getWeatherInfo2(onCatchCallback, '广州')
   },
   getLocation() {
     var that = this

@@ -18,6 +18,7 @@ function openScreen(these) {
       const splashData = {
         ...these._def.dataApp.actiParam,
         openScreenStatusCode: statusCode,
+        openScreenData: data,
       }
       if (statusCode === '-100') {
         console.log('这是-100')
@@ -30,13 +31,6 @@ function openScreen(these) {
       }
       const handleError = (action, error) => {
         console.log(`${action}报错`, error)
-      }
-      const trackSensors = (eventName, properties) => {
-        try {
-          these.sensors.track(eventName, properties)
-        } catch (error) {
-          handleError('埋点', error)
-        }
       }
       if (statusCode == 0) {
         const ecpm = adData.ecpm || adData.cpm
@@ -72,7 +66,11 @@ function openScreen(these) {
         } catch (error) {
           handleError('埋点', error)
         }
-        trackSensors('$WebShow', { title: `开屏广告-广告曝光-${config.adCodeData.oppo.openScreen}` })
+        these.sensors.track('$WebShow', {
+          analysis: {
+            title: '开屏广告-广告曝光-' + config.adCodeData.oppo.openScreen,
+          },
+        })
       } else if (statusCode == 100) {
         let ecpm
         try {
@@ -101,7 +99,11 @@ function openScreen(these) {
         } catch (error) {
           handleError('转换', error)
         }
-        trackSensors('$AppClick', { title: `开屏广告-广告位-${config.adCodeData.oppo.openScreen}` })
+        these.sensors.track('$AppClick', {
+          analysis: {
+            title: '开屏广告-广告位-' + config.adCodeData.oppo.openScreen,
+          },
+        })
       }
     },
   })
@@ -159,8 +161,9 @@ function newBurialSite(
       ? pageLocation[locationData.name]
       : '无页面名称获取' //根据地址获取页面名
 
-    let title = `${pageName + (subTitle ? '-' + subTitle : '')}-${titleData[eventName]
-      }-${formId}`
+    let title = `${pageName + (subTitle ? '-' + subTitle : '')}-${
+      titleData[eventName]
+    }-${formId}`
     these.$app.$sensors.track(eventData[eventName], {
       analysis: {
         formId,
@@ -169,8 +172,9 @@ function newBurialSite(
       },
     })
   } catch (error) {
-    let title = `${pageName + (subTitle ? '-' + subTitle : '')}-${titleData[eventName]
-      }-${formId}`
+    let title = `${pageName + (subTitle ? '-' + subTitle : '')}-${
+      titleData[eventName]
+    }-${formId}`
     these.$app.$sensors.track(eventData[eventName], {
       formId,
       title,

@@ -202,9 +202,6 @@ async function conversionUpload(that, option = {}) {
       }
     }
 
-    if (ecpm > 0) {
-      param.ecpm = ecpm
-    }
     let buriedPointData = await $storage.get({
       key: 'sensorsdata2015_quickapp',
     })
@@ -225,6 +222,7 @@ async function conversionUpload(that, option = {}) {
       adType: adType, //广告类型，
       adPositionId: adPositionId, //广告id
       distinctId: buriedPointData.distinct_id, //设备id
+      ecpm: ecpm,
     }
     console.log(data, '查看回传上报参数')
     $apis.task
@@ -802,40 +800,6 @@ function handleParam(option = {}) {
   }
   return params.join('&')
 }
-//获取天气信息
-const getWeatherInfo = async (onCatchCallback, lng, lat, area) => {
-
-  const params = {
-    appKey: '2D30bc634AA046B4A9f3f185F9eCB310',
-    needAlarm: 0,
-    needMoreDay: 1,
-    need3HourForcast: 1,
-    needIndex: 0,
-    from: 1,
-    needHourData: 0,
-    lng: lng,
-    lat: lat,
-    area: area
-  }
-  $apis.weather.get7dayWeather({ ...params })
-    .catch(onCatchCallback)
-
-}
-//使用城市信息获取天气
-const getWeatherInfo2 = async (onCatchCallback, area) => {
-
-  const params = {
-    appKey: '2D30bc634AA046B4A9f3f185F9eCB310',
-    needMoreDay: 1,
-    need3HourForcast: 1,
-    area: area
-  }
-  $apis.weather.get7dayWeatherforArea({ ...params })
-    .catch(onCatchCallback)
-
-}
-
-
 
 export default {
   throttle,
@@ -850,8 +814,6 @@ export default {
   hideBanerAd,
   viewBanner,
   destroyBanner,
-  getWeatherInfo,
-  getWeatherInfo2,
   conversionUpload, //转化
   checkCurrentDay, //一天触发一次
   changeGlobalParam, //修改全局变量
