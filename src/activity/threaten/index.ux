@@ -5,12 +5,6 @@
     class="threaten"
     style="{{`background-image: url(${bgimgList[showBgIndex]})`}}"
   >
-    <div class="complaint" if="{{complaintStatus}}">
-      <div class="imageBox">
-        <image src="{{complaintImg}}" onclick="complaint"></image>
-      </div>
-    </div>
-
     <div
       class="ad-container"
       if="{{ hasAdList && adState && currentTask.linkType == 'YS' }}"
@@ -59,6 +53,11 @@
     </div>
 
     <div class="tap" onclick="clickPopover" else></div>
+    <div class="complaint" if="{{complaintStatus}}">
+      <div class="imageBox">
+        <image src="{{complaintImg}}" onclick="complaint"></image>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -142,6 +141,8 @@ export default {
   },
   onHide() {
     this.clearRewardedVideoAdTime()
+    this.$app.openApp()
+    console.log('这是页面的onhide')
   },
   onShow() {
     $utils.changeShowAd(false)
@@ -304,9 +305,17 @@ export default {
     if (this.branch === 'xiaomi' && this.currentTask.linkType === 'YS') {
       this.isFinishTask = true
     }
+
+    this.sensorsTrack(
+      {
+        formId: this.adId,
+      },
+      'click'
+    )
     // 点击广告后，执行下一个任务
     this.startTask()
-    this.$app.openApp('ad')
+    console.log('这是点击广告后执行的openApp')
+    this.$app.openApp({ type: 'ad', formId: this.adId })
   },
   adSuccShow(e) {
     if (this.branch === 'oppo') {
@@ -594,6 +603,7 @@ export default {
       // 任务开关
       return
     }
+    this.clearRewardedVideoAdTime()
     this.createRewardedVideoAd(this.taskData.rewardedId)
     this.rewardedVideoAdTime = setTimeout(() => {
       this.rewardedVideoAd.show()

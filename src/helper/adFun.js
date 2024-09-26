@@ -142,7 +142,7 @@ function newBurialSite(
 ) {
   const eventData = {
     //事件
-    show: ' $WebShow',
+    show: '$WebShow',
     click: '$AppClick',
     error: '$WebShow',
   }
@@ -161,9 +161,8 @@ function newBurialSite(
       ? pageLocation[locationData.name]
       : '无页面名称获取' //根据地址获取页面名
 
-    let title = `${pageName + (subTitle ? '-' + subTitle : '')}-${
-      titleData[eventName]
-    }-${formId}`
+    let title = `${pageName + (subTitle ? '-' + subTitle : '')}-${titleData[eventName]
+      }-${formId}`
     these.$app.$sensors.track(eventData[eventName], {
       analysis: {
         formId,
@@ -172,18 +171,41 @@ function newBurialSite(
       },
     })
   } catch (error) {
-    let title = `${pageName + (subTitle ? '-' + subTitle : '')}-${
-      titleData[eventName]
-    }-${formId}`
+    let title = `${pageName + (subTitle ? '-' + subTitle : '')}-${titleData[eventName]
+      }-${formId}`
     these.$app.$sensors.track(eventData[eventName], {
-      formId,
-      title,
+      analysis: {
+        formId,
+        title,
+      },
     })
     console.log(error, '函数埋点错误')
   }
 }
+/**
+ *  ip地址限制跳转其他页面
+ *
+ */
+async function ipLimit(these) {
+  try {
+    //转大写
+    const brand = $ad.getProvider().toUpperCase()
+    const ipLimit = await $apis.task.getIpLimit({ brand })
+    console.log(ipLimit, 'ip是否限制位置')
+    if (ipLimit.data) {
+      $utils.changeShowAd(true)
+      $router.replace({
+        uri: 'pages/welfareCenter',
+      })
+    }
+  } catch (error) {
+    console.log(error, 'ip限制错误')
+  }
+}
+
 
 export default {
   openScreen,
   newBurialSite,
+  ipLimit,
 }

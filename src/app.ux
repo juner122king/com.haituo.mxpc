@@ -7,7 +7,6 @@ import YLHQuickAppSDK from 'ylh-quick-app-ad-sdk';//https://developers.adnet.qq.
 module.exports = {
   onCreate() {
 
-    console.info('Application onCreate');
     sensors.init(this);
     sensors.appLaunch()
     this.$sensors = sensors;
@@ -42,7 +41,7 @@ module.exports = {
     hook2global.$config = $config
     hook2global.$adFun = $adFun
     hook2global.$image = $image
-
+    hook2global.$sensors = sensors
 
     try {
       this.instance = new TOPON_AD_SDK({
@@ -68,7 +67,6 @@ module.exports = {
     }
   },
   onHide() {
-    this.openApp()
   },
   openApp() { },
   dataApp: {

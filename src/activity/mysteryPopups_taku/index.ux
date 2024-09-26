@@ -15,16 +15,12 @@
       onclick="clickPopover"
       style="{{`background-image: url(${bgImg})`}}"
     >
-      <div class="complaint" if="{{complaintStatus}}">
-        <div class="imageBox">
-          <image src="{{complaintImg}}" onclick="complaint"></image>
-        </div>
-      </div>
       <div class="coner" onclick="clickPopover" show="{{showRedPack}}">
         <image class="img-popover" src="{{imageList[showBgIndex]}}"></image>
         <icon type="close" size="80" color="#ffffff"></icon>
       </div>
     </div>
+
     <block
       if="{{ hasAdList  && adState && currentTask.linkType == 'YS' && !isAudit}}"
     >
@@ -95,6 +91,11 @@
         </block>
       </block>
     </block>
+    <div class="complaint" if="{{complaintStatus}}">
+      <div class="imageBox">
+        <image src="{{complaintImg}}" onclick="complaint"></image>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -128,11 +129,11 @@ export default {
     }, // 新增属性，用于跟踪当前任务状态
     bgImg: '', //背景图
     imageList: [
-      '/Common/img/ad/kai1.png',
-      '/Common/img/ad/kai2.png',
-      '/Common/img/ad/kai3.png',
-      '/Common/img/ad/kai4.png',
-      '/Common/img/ad/kai5.png',
+      '/assets/images/Popover-1.png',
+      '/assets/images/Popover-2.png',
+      '/assets/images/Popover-3.png',
+      '/assets/images/Popover-4.png',
+      '/assets/images/Popover-5.png',
     ], //弹窗图片
     adUnitId: '', //激励广告id
     isFinishTask: false, //是否完成任务
@@ -209,6 +210,7 @@ export default {
   onHide() {
     this.clearRewardedVideoAdTime() //清除激励广告 再重新进来的时候开启
     console.log('页面onHide', Date.now())
+    this.$app.openApp()
   },
   changeImage() {
     //1秒内不会重复调用
@@ -350,7 +352,7 @@ export default {
     this.sensorsTrack(e, 'click')
     this.clickPopover()
     console.log('点击了广告')
-    this.$app.openApp('ad')
+    this.$app.openApp({ type: 'ad', formId: this.adId })
   },
   adSuccShow(e) {
     $utils.conversionUpload(this, {
@@ -542,7 +544,7 @@ export default {
    * 设置任务
    */
   settingUpTasks(type) {
-    console.log('到底触发了几次设置任务', type)
+    // console.log('到底触发了几次设置任务', type)
     const { taskList } = this.taskData
     this.currentTask = taskList[this.currentTaskNum]
     console.log(this.currentTask, '设置任务中查看当前任务')
@@ -777,6 +779,7 @@ export default {
       // 任务开关
       return
     }
+    this.clearRewardedVideoAdTime()
     this.createRewardedVideoAd(this.taskData.rewardedId)
     this.rewardedVideoAdTime = setTimeout(() => {
       this.rewardedVideoAd.show()
@@ -796,20 +799,19 @@ export default {
 .wrapper {
   width: 100%;
   height: 100%;
-  background-image: url("http://cdn.ihaituo.cn/qa/pro/app/029e30f6272517f887af64ab30d2f0b7.png");
+  background-image: url('http://cdn.ihaituo.cn/qa/pro/app/029e30f6272517f887af64ab30d2f0b7.png');
   background-repeat: no-repeat;
   background-position: center;
   background-size: 100% 100%;
-
-  .complaint {
-    width: 55px;
-    height: 110px;
-    position: fixed;
-    bottom: 200px;
-    left: 0;
-  }
 }
 
+.complaint {
+  width: 55px;
+  height: 110px;
+  position: fixed;
+  bottom: 200px;
+  left: 0;
+}
 .img-popover {
   width: 630px;
   object-fit: cover;
@@ -817,7 +819,7 @@ export default {
 .Popover-2 {
   width: 100%;
   height: 800px;
-  background-image: url("/assets/images/Popover-2.png");
+  background-image: url('/assets/images/Popover-2.png');
   background-size: 100% 800px;
   background-repeat: no-repeat;
   justify-content: center;

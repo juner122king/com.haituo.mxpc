@@ -72,7 +72,7 @@ export default {
             },
             'error'
           )
-          console.log(data, code, '返回广告失败1')
+          console.log(data, code, '返回广告失败底部原生')
           this.hasAdList = true
           if (code === 205) {
             this.hasAdList = true
@@ -125,7 +125,7 @@ export default {
     $utils.buriedPointReport(this, { event: 'click', adId: this.adId })
     this.sensorsTrack({}, 'click')
     this.$emit('emitClose')
-    this.$app.openApp('ad')
+    this.$app.openApp({ type: 'ad', formId: this.adId })
   },
   close() {
     console.log('close')

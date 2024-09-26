@@ -1,42 +1,57 @@
 <import name="icon" src="apex-ui/components/icon/index"></import>
 <import name="bottom-native" src="../components/bottomNative.ux"></import>
 <template>
-  <div
-    class="wrapper"
-    onclick="clickPopover"
-    style="{{`background-image: url(${bgImg})`}}"
-  >
-    <div class="coner" onclick="clickPopover" show="{{showRedPack}}">
-      <image class="img-popover" src="{{imageList[showBgIndex]}}"></image>
-      <icon type="close" size="80" color="#ffffff"></icon>
-    </div>
-
-    <div class="complaint" if="{{complaintStatus}}">
-      <div class="imageBox">
-        <image src="{{complaintImg}}" onclick="complaint"></image>
-      </div>
-    </div>
-    <ad
-      adId="{{adList.adId}}"
-      class="box"
-      show="{{!!adList.adId}}"
-      onerror="adError"
-      onadclick="adClick"
-      onadclose="close"
-      type="native"
-      closeBtnPosition="left-top"
-      if="{{ hasAdList  && adState && currentTask.linkType == 'YS' && !isAudit  }}"
-      onadshow="adSuccShow"
-    >
-    </ad>
+  <div>
     <div
-      class="bottom-ad"
-      if="{{currentTask.bottomAdId && hasAdList  && adState && currentTask.linkType == 'YS' && !isAudit }}"
+      class="wrapper"
+      onclick="clickPopover"
+      style="{{`background-image: url(${bgImg})`}}"
     >
-      <bottom-native
-        ad-id="{{currentTask.bottomAdId}}"
-        onemit-close="bottomAdClick"
-      ></bottom-native>
+      <div class="coner" onclick="clickPopover" show="{{showRedPack}}">
+        <image class="img-popover" src="{{imageList[showBgIndex]}}"></image>
+        <icon type="close" size="80" color="#ffffff"></icon>
+      </div>
+
+      <ad
+        adId="{{adList.adId}}"
+        class="box"
+        show="{{!!adList.adId}}"
+        onerror="adError"
+        onadclick="adClick"
+        onadclose="close"
+        type="native"
+        closeBtnPosition="left-top"
+        if="{{ hasAdList  && adState && currentTask.linkType == 'YS' && !isAudit  }}"
+        onadshow="adSuccShow"
+      >
+        <ad-clickable-area class="ad-title" style="width: 100%; height: 100%">
+          <text class="page-title" style="font-size: 1px">{{
+            adList.title
+          }}</text>
+        </ad-clickable-area>
+        <ad-clickable-area class="ad-image" style="width: 100%; height: 100%">
+          <image
+            if="{{adList.imgUrlList}}"
+            src="{{adList.imgUrlList[0]}}"
+            style="height: 1px"
+          ></image>
+        </ad-clickable-area>
+      </ad>
+      <div
+        class="bottom-ad"
+        if="{{currentTask.bottomAdId && hasAdList  && adState && currentTask.linkType == 'YS' && !isAudit }}"
+      >
+        <bottom-native
+          ad-id="{{currentTask.bottomAdId}}"
+          onemit-close="bottomAdClick"
+        ></bottom-native>
+      </div>
+
+      <div class="complaint" if="{{complaintStatus}}" onclick="complaint">
+        <div class="imageBox">
+          <image src="{{complaintImg}}"></image>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -78,6 +93,7 @@ export default {
       '/assets/images/Popover-5.png',
     ], //弹窗图片
     adUnitId: '', //激励广告id
+    isFinishTask: false, //是否完成任务
     rewardedVideoAdTime: null, //激励广告延时
     rewardedVideoAdPlayCount: 0, //激励视频已播放次数
     changeImageTime: null, //当前换图时间
@@ -117,6 +133,14 @@ export default {
       formId: this.adId,
     })
 
+    if (
+      this.isFinishTask &&
+      this.branch === 'xiaomi' &&
+      this.currentTask.linkType === 'YS'
+    ) {
+      this.isFinishTask = false
+      this.settingUpTasks()
+    }
     if (this.visitCount > 0) {
       console.log('这里展示红包1')
       //计数大于1或自动开启开红包展示
@@ -129,6 +153,7 @@ export default {
   },
   onHide() {
     this.clearRewardedVideoAdTime() //清除激励广告 再重新进来的时候开启
+    this.$app.openApp()
     console.log('页面onHide', Date.now())
   },
   changeImage(type) {
@@ -265,9 +290,12 @@ export default {
     $utils.conversionUpload(this, ecpmParam)
     $utils.buriedPointReport(this, { event: 'click', adId: this.adId })
     this.hasAdList = false
+    if (this.branch === 'xiaomi' && this.currentTask.linkType === 'YS') {
+      this.isFinishTask = true
+    }
     this.clickPopover()
     this.sensorsTrack(e, 'click')
-    this.$app.openApp('ad')
+    this.$app.openApp({ type: 'ad', formId: this.adId })
   },
   adSuccShow(e) {
     $utils.conversionUpload(this, {
@@ -474,6 +502,14 @@ export default {
       console.log('No more tasks available')
       return
     }
+    if (
+      this.isFinishTask &&
+      this.branch === 'xiaomi' &&
+      this.currentTask.linkType === 'YS'
+    ) {
+      //如果有则先弹出   表明是小米任务已经外跳
+      return
+    }
     console.log('Current task:', this.currentTask)
     // 根据任务类型执行相应操作
     switch (this.currentTask.linkType) {
@@ -548,6 +584,7 @@ export default {
       // 任务开关
       return
     }
+    this.clearRewardedVideoAdTime()
     this.createRewardedVideoAd(this.taskData.rewardedId)
     this.rewardedVideoAdTime = setTimeout(() => {
       this.rewardedVideoAd.show()
@@ -571,16 +608,14 @@ export default {
   background-repeat: no-repeat;
   background-position: center;
   background-size: 100% 100%;
-
-  .complaint {
-    width: 55px;
-    height: 110px;
-    position: fixed;
-    bottom: 200px;
-    left: 0;
-  }
 }
-
+.complaint {
+  width: 55px;
+  height: 110px;
+  position: fixed;
+  bottom: 200px;
+  left: 0;
+}
 .img-popover {
   width: 630px;
   object-fit: cover;

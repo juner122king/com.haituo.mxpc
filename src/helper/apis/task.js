@@ -133,6 +133,24 @@ const getClickReviewControl = (data) => {
     url: `/qa/mini/basic/clickControl/audit/status/${data.branch}`,
   })
 }
+// 获取ip是否存在限制地区
+const getIpLimit = (data) => {
+  return request({
+    method: 'GET',
+    url: `/qa/mini/basic/clickControl/exist/limit/area/${data.brand}`,
+    data,
+  })
+}
+
+// 获取ip位置
+const getIpLocation = (data) => {
+  return request({
+    method: 'GET',
+    url: `/qa/h5/tools/browser/ip`,
+    data,
+  })
+}
+
 
 let task = {
   getCompleteCount,
@@ -148,7 +166,10 @@ let task = {
   getConversionlicks,
   postTrackCapture,
   getClickReviewControl,
-  postConvertUploadUc
+  postConvertUploadUc,
+  getIpLimit,
+  getIpLocation,
+
 }
 
 export default task

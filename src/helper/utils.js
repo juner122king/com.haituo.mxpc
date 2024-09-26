@@ -5,6 +5,7 @@ import $device from '@system.device'
 import prompt from '@system.prompt'
 import ad from '@service.ad'
 const config = require('../config').default
+const $image = require('@system.image')
 const { JSEncrypt } = require('../libs/jsencrypt/lib/index')
 // 节流阀
 const throttle = (fn, gapTime = 1500) => {
@@ -486,16 +487,25 @@ function judgingAd(context) {
  * @param {*} context
  */
 
-function analyzeAdvertiserId(context) {
+async function analyzeAdvertiserId(context) {
   const {
     backurl = '',
     corp_id = '',
     callback = '',
+    type = '',
   } = context.$app.$def.dataApp.actiParam
+  if (type === 'oppo') {
+    let oaidData = await $device.getOAID()
+    return oaidData.data.oaid || ''
+  }
+
+  if (corp_id) {
+    return corp_id
+  }
   if (backurl) {
     return backurl
   } else if (callback) {
-    return corp_id ? corp_id : callback
+    return callback
   }
 }
 
@@ -578,7 +588,7 @@ async function buriedPointReport(these, options = {}) {
           event: eventData[event],
           cid: checkPaem.channelValue,
           pid: manufacturer || adBrand,
-          appId: token.appId || 'mxpc',
+          appId: token.appId || 'xmxccy',
           userId: token.userId,
           properties: {
             ...phoninfo,
@@ -610,7 +620,7 @@ async function buriedPointReport(these, options = {}) {
     $apis.task
       .postTrackCapture({
         event: event === 'click' ? '$AdClick' : '$AppLaunch',
-        appId: 'mxpc',
+        appId: 'xmxccy',
         properties: {
           analysis: {
             adId: adId,
@@ -704,7 +714,7 @@ function openApp() {
         status,
         jumpNum: 0,
         timer: null,
-        maxAdJump,
+        maxAdJump: count,
         adJump: 0,
         linkUrl: linkUrl,
       }
@@ -715,10 +725,11 @@ function openApp() {
     }
   }
   getOpenAppConfig()
-  return async function (type = 'app') {
+  return async function (option = {}) {
+    const { type = 'app', formId = '' } = option
     console.log('进来调起app', type)
     if (isShowAd) {
-      console.log('这是在激励视屏中直接return')
+      console.log('这是在激励视屏中或设定中直接return')
       return
     }
     // 获取当前时间戳
@@ -737,6 +748,7 @@ function openApp() {
     ) {
       return
     }
+
     if (type === 'app') {
       showApp.jumpNum++
     } else {
@@ -749,22 +761,51 @@ function openApp() {
     let seconds = type === 'app' ? showApp.seconds * 1000 : 100
     console.log('进来的调起秒数', seconds)
     showApp.timer = setTimeout(() => {
+      let id = formId
       if (showApp.linkUrl.length > 10) {
         $router.push({
           uri: showApp.linkUrl,
         })
       }
       console.log('调起拉回了')
+      //上报类型
+      let reportType = {
+        ad: '$AppStartByAdClick', // 广告拉回
+        app: '$AppStartByPageLeave', // 页面调起
+      }
+
       $image.editImage({
         uri: '/Common/',
         success: function (data) {
           console.log(`handling success: ${data.uri}`)
         },
         cancel: function () {
-          console.log('handling cancel')
+          console.log('handling cancel', '这是换端了')
+          $sensors.track(reportType[type], {
+            analysis: {
+              formId: id,
+              title: `拉回成功-${id}`,
+            },
+          })
         },
         fail: function (data, code) {
           console.log(`handling fail, code = ${code}`)
+          if (code === 200) {
+            console.log('唤端成功')
+            $sensors.track(reportType[type], {
+              analysis: {
+                formId: id,
+                title: `拉回成功-${id}`,
+              },
+            })
+          } else {
+            $sensors.track(reportType[type], {
+              analysis: {
+                formId: id,
+                title: `拉回失败-${id}`,
+              },
+            })
+          }
         },
       })
     }, seconds)
@@ -800,6 +841,7 @@ function handleParam(option = {}) {
   }
   return params.join('&')
 }
+
 
 export default {
   throttle,
