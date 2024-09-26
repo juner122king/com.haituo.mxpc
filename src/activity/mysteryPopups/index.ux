@@ -106,6 +106,8 @@ export default {
         ...e,
       }
     }
+    // $adFun.ipLimit(this)
+    
     // 延迟执行埋点报告
     setTimeout(() => {
       $utils.buriedPointReport(this)

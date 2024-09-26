@@ -1,8 +1,8 @@
 {
   "package": "com.haituo.mxpc",
   "name": "喵星测评",
-  "versionName": "1.2.3",
-  "versionCode": 123,
+  "versionName": "1.2.4",
+  "versionCode": 124,
   "minPlatformVersion": 1100,
   "icon": "/Common/logo.png",
   "designWidth": 750,
