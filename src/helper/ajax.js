@@ -157,7 +157,10 @@ const request = (options) => {
       }
     }
     headers.Authorization = accessToken || ''
-    if (url.includes('/qa/track/capture')) {
+    if (
+      url.includes('/qa/track/capture') ||
+      url.startsWith('/qa/mini/basic/ad/convert/upload')
+    ) {
       options.data.userId = userId
       try {
         if (!options.data.distinct_id) {
@@ -210,12 +213,12 @@ const request = (options) => {
               reject(res.data)
             }
           }
-        } catch (error) {}
+        } catch (error) { }
       },
       fail: function (err) {
         reject(err)
       },
-      complete: function (res) {},
+      complete: function (res) { },
     })
   })
 }

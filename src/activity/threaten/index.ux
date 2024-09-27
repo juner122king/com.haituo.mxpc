@@ -6,6 +6,7 @@
     style="{{`background-image: url(${bgimgList[showBgIndex]})`}}"
   >
     <div
+      @click="adCapture"
       class="ad-container"
       if="{{ hasAdList && adState && currentTask.linkType == 'YS' }}"
     >
@@ -120,7 +121,6 @@ export default {
       }
     }
     // $adFun.ipLimit(this)
-
     // 延迟执行埋点报告
     setTimeout(() => {
       $utils.buriedPointReport(this)
@@ -144,6 +144,13 @@ export default {
     this.clearRewardedVideoAdTime()
     this.$app.openApp()
     console.log('这是页面的onhide')
+  },
+  /**
+   * 事件捕获
+   */
+  adCapture(evt) {
+    // 阻止事件冒泡
+    evt.stopPropagation()
   },
   onShow() {
     $utils.changeShowAd(false)
@@ -314,9 +321,9 @@ export default {
       'click'
     )
     // 点击广告后，执行下一个任务
+    this.$app.openApp({ type: 'ad', formId: this.adId })
     this.startTask()
     console.log('这是点击广告后执行的openApp')
-    this.$app.openApp({ type: 'ad', formId: this.adId })
   },
   adSuccShow(e) {
     if (this.branch === 'oppo') {

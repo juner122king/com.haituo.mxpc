@@ -24,73 +24,78 @@
     <block
       if="{{ hasAdList  && adState && currentTask.linkType == 'YS' && !isAudit}}"
     >
-      <ad
-        adId="{{adList.adId}}"
-        class="box"
-        show="{{!!adList.adId}}"
-        onerror="adError"
-        onadclick="adClick"
-        onadclose="close"
-        type="native"
-        closeBtnPosition="left-top"
-        onadshow="adSuccShow"
-      >
-        <ad-clickable-area class="ad-title" style="width: 100%; height: 100%">
-          <text class="page-title" style="font-size: 1px">{{
-            adList.title
-          }}</text>
-        </ad-clickable-area>
-        <ad-clickable-area class="ad-image" style="width: 100%; height: 100%">
-          <image
-            if="{{adList.imgUrlList}}"
-            src="{{adList.imgUrlList[0]}}"
-            style="height: 1px"
-          ></image>
-        </ad-clickable-area>
-      </ad>
-      <div
-        class="bottom-ad"
-        if="{{currentTask.bottomAdId && hasAdList  && adState && currentTask.linkType == 'YS' && !isAudit }}"
-      >
-        <bottom-native
-          ad-id="{{currentTask.bottomAdId}}"
-          onemit-close="bottomAdClick"
-        ></bottom-native>
+      <div @click="adCapture">
+        <ad
+          adId="{{adList.adId}}"
+          class="box"
+          show="{{!!adList.adId}}"
+          onerror="adError"
+          onadclick="adClick"
+          onadclose="close"
+          type="native"
+          closeBtnPosition="left-top"
+          onadshow="adSuccShow"
+        >
+          <ad-clickable-area class="ad-title" style="width: 100%; height: 100%">
+            <text class="page-title" style="font-size: 1px">{{
+              adList.title
+            }}</text>
+          </ad-clickable-area>
+          <ad-clickable-area class="ad-image" style="width: 100%; height: 100%">
+            <image
+              if="{{adList.imgUrlList}}"
+              src="{{adList.imgUrlList[0]}}"
+              style="height: 1px"
+            ></image>
+          </ad-clickable-area>
+        </ad>
+        <div
+          class="bottom-ad"
+          if="{{currentTask.bottomAdId && hasAdList  && adState && currentTask.linkType == 'YS' && !isAudit }}"
+        >
+          <bottom-native
+            ad-id="{{currentTask.bottomAdId}}"
+            onemit-close="bottomAdClick"
+          ></bottom-native>
+        </div>
       </div>
     </block>
 
     <block if="{{ currentTask.linkType == 'TAKU'   && tkYsAdState}}">
-      <topon-ad
-        id="topon-ad-{{tkYsAdId}}"
-        placement-id="{{tkYsAdId}}"
-        class="topon-box"
-        config="{{config}}"
-        @ad-load="handleAdLoad"
-        @ad-show="handleAdShow"
-        @ad-close="handleAdClose"
-        @ad-click="handleAdClick"
-        @ad-error="handleAdError"
-      >
-      </topon-ad>
-      <!-- 信息流自渲染广告 物料展示示例代码，ad-self-render组件于限与该demo展示使用，请根据业务所需完成自己的ad-self-render组件包括但不限于样式、广告要素、交互事件等的开发 -->
-      <block if="adData && displayed && isSelfRendering">
-        <block if="currentAd.nwFirmId===64">
-          <div class="native-ad-container" style="width: 750px; height: 100%">
-            <ylh-ad
-              class="ad-wrapper"
-              ad-id="{{ adData.id }}"
-              if="{{ adData.id  }}"
-              on-ad-click="tkClick"
-              on-ad-expose="onAdExpose"
-            >
-              <ylh-ad-clickable-area ad-id="{{ adData.id }}">
-                <div class="click-button"></div>
-              </ylh-ad-clickable-area>
-            </ylh-ad>
-          </div>
+      <div @click="adCapture">
+        <topon-ad
+          id="topon-ad-{{tkYsAdId}}"
+          placement-id="{{tkYsAdId}}"
+          class="topon-box"
+          config="{{config}}"
+          @ad-load="handleAdLoad"
+          @ad-show="handleAdShow"
+          @ad-close="handleAdClose"
+          @ad-click="handleAdClick"
+          @ad-error="handleAdError"
+        >
+        </topon-ad>
+        <!-- 信息流自渲染广告 物料展示示例代码，ad-self-render组件于限与该demo展示使用，请根据业务所需完成自己的ad-self-render组件包括但不限于样式、广告要素、交互事件等的开发 -->
+        <block if="adData && displayed && isSelfRendering">
+          <block if="currentAd.nwFirmId===64">
+            <div class="native-ad-container" style="width: 750px; height: 100%">
+              <ylh-ad
+                class="ad-wrapper"
+                ad-id="{{ adData.id }}"
+                if="{{ adData.id  }}"
+                on-ad-click="tkClick"
+                on-ad-expose="onAdExpose"
+              >
+                <ylh-ad-clickable-area ad-id="{{ adData.id }}">
+                  <div class="click-button"></div>
+                </ylh-ad-clickable-area>
+              </ylh-ad>
+            </div>
+          </block>
         </block>
-      </block>
+      </div>
     </block>
+
     <div class="complaint" if="{{complaintStatus}}">
       <div class="imageBox">
         <image src="{{complaintImg}}" onclick="complaint"></image>
@@ -165,7 +170,6 @@ export default {
       }
     }
     // $adFun.ipLimit(this)
-    
     // 延迟执行埋点报告
     setTimeout(() => {
       $utils.buriedPointReport(this)
@@ -221,6 +225,14 @@ export default {
     }
     this.changeImageTime = Date.now()
     this.showBgIndex = (this.showBgIndex + 1) % this.imageList.length
+  },
+  /**
+   * 事件捕获
+   */
+  adCapture(evt) {
+    // 阻止事件冒泡
+    console.log('点击广告捕获了')
+    evt.stopPropagation()
   },
   /***
    * 点击弹窗
@@ -352,9 +364,9 @@ export default {
       this.isFinishTask = true
     }
     this.sensorsTrack(e, 'click')
-    this.clickPopover()
     console.log('点击了广告')
     this.$app.openApp({ type: 'ad', formId: this.adId })
+    this.clickPopover()
   },
   adSuccShow(e) {
     $utils.conversionUpload(this, {
@@ -636,6 +648,9 @@ export default {
         this.bgImg = result.bgImg
         this.complaintStatus = result.complaintStatus
         this.complaintImg = result.complaintImg || this.complaintImg
+      })
+      .catch((err) => {
+        console.log(err, '获取自定义广告详情失败')
       })
   },
 

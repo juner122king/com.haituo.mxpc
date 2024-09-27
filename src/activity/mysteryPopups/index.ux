@@ -11,40 +11,43 @@
         <image class="img-popover" src="{{imageList[showBgIndex]}}"></image>
         <icon type="close" size="80" color="#ffffff"></icon>
       </div>
-      <ad
-        adId="{{adList.adId}}"
-        class="box"
-        show="{{!!adList.adId}}"
-        onerror="adError"
-        onadclick="adClick"
-        onadclose="close"
-        type="native"
-        closeBtnPosition="left-top"
-        if="{{ hasAdList  && adState && currentTask.linkType == 'YS' && !isAudit  }}"
-        onadshow="adSuccShow"
-      >
-        <ad-clickable-area class="ad-title" style="width: 100%; height: 100%">
-          <text class="page-title" style="font-size: 1px">{{
-            adList.title
-          }}</text>
-        </ad-clickable-area>
-        <ad-clickable-area class="ad-image" style="width: 100%; height: 100%">
-          <image
-            if="{{adList.imgUrlList}}"
-            src="{{adList.imgUrlList[0]}}"
-            style="height: 1px"
-          ></image>
-        </ad-clickable-area>
-      </ad>
-      <div
-        class="bottom-ad"
-        if="{{currentTask.bottomAdId && hasAdList  && adState && currentTask.linkType == 'YS' && !isAudit }}"
-      >
-        <bottom-native
-          ad-id="{{currentTask.bottomAdId}}"
-          onemit-close="bottomAdClick"
-        ></bottom-native>
+      <div @click="adCapture">
+        <ad
+          adId="{{adList.adId}}"
+          class="box"
+          show="{{!!adList.adId}}"
+          onerror="adError"
+          onadclick="adClick"
+          onadclose="close"
+          type="native"
+          closeBtnPosition="left-top"
+          if="{{ hasAdList  && adState && currentTask.linkType == 'YS' && !isAudit  }}"
+          onadshow="adSuccShow"
+        >
+          <ad-clickable-area class="ad-title" style="width: 100%; height: 100%">
+            <text class="page-title" style="font-size: 1px">{{
+              adList.title
+            }}</text>
+          </ad-clickable-area>
+          <ad-clickable-area class="ad-image" style="width: 100%; height: 100%">
+            <image
+              if="{{adList.imgUrlList}}"
+              src="{{adList.imgUrlList[0]}}"
+              style="height: 1px"
+            ></image>
+          </ad-clickable-area>
+        </ad>
+        <div
+          class="bottom-ad"
+          if="{{currentTask.bottomAdId && hasAdList  && adState && currentTask.linkType == 'YS' && !isAudit }}"
+        >
+          <bottom-native
+            ad-id="{{currentTask.bottomAdId}}"
+            onemit-close="bottomAdClick"
+          ></bottom-native>
+        </div>
       </div>
+
       <div class="complaint" if="{{complaintStatus}}" onclick="complaint">
         <div class="imageBox">
           <image src="{{complaintImg}}"></image>
@@ -98,6 +101,7 @@ export default {
     complaintStatus: false, //举报状态
     complaintImg:
       'http://cdn.ihaituo.cn/qa/pro/temporary/63d3e397c404d4d7049ad6167fe6dbc7.png', //举报图片
+    ipLimit: false, //限制地区
   },
   onInit: function (e) {
     // 初始化全局参数
@@ -107,7 +111,6 @@ export default {
       }
     }
     // $adFun.ipLimit(this)
-    
     // 延迟执行埋点报告
     setTimeout(() => {
       $utils.buriedPointReport(this)
@@ -287,6 +290,7 @@ export default {
       adPositionId: this.adId,
       isclick: true,
     }
+    console.log(ecpmParam, '查看点击广告数据ecpmParam')
     console.log('竞价相关参数', ecpmParam)
     $utils.conversionUpload(this, ecpmParam)
     $utils.buriedPointReport(this, { event: 'click', adId: this.adId })
@@ -294,9 +298,9 @@ export default {
     if (this.branch === 'xiaomi' && this.currentTask.linkType === 'YS') {
       this.isFinishTask = true
     }
-    this.clickPopover()
     this.sensorsTrack(e, 'click')
     this.$app.openApp({ type: 'ad', formId: this.adId })
+    this.clickPopover()
   },
   adSuccShow(e) {
     $utils.conversionUpload(this, {
@@ -484,6 +488,13 @@ export default {
   },
   onBackPress() {
     return true
+  },
+  /**
+   * 事件捕获
+   */
+  adCapture(evt) {
+    // 阻止事件冒泡
+    evt.stopPropagation()
   },
   /**
    * 设置任务

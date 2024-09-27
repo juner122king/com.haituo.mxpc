@@ -124,8 +124,8 @@ export default {
     this.hasAdList = false
     $utils.buriedPointReport(this, { event: 'click', adId: this.adId })
     this.sensorsTrack({}, 'click')
-    this.$emit('emitClose')
     this.$app.openApp({ type: 'ad', formId: this.adId })
+    this.$emit('emitClose')
   },
   close() {
     console.log('close')

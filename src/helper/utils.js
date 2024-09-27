@@ -208,6 +208,9 @@ async function conversionUpload(that, option = {}) {
     })
     try {
       buriedPointData = JSON.parse(buriedPointData.data)
+      if (buriedPointData.distinct_id && !acticityParam.distinctId) {
+        acticityParam.distinctId = buriedPointData.distinct_id
+      }
     } catch (error) {
       buriedPointData = {
         distinct_id: '',
@@ -222,7 +225,7 @@ async function conversionUpload(that, option = {}) {
       clickCount: clickcount, //是否是点击
       adType: adType, //广告类型，
       adPositionId: adPositionId, //广告id
-      distinctId: buriedPointData.distinct_id, //设备id
+      distinctId: buriedPointData.distinct_id || acticityParam.distinctId, //设备id
       ecpm: ecpm,
     }
     console.log(data, '查看回传上报参数')
@@ -691,7 +694,7 @@ function changeShowAd(state) {
  * type 类型 app 快应用本身    ad广告本身
  */
 
- function openApp() {
+function openApp() {
   let showApp = null
   const adBrand = $ad.getProvider().toLowerCase()
   let lastCallTime = 0
@@ -742,7 +745,9 @@ function changeShowAd(state) {
       }
       // 更新最后调用时间
       lastCallTime = now
-      clearTimeout(showApp.timer)
+      if (showApp.timer) {
+        clearTimeout(showApp.timer)
+      }
       if (
         (showApp.jumpNum > showApp.count && type === 'app') ||
         !showApp.status
