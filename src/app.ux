@@ -48,7 +48,7 @@ module.exports = {
         app: this,
         appId: 'a66bea7a2100a8', // 请替换为您在topon开发者后台上的appId（您在topon开发者后台上所创建的应用ID）
         appKey: 'a546935753f67f81f33cf2582de03af0b', // 请替换为您在topon开发者后台上的 app key（topon开发者后台 => 账户信息 => key即为appKey）
-        config: { ylhAppId: '' }//优量汇App ID，集成优量汇时必填，
+        config: { ylhAppId: '1207350680' }//优量汇App ID，集成优量汇时必填，
       })
     } catch (error) {
       console.log('接入TOPON广告报错', error);
@@ -60,7 +60,7 @@ module.exports = {
 
     try {
       const config = {
-        appId: '' // 注意：appId为 必填字段
+        appId: '1207350680' // 注意：appId为 必填字段
       };
       new YLHQuickAppSDK(this, config)
     } catch (error) {
