@@ -92,6 +92,38 @@
               </ylh-ad>
             </div>
           </block>
+          <block else>
+            <ad
+              adId="{{currentAd.ad.adId }}"
+              class="box"
+              show="{{!!currentAd.ad.adId }}"
+              onerror="adError"
+              onadclick="adClick"
+              onadclose="close"
+              type="native"
+              closeBtnPosition="left-top"
+              onadshow="adSuccShow"
+            >
+              <ad-clickable-area
+                class="ad-title"
+                style="width: 100%; height: 100%"
+              >
+                <text class="page-title" style="font-size: 1px">{{
+                  currentAd.ad.title
+                }}</text>
+              </ad-clickable-area>
+              <ad-clickable-area
+                class="ad-image"
+                style="width: 100%; height: 100%"
+              >
+                <image
+                  if="{{currentAd.ad.imgUrlList}}"
+                  src="{{currentAd.ad.imgUrlList[0]}}"
+                  style="height: 1px"
+                ></image>
+              </ad-clickable-area>
+            </ad>
+          </block>
         </block>
       </div>
     </block>
@@ -160,7 +192,8 @@ export default {
     changeImageTime: null, //当前换图时间
     complaintStatus: false, //举报状态
     complaintImg:
-      'http://cdn.ihaituo.cn/qa/pro/temporary/63d3e397c404d4d7049ad6167fe6dbc7.png', //举报图片
+      'http://cdn.ihaituo.cn/qa/pro/temporary/63d3e397c404d4d7049ad6167fe6dbc7.png', //
+    taKuError: false,
   },
   onInit: function (e) {
     // 初始化全局参数
@@ -276,7 +309,8 @@ export default {
     if (
       (this.currentTask.linkType === 'YS' && !this.adState) ||
       (this.currentTask.linkType === 'JL' && !this.rewardedVideoAdState) ||
-      this.currentTask.linkType === '无任务'
+      this.currentTask.linkType === '无任务' ||
+      (this.currentTask.linkType === 'TAKU' && this.taKuError)
     ) {
       this.jumpoOutside()
       return
@@ -349,6 +383,11 @@ export default {
     }
   },
   adClick(e) {
+    if (this.currentTask.linkType == 'TAKU') {
+      this.conversionUpTaku(1)
+      this.clickPopover()
+      return
+    }
     let ecpmParam = {
       //竞价相关参数
       ecpm: this.adList.ecpm,
@@ -356,7 +395,6 @@ export default {
       adPositionId: this.adId,
       isclick: true,
     }
-    console.log('竞价相关参数', ecpmParam)
     $utils.conversionUpload(this, ecpmParam)
     $utils.buriedPointReport(this, { event: 'click', adId: this.adId })
     this.hasAdList = false
@@ -369,6 +407,10 @@ export default {
     this.clickPopover()
   },
   adSuccShow(e) {
+    if (this.currentTask.linkType == 'TAKU') {
+      this.conversionUpTaku(0)
+      return
+    }
     $utils.conversionUpload(this, {
       adType: 'NATIVE',
       adPositionId: this.adId,
@@ -379,13 +421,20 @@ export default {
     this.sensorsTrack(e, 'show')
   },
   adError(errCode, errMsg) {
+    if (this.currentTask.linkType == 'TAKU') {
+      this.tkYsAdState = false
+      this.taKuError = true
+    }
     this.adState = false
+    const formId =
+      this.currentTask.linkType == 'TAKU' ? this.currentAd.nwUnitId : ''
     this.sensorsTrack(
       {
         errData: {
           errCode: errCode.errCode,
           errMsg: errCode.errMsg,
         },
+        formId: formId,
       },
       'error'
     )
@@ -482,6 +531,7 @@ export default {
             isclick: true,
             ecpm: that.ecpm,
           })
+          that.sensorsTrack({ formId: adUnitId }, 'click')
           $utils.buriedPointReport(that, { event: 'click', adId: adUnitId })
         }
         $utils.changeShowAd(false)
@@ -491,7 +541,7 @@ export default {
         console.log(e, '激励广告错误')
         that.rewardedVideoAd = ''
         that.rewardedVideoAdState = false
-        that.sensorsTrack(e, 'error')
+        that.sensorsTrack({ formId: adUnitId }, 'error')
         $utils.changeShowAd(false)
       })
 
@@ -625,8 +675,12 @@ export default {
         }
         this.maxTaskNum = this.taskData.taskList.length - 1
 
-        this.settingUpTasks(1)
-        this.openRewardedVideoAd()
+        try {
+          this.settingUpTasks(1)
+          this.openRewardedVideoAd()
+        } catch (error) {
+          console.log(error, '激励广告打开失败')
+        }
       })
       .catch((err) => {
         console.log(err, '获取广告数据失败')
@@ -657,7 +711,6 @@ export default {
   //--------------------  塔库任务 --------------------
   onAdExpose() {
     console.log('TAku广告曝光')
-    this.sensorsTrack({ formId: this.tkYsAdId }, 'show')
     this.conversionUpTaku(0)
   },
   conversionUpTaku(clickCount) {
@@ -671,6 +724,14 @@ export default {
     }
     console.log(ecpmParam, '查看上传参数塔库')
     $utils.conversionUpload(this, ecpmParam)
+    let type = clickCount == 1 ? 'click' : 'show'
+    this.sensorsTrack({ formId: this.currentAd.nwUnitId }, type)
+    if (type === 'click') {
+      $utils.buriedPointReport(this, {
+        event: 'click',
+        adId: this.currentAd.nwUnitId,
+      })
+    }
   },
   // 广告源Load成功回调
   handleAdLoad(e) {
@@ -703,12 +764,12 @@ export default {
     //
     // }, 1000)
     this.conversionUpTaku(1)
-    this.sensorsTrack({ formId: this.tkYsAdId }, 'click')
     this.startTask()
   },
   handleAdError(e) {
     console.log('塔库组件error回调', e)
     this.tkYsAdState = false
+    this.taKuError = true
   },
   // 展示广告广告
   handleDisplayAd() {
@@ -731,8 +792,10 @@ export default {
     /**
      * 重置
      */
-    this.tkYsAdId = id
-    console.log('进来了首次挂载')
+    if (!this.tkYsAdId) {
+      this.tkYsAdId = id
+    }
+    console.log('进来了首次挂载塔库任务')
     this.tkYsAdState = true
     this.isGetAd = false
     this.displayed = false
@@ -750,10 +813,12 @@ export default {
       console.log('TAKU广告已准备好')
       // 展示广告广告
       this.tkYsAdState = true
+      this.taKuError = false
       this.handleDisplayAd()
     } else {
       console.log('TAKU广告未准备好')
       this.tkYsAdState = false
+      this.taKuError = true
     }
   },
 
@@ -788,22 +853,28 @@ export default {
     }
   }, //延时开启激励广告
   openRewardedVideoAd() {
-    if (
-      !this.taskData.rewardedStatus ||
-      this.rewardedVideoAdPlayCount >= this.taskData.rewardedCount ||
-      !this.taskData.rewardedId
-    ) {
-      // 任务开关
-      return
+    try {
+      if (
+        !this.taskData.rewardedStatus ||
+        this.rewardedVideoAdPlayCount >= this.taskData.rewardedCount ||
+        !this.taskData.rewardedId
+      ) {
+        // 任务开关
+        return
+      }
+      this.clearRewardedVideoAdTime()
+      this.createRewardedVideoAd(this.taskData.rewardedId)
+      this.rewardedVideoAdTime = setTimeout(() => {
+        this.rewardedVideoAd.show()
+        $utils.changeShowAd(true)
+        this.rewardedVideoAdPlayCount++
+        console.log(this.rewardedVideoAdPlayCount, '查看激励广告播放次数')
+        this.sensorsTrack({ formId: this.taskData.rewardedId }, 'show')
+      }, this.taskData.rewardedSeconds * 1000)
+    } catch (error) {
+      this.sensorsTrack({ formId: this.taskData.rewardedId }, 'error')
+      console.log(error, '激励广告打开失败')
     }
-    this.clearRewardedVideoAdTime()
-    this.createRewardedVideoAd(this.taskData.rewardedId)
-    this.rewardedVideoAdTime = setTimeout(() => {
-      this.rewardedVideoAd.show()
-      $utils.changeShowAd(true)
-      this.rewardedVideoAdPlayCount++
-      console.log(this.rewardedVideoAdPlayCount, '查看激励广告播放次数')
-    }, this.taskData.rewardedSeconds * 1000)
   },
   //清除激励广告
   clearRewardedVideoAdTime() {

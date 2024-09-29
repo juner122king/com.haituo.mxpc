@@ -414,6 +414,7 @@ export default {
             ecpm: that.ecpm,
           })
           $utils.buriedPointReport(that, { event: 'click', adId: adUnitId })
+          that.sensorsTrack({ formId: adUnitId }, 'click')
         }
         $utils.changeShowAd(false)
       })
@@ -422,7 +423,7 @@ export default {
         console.log(e, '激励广告错误')
         that.rewardedVideoAd = ''
         that.rewardedVideoAdState = false
-        that.sensorsTrack(e, 'error')
+        that.sensorsTrack({ formId: adUnitId }, 'error')
         $utils.changeShowAd(false)
       })
 
@@ -589,22 +590,28 @@ export default {
   },
   //延时开启激励广告
   openRewardedVideoAd() {
-    if (
-      !this.taskData.rewardedStatus ||
-      this.rewardedVideoAdPlayCount >= this.taskData.rewardedCount ||
-      !this.taskData.rewardedId
-    ) {
-      // 任务开关
-      return
+    try {
+      if (
+        !this.taskData.rewardedStatus ||
+        this.rewardedVideoAdPlayCount >= this.taskData.rewardedCount ||
+        !this.taskData.rewardedId
+      ) {
+        // 任务开关
+        return
+      }
+      this.clearRewardedVideoAdTime()
+      this.createRewardedVideoAd(this.taskData.rewardedId)
+      this.rewardedVideoAdTime = setTimeout(() => {
+        this.rewardedVideoAd.show()
+        $utils.changeShowAd(true)
+        this.rewardedVideoAdPlayCount++
+        console.log(this.rewardedVideoAdPlayCount, '查看激励广告播放次数')
+        this.sensorsTrack({ formId: this.taskData.rewardedId }, 'show')
+      }, this.taskData.rewardedSeconds * 1000)
+    } catch (error) {
+      console.log(error, '激励广告打开失败')
+      this.sensorsTrack({ formId: this.taskData.rewardedId }, 'error')
     }
-    this.clearRewardedVideoAdTime()
-    this.createRewardedVideoAd(this.taskData.rewardedId)
-    this.rewardedVideoAdTime = setTimeout(() => {
-      this.rewardedVideoAd.show()
-      $utils.changeShowAd(true)
-      this.rewardedVideoAdPlayCount++
-      console.log(this.rewardedVideoAdPlayCount, '查看激励广告播放次数')
-    }, this.taskData.rewardedSeconds * 1000)
   },
   //清除激励广告
   clearRewardedVideoAdTime() {
